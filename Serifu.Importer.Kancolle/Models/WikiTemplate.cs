@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Diagnostics.CodeAnalysis;
 using AngleSharp.Dom;
-using Serifu.Importer.Helpers;
+using Serifu.Importer.Kancolle.Helpers;
 
-namespace Serifu.Importer.Kancolle;
+namespace Serifu.Importer.Kancolle.Models;
 internal class WikiTemplate
 {
     private readonly Dictionary<string, IElement> parameters;

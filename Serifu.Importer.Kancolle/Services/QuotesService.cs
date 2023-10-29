@@ -1,0 +1,52 @@
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Serifu.Data;
+using Serifu.Data.Entities;
+using Serifu.Importer.Kancolle.Models;
+
+namespace Serifu.Importer.Kancolle.Services;
+
+/// <summary>
+/// Manages the quotes database.
+/// </summary>
+internal class QuotesService
+{
+    private readonly QuotesContext db;
+    private readonly ILogger<QuotesService> logger;
+
+    public QuotesService(
+        QuotesContext db,
+        ILogger<QuotesService> logger)
+    {
+        this.db = db;
+        this.logger = logger;
+    }
+
+    public Task Initialize()
+    {
+        logger.LogInformation("Database is {Path}", Path.GetFullPath(db.Database.GetDbConnection().DataSource));
+        return db.Database.MigrateAsync();
+    }
+
+    /// <summary>
+    /// Deletes all of the quotes for <paramref name="ship"/> and adds <paramref name="quotes"/> in their place.
+    /// </summary>
+    /// <param name="ship">The ship whose quotes to replace.</param>
+    /// <param name="quotes">The new quotes.</param>
+    /// <param name="cancellationToken">An optional cancellation token.</param>
+    public async Task UpdateQuotes(Ship ship, IEnumerable<Quote> quotes, CancellationToken cancellationToken = default)
+    {
+        logger.LogInformation("Saving {Count} quotes for {Ship}", quotes.Count(), ship);
+
+        // Remove the ship's existing quotes, as we don't have any way to identify changes to individual rows. Note that
+        // this assumes no two ships will have the same English name.
+        db.Quotes.RemoveRange(await db.Quotes
+            .Where(q => q.Source == Source.Kancolle && q.SpeakerEnglish == ship.EnglishName)
+            .ToListAsync(cancellationToken));
+
+        // Add the new quotes.
+        db.Quotes.AddRange(quotes);
+
+        await db.SaveChangesAsync(cancellationToken);
+    }
+}

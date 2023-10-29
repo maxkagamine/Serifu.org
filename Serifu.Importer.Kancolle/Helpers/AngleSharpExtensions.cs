@@ -1,6 +1,6 @@
 ﻿using AngleSharp.Dom;
 
-namespace Serifu.Importer.Helpers;
+namespace Serifu.Importer.Kancolle.Helpers;
 
 internal static class AngleSharpExtensions
 {

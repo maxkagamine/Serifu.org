@@ -1,8 +1,8 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace Serifu.Importer.Kancolle;
+namespace Serifu.Importer.Kancolle.Models;
 
-internal class WikiApiResponse
+internal partial class WikiApiResponse
 {
     public WikiApiParseResponse? Parse { get; set; }
 }
@@ -13,4 +13,6 @@ internal class WikiApiParseResponse
 
     [JsonPropertyName("parsetree")]
     public string? ParseTree { get; set; }
+
+    public string? Text { get; set; }
 }
