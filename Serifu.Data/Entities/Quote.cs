@@ -16,7 +16,7 @@ using System.Diagnostics;
 
 namespace Serifu.Data.Entities;
 
-[DebuggerDisplay("{SpeakerEnglish,nq} - {Context,nq}: {QuoteEnglish,nq}")]
+[DebuggerDisplay("Speaker = {SpeakerEnglish,nq}, Context = {Context,nq}, Quote = {QuoteEnglish,nq}")]
 public class Quote
 {
     public Guid Id { get; set; }

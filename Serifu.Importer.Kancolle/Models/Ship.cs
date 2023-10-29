@@ -12,19 +12,9 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
-using System.Text.Json.Serialization;
-
-namespace Serifu.Importer.Kancolle;
-
-internal class WikiApiResponse
+namespace Serifu.Importer.Kancolle.Models;
+internal record Ship(
+    string EnglishName, string JapaneseName)
 {
-    public WikiApiParseResponse? Parse { get; set; }
-}
-
-internal class WikiApiParseResponse
-{
-    public string? Title { get; set; }
-
-    [JsonPropertyName("parsetree")]
-    public string? ParseTree { get; set; }
+    public override string ToString() => EnglishName;
 }

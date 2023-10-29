@@ -14,7 +14,7 @@
 
 using System.Threading.RateLimiting;
 
-namespace Serifu.Importer.Helpers;
+namespace Serifu.Importer.Kancolle.Helpers;
 
 internal class RateLimitingHttpHandler : DelegatingHandler, IAsyncDisposable
 {

@@ -12,16 +12,11 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using AngleSharp.Dom;
-using Serifu.Importer.Helpers;
+using Serifu.Importer.Kancolle.Helpers;
 
-namespace Serifu.Importer.Kancolle;
+namespace Serifu.Importer.Kancolle.Models;
 internal class WikiTemplate
 {
     private readonly Dictionary<string, IElement> parameters;
