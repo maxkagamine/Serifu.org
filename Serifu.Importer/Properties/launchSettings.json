@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Serifu.Importer": {
+      "commandName": "Project",
+      "workingDirectory": "$(ProjectDir)"
+    }
+  }
+}
