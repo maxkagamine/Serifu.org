@@ -37,8 +37,9 @@ internal static class HostExtensions
         {
             using var scope = provider.CreateScope();
             var entrypoint = scope.ServiceProvider.GetRequiredService<T>();
-            int exitCode = await main(entrypoint, stoppingToken);
-            Environment.Exit(exitCode);
+            var lifetime = scope.ServiceProvider.GetRequiredService<IHostApplicationLifetime>();
+            Environment.ExitCode = await main(entrypoint, stoppingToken);
+            lifetime.StopApplication();
         }));
     }
 

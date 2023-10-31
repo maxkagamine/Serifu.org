@@ -15,18 +15,22 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Serifu.Data;
 using Serifu.Importer.Kancolle;
 using Serifu.Importer.Kancolle.Helpers;
 using Serifu.Importer.Kancolle.Services;
+using Serilog;
+using Serilog.Events;
 
 var builder = Host.CreateApplicationBuilder();
 
-builder.Logging.SetMinimumLevel(LogLevel.Debug);
-builder.Logging.AddFilter("System", LogLevel.Warning);
-builder.Logging.AddFilter("Microsoft", LogLevel.Warning);
+builder.Services.AddSerilog(config => config
+    .MinimumLevel.Debug()
+    .MinimumLevel.Override("System", LogEventLevel.Warning)
+    .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+    .WriteTo.Console()
+    .WriteTo.File("kancolle-warnings.log", restrictedToMinimumLevel: LogEventLevel.Warning));
 
 builder.Services.AddDbContext<QuotesContext>(options => options.UseSqlite("Data Source=quotes.db"));
 

@@ -14,10 +14,10 @@
 
 using System.Diagnostics;
 using System.Net;
-using Microsoft.Extensions.Logging;
 using Serifu.Data.Entities;
 using Serifu.Importer.Kancolle.Models;
 using Serifu.Importer.Kancolle.Services;
+using Serilog;
 
 namespace Serifu.Importer.Kancolle;
 internal class KancolleImporter
@@ -26,37 +26,35 @@ internal class KancolleImporter
     private readonly ShipService shipService;
     private readonly AudioFileService audioFileService;
     private readonly QuotesService quotesService;
-    private readonly ILogger<KancolleImporter> logger;
+    private readonly ILogger logger;
 
     public KancolleImporter(
         ShipListService shipListService,
         ShipService shipService,
         AudioFileService audioFileService,
         QuotesService quotesService,
-        ILogger<KancolleImporter> logger)
+        ILogger logger)
     {
         this.shipListService = shipListService;
         this.shipService = shipService;
         this.audioFileService = audioFileService;
         this.quotesService = quotesService;
-        this.logger = logger;
+        this.logger = logger.ForContext<KancolleImporter>();
     }
 
     public async Task Import(CancellationToken cancellationToken)
     {
-        var sw = Stopwatch.StartNew();
-
         await quotesService.Initialize();
 
-        var ships = await shipListService.GetShips(cancellationToken);
-
-        foreach (Ship ship in ships)
+        using (logger.BeginTimedOperation(nameof(Import)))
         {
-            await ImportShip(ship, cancellationToken);
-        }
+            var ships = await shipListService.GetShips(cancellationToken);
 
-        sw.Stop();
-        logger.LogInformation("Import completed in {Duration}.", sw.Elapsed);
+            foreach (Ship ship in ships)
+            {
+                await ImportShip(ship, cancellationToken);
+            }
+        }
     }
 
     private async Task ImportShip(Ship ship, CancellationToken cancellationToken = default)
@@ -72,7 +70,7 @@ internal class KancolleImporter
             }
             catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
             {
-                logger.LogWarning("{Ship}'s {Context} audio file {File} returned 404. Setting to null.",
+                logger.Warning("{Ship}'s {Context} audio file {File} returned 404. Setting to null.",
                     quote.SpeakerEnglish, quote.Context, quote.AudioFile);
 
                 quote.AudioFile = null;

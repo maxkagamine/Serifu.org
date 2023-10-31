@@ -97,4 +97,7 @@ internal class WikiTemplate
         value = default;
         return false;
     }
+
+    public Dictionary<string, string> ToDictionary()
+        => parameters.ToDictionary(x => x.Key, x => x.Value.GetTextNodes());
 }
