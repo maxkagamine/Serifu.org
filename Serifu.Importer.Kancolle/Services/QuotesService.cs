@@ -1,8 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using Serifu.Data;
 using Serifu.Data.Entities;
 using Serifu.Importer.Kancolle.Models;
+using Serilog;
 
 namespace Serifu.Importer.Kancolle.Services;
 
@@ -12,19 +12,19 @@ namespace Serifu.Importer.Kancolle.Services;
 internal class QuotesService
 {
     private readonly QuotesContext db;
-    private readonly ILogger<QuotesService> logger;
+    private readonly ILogger logger;
 
     public QuotesService(
         QuotesContext db,
-        ILogger<QuotesService> logger)
+        ILogger logger)
     {
         this.db = db;
-        this.logger = logger;
+        this.logger = logger.ForContext<QuotesService>();
     }
 
     public Task Initialize()
     {
-        logger.LogInformation("Database is {Path}", Path.GetFullPath(db.Database.GetDbConnection().DataSource));
+        logger.Information("Database is {Path}", Path.GetFullPath(db.Database.GetDbConnection().DataSource));
         return db.Database.MigrateAsync();
     }
 
@@ -36,7 +36,7 @@ internal class QuotesService
     /// <param name="cancellationToken">An optional cancellation token.</param>
     public async Task UpdateQuotes(Ship ship, IEnumerable<Quote> quotes, CancellationToken cancellationToken = default)
     {
-        logger.LogInformation("Saving {Count} quotes for {Ship}", quotes.Count(), ship);
+        logger.Information("Saving {Count} quotes for {Ship}", quotes.Count(), ship);
 
         // Remove the ship's existing quotes, as we don't have any way to identify changes to individual rows. Note that
         // this assumes no two ships will have the same English name.

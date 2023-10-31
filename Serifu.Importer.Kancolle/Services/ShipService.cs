@@ -2,10 +2,10 @@
 using System.Text;
 using System.Text.RegularExpressions;
 using AngleSharp.Dom;
-using Microsoft.Extensions.Logging;
 using Serifu.Data.Entities;
 using Serifu.Importer.Kancolle.Helpers;
 using Serifu.Importer.Kancolle.Models;
+using Serilog;
 
 namespace Serifu.Importer.Kancolle.Services;
 
@@ -15,17 +15,17 @@ namespace Serifu.Importer.Kancolle.Services;
 internal partial class ShipService
 {
     private readonly WikiApiService wikiApiService;
-    private readonly ILogger<ShipService> logger;
+    private readonly ILogger logger;
 
     [GeneratedRegex(@"\[\[(?:.*?\|)?(.*?)\]\]", RegexOptions.Compiled)]
     private static partial Regex WikiLinkRegex();
 
     public ShipService(
         WikiApiService wikiApiService,
-        ILogger<ShipService> logger)
+        ILogger logger)
     {
         this.wikiApiService = wikiApiService;
-        this.logger = logger;
+        this.logger = logger.ForContext<ShipService>();
     }
 
     /// <summary>
@@ -36,7 +36,7 @@ internal partial class ShipService
     /// <returns>A collection of newly-created <see cref="Quote"/> entities (not yet added to the database).</returns>
     public async Task<IEnumerable<Quote>> GetQuotes(Ship ship, CancellationToken cancellationToken = default)
     {
-        logger.LogInformation("Fetching wiki page for {Ship}.", ship);
+        logger.Information("Fetching wiki page for {Ship}.", ship);
         using var document = await wikiApiService.GetXml(ship.EnglishName, cancellationToken);
 
         List<Quote> quotes = new();
@@ -44,12 +44,10 @@ internal partial class ShipService
 
         foreach (var template in FindTemplates(document, new[] { "ShipquoteKai", "SeasonalQuote" }))
         {
-            var missingParameters = new[] { "scenario", "translation", "origin" }
-                .Where(x => !template.ContainsKey(x)).ToArray();
-            if (missingParameters.Any())
+            if (new[] { "scenario", "translation", "origin" }.Any(x => !template.ContainsKey(x)))
             {
-                logger.LogWarning("One of {Ship}'s quotes is missing required parameters: {MissingParameters}.",
-                    ship, missingParameters);
+                logger.Warning("One of {Ship}'s quotes is missing required parameters: {Parameters}.",
+                    ship, template.ToDictionary());
 
                 continue;
             }
@@ -72,14 +70,11 @@ internal partial class ShipService
 
         if (quotes.Count == 0)
         {
-            logger.LogWarning("""
-                No quotes found for {Ship}.
-                Check whether the scraping code is broken or the page actually has no quotes.
-                """, ship);
+            logger.Warning("No quotes found for {Ship}. Check whether the scraping code is broken or the page actually has no quotes.", ship);
         }
         else
         {
-            logger.LogInformation("Found {Count} quotes for {Ship}.", quotes.Count, ship);
+            logger.Information("Found {Count} quotes for {Ship}.", quotes.Count, ship);
         }
 
         return quotes;

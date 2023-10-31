@@ -1,5 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
-using Serifu.Data.Entities;
+﻿using Serifu.Data.Entities;
+using Serilog;
 
 namespace Serifu.Importer.Kancolle.Services;
 
@@ -12,16 +12,16 @@ internal class AudioFileService
     const string FileRedirectBaseUrl = "https://en.kancollewiki.net/Special:Redirect/file/";
     
     private readonly HttpClient httpClient;
-    private readonly ILogger<AudioFileService> logger;
+    private readonly ILogger logger;
 
     public AudioFileService(
         HttpClient httpClient,
-        ILogger<AudioFileService> logger)
+        ILogger logger)
     {
         this.httpClient = httpClient;
-        this.logger = logger;
+        this.logger = logger.ForContext<AudioFileService>();
 
-        logger.LogInformation("Kancolle audio directory is {Path}", Path.GetFullPath(AudioDirectory));
+        logger.Information("Kancolle audio directory is {Path}", Path.GetFullPath(AudioDirectory));
     }
 
     /// <summary>
@@ -45,11 +45,11 @@ internal class AudioFileService
 
         if (!overwrite && File.Exists(filePath))
         {
-            logger.LogDebug("{File} already downloaded.", filename);
+            logger.Debug("{File} already downloaded.", filename);
             return;
         }
 
-        logger.LogInformation("Downloading {File}", filename);
+        logger.Information("Downloading {File}", filename);
 
         var tempPath = Path.GetTempFileName();
 
@@ -61,7 +61,5 @@ internal class AudioFileService
 
         Directory.CreateDirectory(dir);
         File.Move(tempPath, filePath, overwrite);
-
-        logger.LogInformation("Downloaded {File}", filename);
     }
 }

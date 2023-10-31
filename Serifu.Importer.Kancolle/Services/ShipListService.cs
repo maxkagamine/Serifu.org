@@ -1,8 +1,8 @@
 ﻿using AngleSharp.Dom;
 using AngleSharp.Html.Dom;
-using Microsoft.Extensions.Logging;
 using Serifu.Importer.Kancolle.Helpers;
 using Serifu.Importer.Kancolle.Models;
+using Serilog;
 
 namespace Serifu.Importer.Kancolle.Services;
 
@@ -14,14 +14,14 @@ internal class ShipListService
     const string ShipListPage = "Ship list";
 
     private readonly WikiApiService wikiApiService;
-    private readonly ILogger<ShipListService> logger;
+    private readonly ILogger logger;
 
     public ShipListService(
         WikiApiService wikiApiService,
-        ILogger<ShipListService> logger)
+        ILogger logger)
     {
         this.wikiApiService = wikiApiService;
-        this.logger = logger;
+        this.logger = logger.ForContext<ShipListService>();
     }
 
     /// <summary>
@@ -32,7 +32,7 @@ internal class ShipListService
     /// <returns>A collection of <see cref="Ship"/>.</returns>
     public async Task<IEnumerable<Ship>> GetShips(CancellationToken cancellationToken = default)
     {
-        logger.LogInformation("Getting ship list.");
+        logger.Information("Getting ship list.");
         using var document = await wikiApiService.GetHtml(ShipListPage, cancellationToken);
 
         var ships = document.QuerySelectorAll<IHtmlAnchorElement>("span[id^=\"shiplistkai-\"] a:not(.mw-redirect)")
@@ -55,7 +55,7 @@ internal class ShipListService
             throw new Exception("No ship has a Japanese name. This probably means the table structure has changed.");
         }
 
-        logger.LogInformation("Found {Count} ships.", ships.Count);
+        logger.Information("Found {Count} ships.", ships.Count);
         return ships;
     }
 }

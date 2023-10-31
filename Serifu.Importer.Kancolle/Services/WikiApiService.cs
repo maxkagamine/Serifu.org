@@ -4,8 +4,8 @@ using AngleSharp.Html.Dom;
 using AngleSharp.Html.Parser;
 using AngleSharp.Xml.Dom;
 using AngleSharp.Xml.Parser;
-using Microsoft.Extensions.Logging;
 using Serifu.Importer.Kancolle.Models;
+using Serilog;
 using Url = Flurl.Url;
 
 namespace Serifu.Importer.Kancolle.Services;
@@ -18,17 +18,17 @@ internal partial class WikiApiService
     const string WikiApiUrl = "https://en.kancollewiki.net/w/api.php";
 
     private readonly HttpClient httpClient;
-    private readonly ILogger<WikiApiService> logger;
+    private readonly ILogger logger;
 
     [GeneratedRegex(@"^<root>#REDIRECT \[\[([^\]]+)", RegexOptions.Compiled)]
     private static partial Regex RedirectParseTreeRegex();
 
     public WikiApiService(
         HttpClient httpClient,
-        ILogger<WikiApiService> logger)
+        ILogger logger)
     {
         this.httpClient = httpClient;
-        this.logger = logger;
+        this.logger = logger.ForContext<WikiApiService>();
     }
 
     public async Task<IHtmlDocument> GetHtml(string page, CancellationToken cancellationToken = default)
