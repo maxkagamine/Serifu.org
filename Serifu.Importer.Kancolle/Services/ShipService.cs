@@ -54,6 +54,7 @@ internal partial class ShipService
         using var document = await wikiApiService.GetXml(ship.EnglishName, cancellationToken);
 
         List<Quote> quotes = new();
+        int i = 0;
 
         foreach (var template in FindTemplates(document, new[] { "ShipquoteKai", "SeasonalQuote" }))
         {
@@ -77,6 +78,7 @@ internal partial class ShipService
                 QuoteJapanese = template["origin"],
                 Notes = ExtractNotes(template),
                 AudioFile = GetAudioFile(ship.EnglishName, template),
+                SortOrder = i++,
             };
 
             quotes.Add(quote);
