@@ -39,6 +39,7 @@ builder.Services.AddScoped<ShipListService>();
 builder.Services.AddScoped<ShipService>();
 builder.Services.AddScoped<WikiApiService>();
 
-builder.Services.AddHostedService<KancolleImporter>();
+builder.Services.AddEntryPoint<KancolleImporter>((importer, cancellationToken) =>
+    importer.Import(cancellationToken));
 
 await builder.Build().RunAsync();
