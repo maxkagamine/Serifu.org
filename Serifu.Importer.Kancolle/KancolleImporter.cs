@@ -1,13 +1,12 @@
 ﻿using System.Diagnostics;
 using System.Net;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Serifu.Data.Entities;
 using Serifu.Importer.Kancolle.Models;
 using Serifu.Importer.Kancolle.Services;
 
 namespace Serifu.Importer.Kancolle;
-internal class KancolleImporter : BackgroundService
+internal class KancolleImporter
 {
     private readonly ShipListService shipListService;
     private readonly ShipService shipService;
@@ -29,22 +28,21 @@ internal class KancolleImporter : BackgroundService
         this.logger = logger;
     }
 
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    public async Task Import(CancellationToken cancellationToken)
     {
         var sw = Stopwatch.StartNew();
 
         await quotesService.Initialize();
 
-        var ships = await shipListService.GetShips(stoppingToken);
+        var ships = await shipListService.GetShips(cancellationToken);
 
         foreach (Ship ship in ships)
         {
-            await ImportShip(ship, stoppingToken);
+            await ImportShip(ship, cancellationToken);
         }
 
         sw.Stop();
         logger.LogInformation("Import completed in {Duration}.", sw.Elapsed);
-        Environment.Exit(0);
     }
 
     private async Task ImportShip(Ship ship, CancellationToken cancellationToken = default)
