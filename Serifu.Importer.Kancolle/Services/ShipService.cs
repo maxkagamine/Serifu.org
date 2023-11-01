@@ -155,7 +155,7 @@ internal partial class ShipService
     /// </summary>
     private static string GetAudioFile(string pageName, WikiTemplate template)
     {
-        if (template.TryGetString("audio", out var audio))
+        if (template.TryGetString("audio", out var audio) && !string.IsNullOrEmpty(audio))
         {
             return audio;
         }
