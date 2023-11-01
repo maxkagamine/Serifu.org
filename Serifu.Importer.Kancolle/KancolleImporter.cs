@@ -1,6 +1,6 @@
-﻿using System.Diagnostics;
-using System.Net;
+﻿using System.Net;
 using Serifu.Data.Entities;
+using Serifu.Importer.Kancolle.Helpers;
 using Serifu.Importer.Kancolle.Models;
 using Serifu.Importer.Kancolle.Services;
 using Serilog;
@@ -30,15 +30,20 @@ internal class KancolleImporter
 
     public async Task Import(CancellationToken cancellationToken)
     {
+        Console.Title = "Kancolle Importer";
+
         await quotesService.Initialize();
 
         using (logger.BeginTimedOperation(nameof(Import)))
+        using (var progress = new TerminalProgressBar())
         {
-            var ships = await shipListService.GetShips(cancellationToken);
+            var ships = (await shipListService.GetShips(cancellationToken)).ToList();
 
-            foreach (Ship ship in ships)
+            for (int i = 0; i < ships.Count; i++)
             {
-                await ImportShip(ship, cancellationToken);
+                progress.SetProgress(i, ships.Count);
+
+                await ImportShip(ships[i], cancellationToken);
             }
         }
     }
