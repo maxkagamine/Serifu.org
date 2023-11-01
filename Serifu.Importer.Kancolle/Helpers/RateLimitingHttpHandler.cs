@@ -1,27 +1,36 @@
-﻿using System.Threading.RateLimiting;
+﻿namespace Serifu.Importer.Kancolle.Helpers;
 
-namespace Serifu.Importer.Kancolle.Helpers;
-
-internal class RateLimitingHttpHandler : DelegatingHandler, IAsyncDisposable
+internal class RateLimitingHttpHandler : DelegatingHandler
 {
-    private readonly PartitionedRateLimiter<HttpRequestMessage> rateLimiter;
+    private static readonly TimeSpan TimeBetweenRequests = TimeSpan.FromSeconds(5);
 
-    public RateLimitingHttpHandler()
-    {
-        rateLimiter = PartitionedRateLimiter.Create<HttpRequestMessage, string>(req =>
-            RateLimitPartition.GetFixedWindowLimiter(req.RequestUri?.Host ?? "", _ => new()
-            {
-                PermitLimit = 1,
-                QueueLimit = int.MaxValue,
-                Window = TimeSpan.FromSeconds(3),
-            }));
-    }
+    private readonly SemaphoreSlim rateLimiter = new(1, 1);
 
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
-        await rateLimiter.AcquireAsync(request, cancellationToken: cancellationToken);
-        return await base.SendAsync(request, cancellationToken);
+        await rateLimiter.WaitAsync(cancellationToken);
+
+        try
+        {
+            return await base.SendAsync(request, cancellationToken);
+        }
+        finally
+        {
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(TimeBetweenRequests);
+                rateLimiter.Release();
+            }, CancellationToken.None);
+        }
     }
 
-    public ValueTask DisposeAsync() => rateLimiter.DisposeAsync();
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            rateLimiter.Dispose();
+        }
+
+        base.Dispose(disposing);
+    }
 }
