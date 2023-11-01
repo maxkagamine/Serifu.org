@@ -13,6 +13,7 @@
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
 using Microsoft.Extensions.Hosting;
+using Serilog;
 
 namespace Microsoft.Extensions.DependencyInjection;
 internal static class HostExtensions
@@ -38,7 +39,19 @@ internal static class HostExtensions
             using var scope = provider.CreateScope();
             var entrypoint = scope.ServiceProvider.GetRequiredService<T>();
             var lifetime = scope.ServiceProvider.GetRequiredService<IHostApplicationLifetime>();
-            Environment.ExitCode = await main(entrypoint, stoppingToken);
+            var logger = scope.ServiceProvider.GetRequiredService<ILogger>();
+
+            try
+            {
+                Environment.ExitCode = await main(entrypoint, stoppingToken);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                // Microsoft.Extensions.Hosting prints exceptions twice and exits with 0... we'll do it ourselves.
+                logger.Fatal(ex, "Unhandled exception.");
+                Environment.ExitCode = 255;
+            }
+
             lifetime.StopApplication();
         }));
     }
