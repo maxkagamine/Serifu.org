@@ -77,6 +77,17 @@ internal partial class ShipService
             logger.Information("Found {Count} quotes for {Ship}.", quotes.Count, ship);
         }
 
+        var duplicateAudioFiles = quotes
+            .GroupBy(q => q.AudioFile)
+            .Where(g => g.Key is not null && g.Count() > 1)
+            .Select(g => g.Key!)
+            .ToArray();
+        if (duplicateAudioFiles.Length > 0)
+        {
+            logger.Warning("{Ship}'s quotes contain the following audio files more than once: {AudioFiles}. This is probably a copy-paste error.",
+                ship, duplicateAudioFiles);
+        }
+
         return quotes;
     }
 
