@@ -49,4 +49,16 @@ internal class QuotesService
 
         await db.SaveChangesAsync(cancellationToken);
     }
+
+    /// <summary>
+    /// Gets the ships already in the database.
+    /// </summary>
+    /// <param name="cancellationToken">An optional cancellation token.</param>
+    public async Task<IEnumerable<Ship>> GetShips(CancellationToken cancellationToken = default)
+    {
+        return await db.Quotes
+            .Where(q => q.Source == Source.Kancolle)
+            .Select(q => new Ship(q.SpeakerEnglish, q.SpeakerJapanese))
+            .ToListAsync(cancellationToken);
+    }
 }

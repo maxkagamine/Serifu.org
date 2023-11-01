@@ -22,6 +22,7 @@
     <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
     <PackageReference Include="SerilogAnalyzer" Version="0.15.0" />
     <PackageReference Include="SerilogMetrics" Version="2.1.0" />
+    <PackageReference Include="Spectre.Console" Version="0.47.0" />
   </ItemGroup>
 
   <ItemGroup>
