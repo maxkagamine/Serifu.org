@@ -50,6 +50,7 @@ internal static class HostExtensions
                 // Microsoft.Extensions.Hosting prints exceptions twice and exits with 0... we'll do it ourselves.
                 logger.Fatal(ex, "Unhandled exception.");
                 Environment.ExitCode = 255;
+                Console.Write("\a"); // Flashes the taskbar if the terminal's not in the foreground
             }
 
             lifetime.StopApplication();

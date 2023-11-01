@@ -18,6 +18,7 @@ using Serifu.Importer.Kancolle.Helpers;
 using Serifu.Importer.Kancolle.Models;
 using Serifu.Importer.Kancolle.Services;
 using Serilog;
+using Spectre.Console;
 
 namespace Serifu.Importer.Kancolle;
 internal class KancolleImporter
@@ -48,6 +49,22 @@ internal class KancolleImporter
 
         await quotesService.Initialize();
 
+        var shipsAlreadyInDb = (await quotesService.GetShips(cancellationToken)).ToHashSet();
+        bool skipShipsAlreadyInDb = false;
+        if (shipsAlreadyInDb.Count > 0)
+        {
+            Console.Write("\a"); // Flashes the taskbar if the terminal's not in the foreground
+            skipShipsAlreadyInDb = AnsiConsole.Prompt(new SelectionPrompt<bool>()
+                .Title($"\nSkip [purple]{shipsAlreadyInDb.Count}[/] ships already in db?")
+                .AddChoices(true, false)
+                .UseConverter(x => x ? "Yes" : "No"));
+
+            if (skipShipsAlreadyInDb)
+            {
+                logger.Information("Skipping {Count} ships already in db", shipsAlreadyInDb.Count);
+            }
+        }
+
         using (logger.BeginTimedOperation(nameof(Import)))
         using (var progress = new TerminalProgressBar())
         {
@@ -55,8 +72,15 @@ internal class KancolleImporter
 
             for (int i = 0; i < ships.Count; i++)
             {
-                progress.SetProgress(i, ships.Count);
+                cancellationToken.ThrowIfCancellationRequested();
 
+                if (skipShipsAlreadyInDb && shipsAlreadyInDb.Contains(ships[i]))
+                {
+                    logger.Debug("{Ship} already in db", ships[i]);
+                    continue;
+                }
+
+                progress.SetProgress(i, ships.Count);
                 await ImportShip(ships[i], cancellationToken);
             }
         }
