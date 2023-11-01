@@ -36,12 +36,13 @@ internal class ShipListService
         using var document = await wikiApiService.GetHtml(ShipListPage, cancellationToken);
 
         var ships = document.QuerySelectorAll<IHtmlAnchorElement>("span[id^=\"shiplistkai-\"] a:not(.mw-redirect)")
+            .DistinctBy(link => link.Href) // Verniy links directly to Hibiki in the table, so isn't a redirect
             .Select(link =>
             {
                 var englishName = link.TextContent.Trim();
-                var japaneseName = link.ParentElement?.GetTextNodes() ?? englishName;
+                var japaneseName = link.ParentElement?.GetTextNodes();
 
-                return new Ship(englishName, japaneseName);
+                return new Ship(englishName, string.IsNullOrEmpty(japaneseName) ? englishName : japaneseName);
             })
             .ToList();
 
