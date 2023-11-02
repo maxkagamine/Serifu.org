@@ -25,22 +25,22 @@ internal class AudioFileService
     }
 
     /// <summary>
-    /// Tries to download the audio file specified in <see cref="Quote.AudioFile"/>.
+    /// Tries to download the audio file specified in <see cref="VoiceLine.AudioFile"/>.
     /// </summary>
-    /// <param name="quote">The quote whose audio file to download.</param>
+    /// <param name="voiceLine">The voice line whose audio file to download.</param>
     /// <param name="overwrite">Whether to replace the file if it exists.</param>
     /// <param name="cancellationToken">An optional cancellation token.</param>
     /// <exception cref="HttpRequestException"></exception>
-    public async Task DownloadAudioFile(Quote quote, bool overwrite = false, CancellationToken cancellationToken = default)
+    public async Task DownloadAudioFile(VoiceLine voiceLine, bool overwrite = false, CancellationToken cancellationToken = default)
     {
-        var filename = quote.AudioFile;
+        var filename = voiceLine.AudioFile;
 
         if (filename is null)
         {
             return;
         }
 
-        var dir = Path.Combine(AudioDirectory, quote.SpeakerEnglish);
+        var dir = Path.Combine(AudioDirectory, voiceLine.SpeakerEnglish);
         var filePath = Path.Combine(dir, filename);
 
         if (!overwrite && File.Exists(filePath))

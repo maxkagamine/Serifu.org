@@ -29,47 +29,47 @@ internal partial class ShipService
     }
 
     /// <summary>
-    /// Fetches the given ship's wiki page and extracts their list of quotes.
+    /// Fetches the given ship's wiki page and extracts their list of voice lines.
     /// </summary>
     /// <param name="ship">The ship to look up.</param>
     /// <param name="cancellationToken">An optional cancellation token.</param>
-    /// <returns>A collection of newly-created <see cref="Quote"/> entities (not yet added to the database).</returns>
-    public async Task<IEnumerable<Quote>> GetQuotes(Ship ship, CancellationToken cancellationToken = default)
+    /// <returns>A collection of newly-created <see cref="VoiceLine"/> entities (not yet added to the database).</returns>
+    public async Task<IEnumerable<VoiceLine>> GetVoiceLines(Ship ship, CancellationToken cancellationToken = default)
     {
         logger.Information("Fetching wiki page for {Ship}.", ship);
         using var document = await wikiApiService.GetXml(ship.EnglishName, cancellationToken);
 
-        List<Quote> quotes = new();
+        List<VoiceLine> voiceLines = new();
         int i = 0;
 
         foreach (var template in FindTemplates(document, new[] { "ShipquoteKai", "SeasonalQuote" }))
         {
             if (new[] { "scenario", "translation", "origin" }.Any(x => !template.ContainsKey(x)))
             {
-                logger.Warning("One of {Ship}'s quotes is missing required parameters: {Parameters}.",
+                logger.Warning("One of {Ship}'s voice lines is missing required parameters: {Parameters}.",
                     ship, template.ToDictionary());
 
                 continue;
             }
 
-            var quote = new Quote()
+            var voiceLine = new VoiceLine()
             {
                 Source = Source.Kancolle,
                 Context = FormatContext(template),
                 SpeakerEnglish = ship.EnglishName,
                 SpeakerJapanese = ship.JapaneseName,
-                QuoteEnglish = template["translation"],
-                QuoteJapanese = template["origin"],
+                TextEnglish = template["translation"],
+                TextJapanese = template["origin"],
                 Notes = ExtractNotes(template),
                 AudioFile = GetAudioFile(ship.EnglishName, template),
                 SortOrder = i++,
             };
 
-            if (quotes.Any(q =>
-                q.Context == quote.Context &&
-                q.QuoteEnglish == quote.QuoteEnglish &&
-                q.QuoteJapanese == quote.QuoteJapanese &&
-                q.AudioFile == quote.AudioFile))
+            if (voiceLines.Any(v =>
+                v.Context == voiceLine.Context &&
+                v.TextEnglish == voiceLine.TextEnglish &&
+                v.TextJapanese == voiceLine.TextJapanese &&
+                v.AudioFile == voiceLine.AudioFile))
             {
                 // Kasuga Maru has a separate table for her Taiyou remodel with many of the same lines duplicated.
                 continue;
@@ -93,28 +93,28 @@ internal partial class ShipService
                  */
             }
 
-            quotes.Add(quote);
+            voiceLines.Add(voiceLine);
         }
 
-        if (quotes.Count == 0)
+        if (voiceLines.Count == 0)
         {
-            logger.Warning("No quotes found for {Ship}. Check whether the scraping code is broken or the page actually has no quotes.", ship);
+            logger.Warning("No voice lines found for {Ship}. Check whether the scraping code is broken or the page actually has no voice lines.", ship);
         }
         else
         {
-            logger.Information("Found {Count} quotes for {Ship}.", quotes.Count, ship);
+            logger.Information("Found {Count} voice lines for {Ship}.", voiceLines.Count, ship);
         }
 
-        foreach (var audioFile in quotes
-            .GroupBy(q => q.AudioFile)
-            .Where(g => g.Key is not null && g.DistinctBy(q => q.QuoteJapanese).Count() > 1)
+        foreach (var audioFile in voiceLines
+            .GroupBy(v => v.AudioFile)
+            .Where(g => g.Key is not null && g.DistinctBy(v => v.TextJapanese).Count() > 1)
             .Select(g => g.Key!))
         {
             logger.Warning("{Ship} has voice lines with different Japanese but the same audio file {AudioFile}.",
                 ship, audioFile);
         }
 
-        return quotes;
+        return voiceLines;
     }
 
     private static IEnumerable<WikiTemplate> FindTemplates(IDocument document, string[] templateNames)
