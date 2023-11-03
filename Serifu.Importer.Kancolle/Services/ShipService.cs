@@ -170,7 +170,7 @@ internal partial class ShipService
 
         // Attempt to differentiate remodel-specific lines. Getting the proper remodel names for all ships would require
         // a bunch of special cases, but this should work for most ships.
-        if (TryGetRemodelName(template, out var kaiName))
+        if (TryGetRemodelName(template, out var kaiName) && !context.Contains(kaiName))
         {
             context += $" ({kaiName})";
         }
