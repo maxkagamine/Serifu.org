@@ -61,6 +61,7 @@ internal partial class ShipService
 
         foreach (var template in FindTemplates(document, new[] { "ShipquoteKai", "SeasonalQuote" }))
         {
+            // Make sure the template is valid
             if (new[] { "scenario", "translation", "origin" }.Any(x => !template.ContainsKey(x)))
             {
                 logger.Warning("One of {Ship}'s voice lines is missing required parameters: {Parameters}.",
@@ -82,6 +83,7 @@ internal partial class ShipService
                 continue;
             }
 
+            // Create voice line entity from template
             var voiceLine = new VoiceLine()
             {
                 Source = Source.Kancolle,
@@ -95,13 +97,24 @@ internal partial class ShipService
                 SortOrder = i++,
             };
 
+            if (voiceLine.AudioFile.Contains('['))
+            {
+                // Brackets indicate that there was no `audio`, so the filename was generated dynamically, but the
+                // `scenario` has a wiki link in it. Since template params are expanded verbatim, this will result in an
+                // invalid filename in the wiki as well, but we can avoid a 400 by nulling the AudioFile here.
+                logger.Warning("{Ship}'s {Context} is missing an audio file, and the auto-generated filename contains invalid characters. Setting to null.",
+                    ship, voiceLine.Context);
+
+                voiceLine.AudioFile = null;
+            }
+
+            // Check for duplicates (Kasuga Maru has a separate table for her Taiyou remodel w/ many of the same lines)
             if (voiceLines.Any(v =>
                 v.Context == voiceLine.Context &&
                 v.TextEnglish == voiceLine.TextEnglish &&
                 v.TextJapanese == voiceLine.TextJapanese &&
                 v.AudioFile == voiceLine.AudioFile))
             {
-                // Kasuga Maru has a separate table for her Taiyou remodel with many of the same lines duplicated.
                 continue;
 
                 /* Regarding duplicates, here's my truth table for different cases after analyzing the data (x = same):
@@ -135,12 +148,13 @@ internal partial class ShipService
             logger.Information("Found {Count} voice lines for {Ship}.", voiceLines.Count, ship);
         }
 
+        // Log warnings for potential mistakes in the wiki
         foreach (var group in voiceLines
             .GroupBy(v => v.AudioFile)
             .Where(g => g.Key is not null && g.DistinctBy(v => v.TextJapanese).Count() > 1))
         {
-            logger.Warning("{Ship}'s voice lines {Contexts} have different Japanese but the same audio file: {AudioFile}.",
-                ship, group.Select(v => v.Context), group.Key);
+            logger.Warning("{Ship}'s voice lines {Contexts} have different Japanese but the same audio file {AudioFile}: {TextJapaneses}.",
+                ship, group.Select(v => v.Context), group.Key, group.Select(v => v.TextJapanese));
         }
 
         return voiceLines;

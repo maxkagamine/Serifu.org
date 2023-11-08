@@ -98,10 +98,10 @@ internal class KancolleImporter
             {
                 await audioFileService.DownloadAudioFile(voiceLine, cancellationToken: cancellationToken);
             }
-            catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+            catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.BadRequest)
             {
-                logger.Warning("{Ship}'s {Context} audio file {File} returned 404. Setting to null.",
-                    voiceLine.SpeakerEnglish, voiceLine.Context, voiceLine.AudioFile);
+                logger.Warning("{Ship}'s {Context} audio file {File} returned {StatusCode}. Setting to null.",
+                    voiceLine.SpeakerEnglish, voiceLine.Context, voiceLine.AudioFile, (int)ex.StatusCode);
 
                 voiceLine.AudioFile = null;
             }
