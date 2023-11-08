@@ -54,10 +54,11 @@ internal class KancolleImporter
         if (shipsAlreadyInDb.Count > 0)
         {
             Console.Write("\a"); // Flashes the taskbar if the terminal's not in the foreground
-            skipShipsAlreadyInDb = AnsiConsole.Prompt(new SelectionPrompt<bool>()
+            skipShipsAlreadyInDb = await new SelectionPrompt<bool>()
                 .Title($"\nSkip [purple]{shipsAlreadyInDb.Count}[/] ships already in db?")
                 .AddChoices(true, false)
-                .UseConverter(x => x ? "Yes" : "No"));
+                .UseConverter(x => x ? "Yes" : "No")
+                .ShowAsync(AnsiConsole.Console, cancellationToken);
 
             if (skipShipsAlreadyInDb)
             {
