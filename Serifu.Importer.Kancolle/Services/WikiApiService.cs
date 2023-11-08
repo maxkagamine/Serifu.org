@@ -34,7 +34,7 @@ internal partial class WikiApiService
     private readonly HttpClient httpClient;
     private readonly ILogger logger;
 
-    [GeneratedRegex(@"^<root>#REDIRECT \[\[([^\]]+)", RegexOptions.Compiled)]
+    [GeneratedRegex(@"^<root>#REDIRECT \[\[([^\]]+)")]
     private static partial Regex RedirectParseTreeRegex();
 
     public WikiApiService(
