@@ -17,8 +17,11 @@ internal partial class ShipService
     private readonly WikiApiService wikiApiService;
     private readonly ILogger logger;
 
-    [GeneratedRegex(@"\[\[(?:.*?\|)?(.*?)\]\]", RegexOptions.Compiled)]
+    [GeneratedRegex(@"\[\[(?:.*?\|)?(.*?)\]\]")]
     private static partial Regex WikiLinkRegex();
+
+    [GeneratedRegex(@"^[\s\?]*$")]
+    private static partial Regex EmptyOrQuestionMarks();
 
     public ShipService(
         WikiApiService wikiApiService,
@@ -48,7 +51,20 @@ internal partial class ShipService
             {
                 logger.Warning("One of {Ship}'s voice lines is missing required parameters: {Parameters}.",
                     ship, template.ToDictionary());
+                continue;
+            }
 
+            if (EmptyOrQuestionMarks().IsMatch(template["translation"]))
+            {
+                logger.Warning("{Ship}'s {Context} voice line is missing a translation.",
+                    ship, FormatContext(template));
+                continue;
+            }
+
+            if (EmptyOrQuestionMarks().IsMatch(template["origin"]))
+            {
+                logger.Warning("{Ship}'s {Context} voice line is missing the original Japanese.",
+                    ship, FormatContext(template));
                 continue;
             }
 
@@ -105,13 +121,12 @@ internal partial class ShipService
             logger.Information("Found {Count} voice lines for {Ship}.", voiceLines.Count, ship);
         }
 
-        foreach (var audioFile in voiceLines
+        foreach (var group in voiceLines
             .GroupBy(v => v.AudioFile)
-            .Where(g => g.Key is not null && g.DistinctBy(v => v.TextJapanese).Count() > 1)
-            .Select(g => g.Key!))
+            .Where(g => g.Key is not null && g.DistinctBy(v => v.TextJapanese).Count() > 1))
         {
-            logger.Warning("{Ship} has voice lines with different Japanese but the same audio file {AudioFile}.",
-                ship, audioFile);
+            logger.Warning("{Ship}'s voice lines {Contexts} have different Japanese but the same audio file: {AudioFile}.",
+                ship, group.Select(v => v.Context), group.Key);
         }
 
         return voiceLines;
