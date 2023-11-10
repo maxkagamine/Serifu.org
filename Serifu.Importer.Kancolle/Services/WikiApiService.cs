@@ -13,13 +13,9 @@
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
 using System.Net.Http.Json;
-using System.Text.RegularExpressions;
-using AngleSharp.Html.Dom;
-using AngleSharp.Html.Parser;
-using AngleSharp.Xml.Dom;
-using AngleSharp.Xml.Parser;
+using AngleSharp;
+using AngleSharp.Dom;
 using Serifu.Importer.Kancolle.Models;
-using Serilog;
 using Url = Flurl.Url;
 
 namespace Serifu.Importer.Kancolle.Services;
@@ -30,27 +26,40 @@ namespace Serifu.Importer.Kancolle.Services;
 internal partial class WikiApiService
 {
     const string WikiApiUrl = "https://en.kancollewiki.net/w/api.php";
+    private static readonly Uri WikiBaseUri = new("https://en.kancollewiki.net/");
 
     private readonly HttpClient httpClient;
-    private readonly ILogger logger;
 
-    [GeneratedRegex(@"^<root>#REDIRECT \[\[([^\]]+)")]
-    private static partial Regex RedirectParseTreeRegex();
-
-    public WikiApiService(
-        HttpClient httpClient,
-        ILogger logger)
+    public WikiApiService(HttpClient httpClient)
     {
         this.httpClient = httpClient;
-        this.logger = logger.ForContext<WikiApiService>();
     }
 
-    public async Task<IHtmlDocument> GetHtml(string page, CancellationToken cancellationToken = default)
+    /// <summary>
+    /// Fetches and parses the given wiki page using the API.
+    /// </summary>
+    /// <param name="page">The wiki page to fetch.</param>
+    /// <param name="cancellationToken">An optional cancellation token.</param>
+    /// <returns>The parsed HTML document.</returns>
+    /// <exception cref="WikiRedirectException">The requested wiki page is a redirect.</exception>
+    public async Task<IDocument> GetPage(string page, CancellationToken cancellationToken = default)
     {
-        var response = await SendParseRequest(page, "text", cancellationToken);
-        var html = response.Parse?.Text ?? throw new Exception($"Wiki API response for {page} is missing 'text' prop.");
-        var document = await new HtmlParser().ParseDocumentAsync(html, cancellationToken);
+        string url = new Url(WikiApiUrl).SetQueryParams(new
+        {
+            page,
+            action = "parse",
+            format = "json",
+            prop = "text",
+            formatversion = 2
+        });
 
+        var response = await httpClient.GetFromJsonAsync<WikiApiResponse>(url, cancellationToken);
+        var html = response?.Parse?.Text ?? throw new Exception($"Wiki API returned an invalid response for {page}.");
+        var document = await new BrowsingContext().OpenAsync(res => res
+            .Address(new Uri(WikiBaseUri, page.Replace(' ', '_'))).Content(html), cancellationToken);
+
+        // We could follow redirects, but in this case it means we mistakenly followed a link to a remodel which
+        // redirects to the base ship's page and thus would result in duplicates.
         var redirectLink = document.QuerySelector(".mw-parser-output > .redirectMsg a");
         if (redirectLink is not null)
         {
@@ -58,34 +67,5 @@ internal partial class WikiApiService
         }
 
         return document;
-    }
-
-    public async Task<IXmlDocument> GetXml(string page, CancellationToken cancellationToken = default)
-    {
-        var response = await SendParseRequest(page, "parsetree", cancellationToken);
-        var xml = response.Parse?.ParseTree ?? throw new Exception($"Wiki API response for {page} is missing 'parsetree' prop.");
-
-        var redirectMatch = RedirectParseTreeRegex().Match(xml);
-        if (redirectMatch.Success)
-        {
-            throw new WikiRedirectException(page, redirectMatch.Groups[1].Value);
-        }
-        
-        return await new XmlParser().ParseDocumentAsync(xml, cancellationToken);
-    }
-
-    private async Task<WikiApiResponse> SendParseRequest(string page, string prop, CancellationToken cancellationToken = default)
-    {
-        string url = new Url(WikiApiUrl).SetQueryParams(new
-        {
-            page,
-            action = "parse",
-            format = "json",
-            prop,
-            formatversion = 2
-        });
-
-        return await httpClient.GetFromJsonAsync<WikiApiResponse>(url, cancellationToken) ??
-            throw new Exception($"Wiki API response for {page} and prop {prop} is null.");
     }
 }

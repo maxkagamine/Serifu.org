@@ -11,6 +11,7 @@
     <PackageReference Include="AngleSharp" Version="1.0.5" />
     <PackageReference Include="AngleSharp.Xml" Version="1.0.0" />
     <PackageReference Include="Flurl" Version="3.0.7" />
+    <PackageReference Include="HtmlSanitizer" Version="8.1.748-beta" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="7.0.12">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

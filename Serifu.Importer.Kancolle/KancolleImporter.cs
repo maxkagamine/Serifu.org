@@ -56,7 +56,7 @@ internal class KancolleImporter
             Console.Write("\a"); // Flashes the taskbar if the terminal's not in the foreground
             skipShipsAlreadyInDb = await new SelectionPrompt<bool>()
                 .Title($"\nSkip [purple]{shipsAlreadyInDb.Count}[/] ships already in db?")
-                .AddChoices(true, false)
+                .AddChoices(false, true)
                 .UseConverter(x => x ? "Yes" : "No")
                 .ShowAsync(AnsiConsole.Console, cancellationToken);
 
