@@ -1,9 +1,9 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using System.Text;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
+using System.Web;
 using AngleSharp.Dom;
+using AngleSharp.Html.Dom;
+using Ganss.Xss;
 using Serifu.Data.Entities;
-using Serifu.Importer.Kancolle.Helpers;
 using Serifu.Importer.Kancolle.Models;
 using Serilog;
 
@@ -14,22 +14,33 @@ namespace Serifu.Importer.Kancolle.Services;
 /// </summary>
 internal partial class ShipService
 {
+    private const string RowsOfTopLevelTablesSelector = ".mw-parser-output > table tr";
+    private const string ScenarioSelector = "td[rowspan=2]:first-child b";
+    private const string PlayButtonSelector = "td[rowspan=2]:first-child a[title='Play']";
+    private const string EnglishSelector = "td:nth-child(2)";
+    private const string JapaneseSelector = "td:only-child"; // Second row
+    private const string NotesSelector = "td[rowspan=2]:last-child"; // SeasonalQuote only
+
     private readonly WikiApiService wikiApiService;
     private readonly ILogger logger;
+    private readonly HtmlSanitizer htmlSanitizer;
 
-    [GeneratedRegex(@"\[\[(?:.*?\|)?(.*?)\]\]")]
-    private static partial Regex WikiLinkRegex();
-
-    [GeneratedRegex(@"^[\s\?]*$")]
-    private static partial Regex EmptyOrQuestionMarks();
-
-    public ShipService(
-        WikiApiService wikiApiService,
-        ILogger logger)
+    public ShipService(WikiApiService wikiApiService, ILogger logger)
     {
         this.wikiApiService = wikiApiService;
         this.logger = logger.ForContext<ShipService>();
+
+        htmlSanitizer = new HtmlSanitizer();
+        htmlSanitizer.AllowedTags.Clear();
+        htmlSanitizer.AllowedTags.Add("a");
+        htmlSanitizer.AllowedTags.Add("br");
+        htmlSanitizer.AllowedAttributes.Clear();
+        htmlSanitizer.AllowedAttributes.Add("href");
+        htmlSanitizer.KeepChildNodes = true;
     }
+
+    [GeneratedRegex(@"^[\s\?]*$")]
+    private static partial Regex EmptyOrQuestionMarks();
 
     /// <summary>
     /// Fetches the given ship's wiki page and extracts their list of voice lines.
@@ -40,61 +51,50 @@ internal partial class ShipService
     public async Task<IEnumerable<VoiceLine>> GetVoiceLines(Ship ship, CancellationToken cancellationToken = default)
     {
         logger.Information("Fetching wiki page for {Ship}.", ship);
-        using var document = await wikiApiService.GetXml(ship.EnglishName, cancellationToken);
+        using var document = await wikiApiService.GetPage(ship.EnglishName, cancellationToken);
 
         List<VoiceLine> voiceLines = new();
-        int i = 0;
-
-        foreach (var template in FindTemplates(document, new[] { "ShipquoteKai", "SeasonalQuote" }))
+        
+        foreach (var row in FindVoiceLineRows(document))
         {
-            // Make sure the template is valid
-            if (new[] { "scenario", "translation", "origin" }.Any(x => !template.ContainsKey(x)))
+            List<string> referenceIds = new();
+
+            string context = GetText(row.Scenario);
+            string textEnglish = GetText(row.English, referenceIds);
+            string textJapanese = GetText(row.Japanese);
+            string? audioFile = GetFilename(row.PlayButton);
+
+            if (EmptyOrQuestionMarks().IsMatch(textEnglish))
             {
-                logger.Warning("One of {Ship}'s voice lines is missing required parameters: {Parameters}.",
-                    ship, template.ToDictionary());
+                logger.Warning("{Ship}'s {Context} voice line is missing a translation.", ship, context);
                 continue;
             }
 
-            if (EmptyOrQuestionMarks().IsMatch(template["translation"]))
+            if (EmptyOrQuestionMarks().IsMatch(textJapanese))
             {
-                logger.Warning("{Ship}'s {Context} voice line is missing a translation.",
-                    ship, FormatContext(template));
+                logger.Warning("{Ship}'s {Context} voice line is missing the original Japanese.", ship, context);
                 continue;
             }
 
-            if (EmptyOrQuestionMarks().IsMatch(template["origin"]))
-            {
-                logger.Warning("{Ship}'s {Context} voice line is missing the original Japanese.",
-                    ship, FormatContext(template));
-                continue;
-            }
+            string unsafeNotes = string.Join("<br>\n", (row.Notes is null ? Array.Empty<IElement>() : new[] { row.Notes })
+                .Concat(GetReferences(document, referenceIds))
+                .Where(el => !string.IsNullOrWhiteSpace(el.TextContent))
+                .Select(el => el.InnerHtml.Trim()));
 
-            // Create voice line entity from template
             var voiceLine = new VoiceLine()
             {
                 Source = Source.Kancolle,
-                Context = FormatContext(template),
+                Context = context,
                 SpeakerEnglish = ship.EnglishName,
                 SpeakerJapanese = ship.JapaneseName,
-                TextEnglish = template["translation"],
-                TextJapanese = template["origin"],
-                Notes = ExtractNotes(template),
-                AudioFile = GetAudioFile(ship.EnglishName, template),
-                SortOrder = i++,
+                TextEnglish = textEnglish,
+                TextJapanese = textJapanese,
+                Notes = htmlSanitizer.Sanitize(unsafeNotes, document.BaseUri).Trim(),
+                AudioFile = audioFile,
+                SortOrder = voiceLines.Count,
             };
 
-            if (voiceLine.AudioFile.Contains('['))
-            {
-                // Brackets indicate that there was no `audio`, so the filename was generated dynamically, but the
-                // `scenario` has a wiki link in it. Since template params are expanded verbatim, this will result in an
-                // invalid filename in the wiki as well, but we can avoid a 400 by nulling the AudioFile here.
-                logger.Warning("{Ship}'s {Context} is missing an audio file, and the auto-generated filename contains invalid characters. Setting to null.",
-                    ship, voiceLine.Context);
-
-                voiceLine.AudioFile = null;
-            }
-
-            // Check for duplicates (Kasuga Maru has a separate table for her Taiyou remodel w/ many of the same lines)
+            // Check for duplicates (Kasuga Maru has a separate table for her Taiyou remodel with many of the same lines)
             if (voiceLines.Any(v =>
                 v.Context == voiceLine.Context &&
                 v.TextEnglish == voiceLine.TextEnglish &&
@@ -102,24 +102,6 @@ internal partial class ShipService
                 v.AudioFile == voiceLine.AudioFile))
             {
                 continue;
-
-                /* Regarding duplicates, here's my truth table for different cases after analyzing the data (x = same):
-                 *
-                 * Ctx Jpn Eng Aud
-                 *  x   x   x   x   Duplicate (Kasuga Maru only)
-                 *  ?   x   x       Sometimes the same line is spoken with different intonation. (There are also some
-                 *                  identical audio files; possibly others that are the same too but not byte-for-byte.)
-                 *  ?   x       x   Different translations for the same voice line. Only 9 such cases; may as well keep.
-                 *  ?   x           Combination of the above two cases.
-                 *  ?       ?   x   ⚠️ Could be different punctuation, kanji vs. kana, etc., but could also be a mistake
-                 *                  in the wiki (copy-paste error). Log a warning.
-                 *  ?       x       Different voice lines that coincidentally have the same translation.
-                 *  x               This happens a lot, either due to seasonal quotes putting the specific context in
-                 *                  the notes or because the line is for a remodel which was noted elsewhere.
-                 *      x   x   x   Same voice line used in different contexts or reused for events. Surprisingly only
-                 *                  four, but could be more if we identify copies of the same audio. Could concat the
-                 *                  contexts, but since there's so few we may as well leave them as-is.
-                 */
             }
 
             voiceLines.Add(voiceLine);
@@ -139,127 +121,94 @@ internal partial class ShipService
             .GroupBy(v => v.AudioFile)
             .Where(g => g.Key is not null && g.DistinctBy(v => v.TextJapanese).Count() > 1))
         {
-            logger.Warning("{Ship}'s voice lines {Contexts} have different Japanese but the same audio file {AudioFile}: {TextJapaneses}.",
-                ship, group.Select(v => v.Context), group.Key, group.Select(v => v.TextJapanese));
+            logger.Warning("{Ship} has lines with different Japanese but same audio file {AudioFile}: {@VoiceLines}.",
+                ship, group.Key, group.Select(v => new { v.Context, v.TextJapanese }));
         }
 
         return voiceLines;
     }
 
-    private static IEnumerable<WikiTemplate> FindTemplates(IDocument document, string[] templateNames)
-        => document.GetElementsByTagName("template")
-            .Select(el => new WikiTemplate(el))
-            .Where(t => templateNames.Any(name => name.Equals(t.Name, StringComparison.OrdinalIgnoreCase)))
-            .ToList();
-
-    private static string ExtractNotes(WikiTemplate template)
+    /// <summary>
+    /// Finds all ShipquoteKai and SeasonalQuote rows present in the document.
+    /// </summary>
+    /// <param name="document">The document.</param>
+    /// <returns>A collection of <see cref="VoiceLineTableRow"/> containing the relevant elements.</returns>
+    private IEnumerable<VoiceLineTableRow> FindVoiceLineRows(IDocument document)
     {
-        List<string> allNotes = new();
-
-        var refs = template.GetXml("translation")
-            .QuerySelectorAll("ext")
-            .Where(ext => ext.GetChild("name").TextContent == "ref")
-            .Select(ext => ext.GetChild("inner").GetTextNodes());
-
-        if (template.TryGetString("notes", out var seasonalQuoteNotes))
+        foreach (IElement tr in document.QuerySelectorAll(RowsOfTopLevelTablesSelector))
         {
-            allNotes.Add(seasonalQuoteNotes);
+            var scenario = tr.QuerySelector(ScenarioSelector);
+            var playButton = tr.QuerySelector<IHtmlAnchorElement>(PlayButtonSelector);
+            var english = tr.QuerySelector(EnglishSelector);
+            var japanese = tr.NextElementSibling?.QuerySelector(JapaneseSelector);
+            var notes = tr.QuerySelector(NotesSelector);
+
+            if (scenario is not null && english is not null && japanese is not null)
+            {
+                // Sanity check
+                IElement? nearestHeader = tr.Closest("table")!;
+                while (nearestHeader is not null && nearestHeader.TagName != "H2")
+                {
+                    nearestHeader = nearestHeader.PreviousElementSibling;
+                }
+                if (nearestHeader?.TextContent.Trim() != "Voice Lines[edit]")
+                {
+                    logger.Warning("Returning a voice line that doesn't appear to be within the \"Voice Lines\" section... check {Url} and make sure this is ok. Header = {Header}, Scenario = {Scenario}, English = {English}",
+                        document.Url, nearestHeader?.TextContent, scenario.TextContent, english.TextContent);
+                }
+
+                yield return new VoiceLineTableRow(scenario, playButton, english, japanese, notes);
+            }
         }
-
-        allNotes.AddRange(refs);
-        return string.Join('\n', allNotes);
-    }
-
-    private static string FormatContext(WikiTemplate template)
-    {
-        var context = template["scenario"];
-
-        // ShipquoteKai template does this (for hourlies)
-        if (context.Length == 2)
-        {
-            context += ":00";
-        }
-
-        // Seasonal quotes often link to the event page
-        context = WikiLinkRegex().Replace(context, "$1");
-
-        // Attempt to differentiate remodel-specific lines. Getting the proper remodel names for all ships would require
-        // a bunch of special cases, but this should work for most ships.
-        if (TryGetRemodelName(template, out var kaiName) && !context.Contains(kaiName))
-        {
-            context += $" ({kaiName})";
-        }
-
-        return context;
     }
 
     /// <summary>
-    /// Returns <c>audio</c> if present, else tries to piece together the filename in the same manner as the
-    /// ShipquoteKai template.
-    ///
-    /// This and <see cref="TryGetRemodelName(Dictionary{string, string})"/> needs to be kept in sync with
-    /// https://en.kancollewiki.net/w/index.php?title=Template:ShipquoteKai&action=edit.
-    ///
-    /// Last revision: August 29th, 2023
-    ///
-    /// (It might be better to rewrite all of this to scrape the html instead of the xml parse tree. Which is going to
-    /// be least fragile is honestly a toss-up, and both have disadvantages.)
+    /// Returns the trimmed text content without reference links.
     /// </summary>
-    private static string GetAudioFile(string pageName, WikiTemplate template)
+    /// <param name="element">The element.</param>
+    /// <param name="referenceIds">Collection to which to add the extracted reference ids.</param>
+    /// <returns>A plain text string.</returns>
+    private static string GetText(IElement element, ICollection<string>? referenceIds = null)
     {
-        if (template.TryGetString("audio", out var audio) && !string.IsNullOrEmpty(audio))
-        {
-            return audio;
-        }
-
-        StringBuilder url = new("Ship Voice ");
-
-        url.Append(template.GetStringOrDefault("name") ?? pageName);
-
-        if (TryGetRemodelName(template, out var kaiName))
-        {
-            url.AppendFormat(" {0}", kaiName);
-        }
-
-        url.Append(' ');
-
-        if (template.TryGetString("line", out var line))
-        {
-            url.Append(line);
-        }
-        else if (template["scenario"].Length > 2 && template["scenario"][2] == ':')
-        {
-            url.Append(template["scenario"][..2]);
-        }
-        else if (template["scenario"] == "Air Battle/Daytime Spotting/Night Battle Attack")
-        {
-            url.Append("Night Attack");
-        }
-        else
-        {
-            url.Append(template["scenario"]);
-        }
-
-        return url.Append(".mp3").ToString();
+        var clonedElement = (IElement)element.Clone();
+        RemoveReferenceLinks(clonedElement, referenceIds);
+        return clonedElement.TextContent.Trim();
     }
 
-    private static bool TryGetRemodelName(WikiTemplate template, [NotNullWhen(true)] out string? kaiName)
+    /// <summary>
+    /// Removes the superscript reference numbers from the element.
+    /// </summary>
+    /// <param name="element">The element.</param>
+    /// <param name="referenceIds">Collection to which to add the extracted reference ids.</param>
+    private static void RemoveReferenceLinks(IElement element, ICollection<string>? referenceIds = null)
     {
-        kaiName =
-            template.ContainsKey("kai") ? "Kai" :
-            template.ContainsKey("kai2") ? "Kai Ni" :
-            template.ContainsKey("kai3") ? "Kai San" :
-            template.TryGetString("form2", out var form2) ? form2 :
-            template.ContainsKey("kai2b") ? "Kai Ni B" :
-            template.ContainsKey("kaic") ? "Kai Ni C" :
-            template.ContainsKey("kai2c") ? "Kai Ni C" :
-            template.ContainsKey("kai2d") ? "Kai Ni D" :
-            template.ContainsKey("kai2e") ? "Kai Ni E" :
-            template.ContainsKey("kai2toku") ? "Kai Ni Toku" :
-            template.ContainsKey("kaigo") ? "Kai Ni Go" :
-            template.ContainsKey("kai2j") ? "Kai Ni Juu" :
-            null;
+        foreach (var reference in element.QuerySelectorAll("sup.reference"))
+        {
+            if (referenceIds is not null)
+            {
+                var link = reference.QuerySelector<IHtmlAnchorElement>("a") ?? throw new Exception("Reference number is not linked.");
+                var id = new Flurl.Url(link.Href).Fragment;
 
-        return kaiName is not null;
+                referenceIds.Add(id);
+            }
+
+            reference.Remove();
+        }
     }
+
+    /// <summary>
+    /// Gets the elements containing the reference text for each reference id.
+    /// </summary>
+    /// <param name="document">The document.</param>
+    /// <param name="referenceIds">The reference ids collected by <see cref="RemoveReferenceLinks(IElement, ICollection{string}?)"/>.</param>
+    /// <returns>The corresponding <c>.reference-text</c> elements.</returns>
+    private static IEnumerable<IElement> GetReferences(IDocument document, IEnumerable<string> referenceIds)
+        => referenceIds.Select(id => document.GetElementById(id)?.QuerySelector(".reference-text") ?? throw new Exception($"No reference for {id}."));
+
+    /// <summary>
+    /// Gets the name of the file the element links to, url decoded.
+    /// </summary>
+    /// <param name="element">The link element.</param>
+    private static string? GetFilename(IHtmlAnchorElement? element)
+        => HttpUtility.UrlDecode(element?.Href.Split('/').Last());
 }

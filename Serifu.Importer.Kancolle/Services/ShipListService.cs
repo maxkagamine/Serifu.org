@@ -33,7 +33,7 @@ internal class ShipListService
     public async Task<IEnumerable<Ship>> GetShips(CancellationToken cancellationToken = default)
     {
         logger.Information("Getting ship list.");
-        using var document = await wikiApiService.GetHtml(ShipListPage, cancellationToken);
+        using var document = await wikiApiService.GetPage(ShipListPage, cancellationToken);
 
         var ships = document.QuerySelectorAll<IHtmlAnchorElement>("span[id^=\"shiplistkai-\"] a:not(.mw-redirect)")
             .DistinctBy(link => link.Href) // Verniy links directly to Hibiki in the table, so isn't a redirect

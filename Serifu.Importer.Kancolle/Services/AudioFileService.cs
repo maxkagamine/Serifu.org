@@ -25,7 +25,7 @@ internal class AudioFileService
     }
 
     /// <summary>
-    /// Tries to download the audio file specified in <see cref="VoiceLine.AudioFile"/>.
+    /// Downloads the audio file specified in <see cref="VoiceLine.AudioFile"/>.
     /// </summary>
     /// <param name="voiceLine">The voice line whose audio file to download.</param>
     /// <param name="overwrite">Whether to replace the file if it exists.</param>
