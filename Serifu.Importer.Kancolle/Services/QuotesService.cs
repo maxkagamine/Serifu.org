@@ -52,8 +52,8 @@ internal class QuotesService
     {
         logger.Information("Saving {Count} quotes for {Ship}", quotes.Count(), ship);
 
-        // Remove the ship's existing quotes, as we don't have any way to identify changes to individual rows. Note that
-        // this assumes no two ships will have the same English name.
+        // Remove the ship's existing quotes (EF Core doesn't support Sqlite's UPSERT). Note that this assumes no two
+        // ships will have the same English name.
         db.Quotes.RemoveRange(await db.Quotes
             .Where(q => q.Source == Source.Kancolle && q.SpeakerEnglish == ship.EnglishName)
             .ToListAsync(cancellationToken));
@@ -65,14 +65,14 @@ internal class QuotesService
     }
 
     /// <summary>
-    /// Gets the ships already in the database.
+    /// Gets the English names of the ships already in the database.
     /// </summary>
     /// <param name="cancellationToken">An optional cancellation token.</param>
-    public async Task<IEnumerable<Ship>> GetShips(CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<string>> GetShips(CancellationToken cancellationToken = default)
     {
         return await db.Quotes
             .Where(q => q.Source == Source.Kancolle)
-            .Select(q => new Ship(q.SpeakerEnglish, q.SpeakerJapanese))
+            .Select(q => q.SpeakerEnglish)
             .ToListAsync(cancellationToken);
     }
 }

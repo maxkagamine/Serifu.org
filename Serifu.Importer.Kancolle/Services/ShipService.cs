@@ -17,6 +17,7 @@ using System.Web;
 using AngleSharp.Dom;
 using AngleSharp.Html.Dom;
 using Ganss.Xss;
+using Serifu.Data;
 using Serifu.Data.Entities;
 using Serifu.Importer.Kancolle.Models;
 using Serilog;
@@ -97,6 +98,7 @@ internal partial class ShipService
 
             var quote = new Quote()
             {
+                Id = QuoteId.CreateKancolleId(ship.ShipNumber, index: quotes.Count),
                 Source = Source.Kancolle,
                 Context = context,
                 SpeakerEnglish = ship.EnglishName,
@@ -105,7 +107,6 @@ internal partial class ShipService
                 QuoteJapanese = textJapanese,
                 Notes = htmlSanitizer.Sanitize(unsafeNotes, document.BaseUri).Trim(),
                 AudioFile = audioFile,
-                SortOrder = quotes.Count,
             };
 
             // Check for duplicates (Kasuga Maru has a separate table for her Taiyou remodel with many of the same lines)

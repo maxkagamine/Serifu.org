@@ -75,7 +75,7 @@ internal class KancolleImporter
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                if (skipShipsAlreadyInDb && shipsAlreadyInDb.Contains(ships[i]))
+                if (skipShipsAlreadyInDb && shipsAlreadyInDb.Contains(ships[i].EnglishName))
                 {
                     logger.Debug("{Ship} already in db", ships[i]);
                     continue;
