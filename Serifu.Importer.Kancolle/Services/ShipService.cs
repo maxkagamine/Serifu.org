@@ -54,11 +54,11 @@ internal partial class ShipService
         logger.Information("Fetching wiki page for {Ship}.", ship);
         using var document = await wikiApiService.GetPage(ship.EnglishName, cancellationToken);
 
-        List<Quote> quotes = new();
+        List<Quote> quotes = [];
 
         foreach (var row in FindQuoteRows(document))
         {
-            List<string> referenceIds = new();
+            List<string> referenceIds = [];
 
             string context = GetText(row.Scenario);
             string textEnglish = GetText(row.English, referenceIds);
@@ -77,7 +77,7 @@ internal partial class ShipService
                 continue;
             }
 
-            string unsafeNotes = string.Join("<br>\n", (row.Notes is null ? Array.Empty<IElement>() : new[] { row.Notes })
+            string unsafeNotes = string.Join("<br>\n", (row.Notes is null ? [] : new[] { row.Notes })
                 .Concat(GetReferences(document, referenceIds))
                 .Where(el => !string.IsNullOrWhiteSpace(el.TextContent))
                 .Select(el => el.InnerHtml.Trim()));

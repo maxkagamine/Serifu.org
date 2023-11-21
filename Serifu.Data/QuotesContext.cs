@@ -3,11 +3,8 @@ using Serifu.Data.Entities;
 
 namespace Serifu.Data;
 
-public class QuotesContext : DbContext
+public class QuotesContext(DbContextOptions<QuotesContext> options) : DbContext(options)
 {
-    public QuotesContext(DbContextOptions<QuotesContext> options) : base(options)
-    { }
-
     public required DbSet<Quote> Quotes { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

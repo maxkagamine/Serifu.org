@@ -5,7 +5,12 @@ VisualStudioVersion = 17.7.34009.444
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Serifu.Data", "Serifu.Data\Serifu.Data.csproj", "{37164BB0-5B78-4E42-9121-D8E807C2D7C0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Serifu.Importer.Kancolle", "Serifu.Importer.Kancolle\Serifu.Importer.Kancolle.csproj", "{B0BDC509-54DC-4098-9968-AF615A971F10}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Serifu.Importer.Kancolle", "Serifu.Importer.Kancolle\Serifu.Importer.Kancolle.csproj", "{B0BDC509-54DC-4098-9968-AF615A971F10}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{B81DCFC9-FFDC-42B8-93F4-75774F3A69F0}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
