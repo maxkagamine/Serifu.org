@@ -42,7 +42,13 @@ internal class ShipListService
                 var englishName = link.TextContent.Trim();
                 var japaneseName = link.ParentElement?.GetTextNodes();
 
-                return new Ship(englishName, string.IsNullOrEmpty(japaneseName) ? englishName : japaneseName);
+                var shipNumberStr = link.Closest("tr")?.FirstElementChild?.GetTextNodes();
+                if (shipNumberStr is null || !int.TryParse(shipNumberStr, out int shipNumber))
+                {
+                    throw new Exception($"Failed to extract ship number for {englishName}. The table may have changed.");
+                }
+
+                return new Ship(shipNumber, englishName, string.IsNullOrEmpty(japaneseName) ? englishName : japaneseName);
             })
             .ToList();
 
