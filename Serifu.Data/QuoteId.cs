@@ -40,6 +40,11 @@ public static class QuoteId
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static long CreateKancolleId(int shipNumber, int index)
     {
+        ArgumentOutOfRangeException.ThrowIfNegative(shipNumber);
+        ArgumentOutOfRangeException.ThrowIfNegative(index);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(shipNumber, 0xFFFF);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(index, 0xFFFF);
+
         return ((long)Source.Kancolle << 32) | ((uint)(ushort)shipNumber << 16) | (ushort)index;
     }
 }

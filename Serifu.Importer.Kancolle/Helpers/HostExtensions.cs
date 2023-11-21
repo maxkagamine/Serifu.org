@@ -57,7 +57,7 @@ internal static class HostExtensions
         }));
     }
 
-    /// <inheritdoc cref="AddEntryPoint{T}(IServiceCollection, Func{T, CancellationToken, Task{Int32}})"/>
+    /// <inheritdoc cref="AddEntryPoint{T}(IServiceCollection, Func{T, CancellationToken, Task{int}})"/>
     public static IServiceCollection AddEntryPoint<T>(
         this IServiceCollection services,
         Func<T, CancellationToken, Task> main) where T : class
@@ -67,15 +67,8 @@ internal static class HostExtensions
             return 0;
         });
 
-    private class DelegateService : BackgroundService
+    private class DelegateService(Func<CancellationToken, Task> executeAsync) : BackgroundService
     {
-        private readonly Func<CancellationToken, Task> executeAsync;
-
-        public DelegateService(Func<CancellationToken, Task> executeAsync)
-        {
-            this.executeAsync = executeAsync;
-        }
-
         protected override Task ExecuteAsync(CancellationToken stoppingToken) => executeAsync(stoppingToken);
     }
 }
