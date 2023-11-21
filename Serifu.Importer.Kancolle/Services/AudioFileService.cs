@@ -8,7 +8,7 @@ namespace Serifu.Importer.Kancolle.Services;
 /// </summary>
 internal class AudioFileService
 {
-    const string AudioDirectory = $"audio/{nameof(Source.Kancolle)}";
+    const string AudioDirectory = $"../audio/{nameof(Source.Kancolle)}";
     const string FileRedirectBaseUrl = "https://en.kancollewiki.net/Special:Redirect/file/";
 
     private readonly HttpClient httpClient;
