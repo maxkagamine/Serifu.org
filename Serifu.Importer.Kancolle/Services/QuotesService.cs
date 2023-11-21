@@ -34,13 +34,11 @@ internal class QuotesService
     {
         this.db = db;
         this.logger = logger.ForContext<QuotesService>();
+
+        logger.Information("Database is {Path}", Path.GetFullPath(db.Database.GetDbConnection().DataSource));
     }
 
-    public Task Initialize()
-    {
-        logger.Information("Database is {Path}", Path.GetFullPath(db.Database.GetDbConnection().DataSource));
-        return db.Database.MigrateAsync();
-    }
+    public Task Initialize() => db.Database.MigrateAsync();
 
     /// <summary>
     /// Deletes all of the quotes for <paramref name="ship"/> and adds <paramref name="quotes"/> in their place.

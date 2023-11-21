@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "Serifu.Importer.Kancolle": {
-      "commandName": "Project",
-      "workingDirectory": "$(SolutionDir)"
-    }
-  }
-}
