@@ -10,7 +10,7 @@ using Serifu.Data;
 
 namespace Serifu.Data.Migrations
 {
-    [DbContext(typeof(SerifuContext))]
+    [DbContext(typeof(QuotesContext))]
     [Migration("20231031042124_AddSortOrder")]
     partial class AddSortOrder
     {

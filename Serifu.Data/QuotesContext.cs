@@ -17,26 +17,26 @@ using Serifu.Data.Entities;
 
 namespace Serifu.Data;
 
-public class SerifuContext : DbContext
+public class QuotesContext : DbContext
 {
-    public SerifuContext(DbContextOptions<SerifuContext> options) : base(options)
+    public QuotesContext(DbContextOptions<QuotesContext> options) : base(options)
     { }
 
-    public required DbSet<VoiceLine> VoiceLines { get; set; }
+    public required DbSet<Quote> Quotes { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<VoiceLine>()
-            .Property(v => v.Source)
+        modelBuilder.Entity<Quote>()
+            .Property(q => q.Source)
             .HasConversion<string>();
 
-        modelBuilder.Entity<VoiceLine>()
-            .HasIndex(v => v.Source);
+        modelBuilder.Entity<Quote>()
+            .HasIndex(q => q.Source);
 
-        modelBuilder.Entity<VoiceLine>()
-            .HasIndex(v => v.SpeakerEnglish);
+        modelBuilder.Entity<Quote>()
+            .HasIndex(q => q.SpeakerEnglish);
 
-        modelBuilder.Entity<VoiceLine>()
-            .HasIndex(v => v.SpeakerJapanese);
+        modelBuilder.Entity<Quote>()
+            .HasIndex(q => q.SpeakerJapanese);
     }
 }

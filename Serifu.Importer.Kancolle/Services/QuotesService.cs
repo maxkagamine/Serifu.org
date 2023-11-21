@@ -21,19 +21,19 @@ using Serilog;
 namespace Serifu.Importer.Kancolle.Services;
 
 /// <summary>
-/// Manages the voice lines in the database.
+/// Manages the quotes database.
 /// </summary>
-internal class VoiceLinesService
+internal class QuotesService
 {
-    private readonly SerifuContext db;
+    private readonly QuotesContext db;
     private readonly ILogger logger;
 
-    public VoiceLinesService(
-        SerifuContext db,
+    public QuotesService(
+        QuotesContext db,
         ILogger logger)
     {
         this.db = db;
-        this.logger = logger.ForContext<VoiceLinesService>();
+        this.logger = logger.ForContext<QuotesService>();
     }
 
     public Task Initialize()
@@ -43,23 +43,23 @@ internal class VoiceLinesService
     }
 
     /// <summary>
-    /// Deletes all of the voice lines for <paramref name="ship"/> and adds <paramref name="voiceLines"/> in their place.
+    /// Deletes all of the quotes for <paramref name="ship"/> and adds <paramref name="quotes"/> in their place.
     /// </summary>
-    /// <param name="ship">The ship whose voice lines to replace.</param>
-    /// <param name="voiceLines">The new voice lines.</param>
+    /// <param name="ship">The ship whose quotes to replace.</param>
+    /// <param name="quotes">The new quotes.</param>
     /// <param name="cancellationToken">An optional cancellation token.</param>
-    public async Task UpdateVoiceLines(Ship ship, IEnumerable<VoiceLine> voiceLines, CancellationToken cancellationToken = default)
+    public async Task UpdateQuotes(Ship ship, IEnumerable<Quote> quotes, CancellationToken cancellationToken = default)
     {
-        logger.Information("Saving {Count} voice lines for {Ship}", voiceLines.Count(), ship);
+        logger.Information("Saving {Count} quotes for {Ship}", quotes.Count(), ship);
 
-        // Remove the ship's existing voice lines, as we don't have any way to identify changes to individual rows. Note
-        // that this assumes no two ships will have the same English name.
-        db.VoiceLines.RemoveRange(await db.VoiceLines
-            .Where(v => v.Source == Source.Kancolle && v.SpeakerEnglish == ship.EnglishName)
+        // Remove the ship's existing quotes, as we don't have any way to identify changes to individual rows. Note that
+        // this assumes no two ships will have the same English name.
+        db.Quotes.RemoveRange(await db.Quotes
+            .Where(q => q.Source == Source.Kancolle && q.SpeakerEnglish == ship.EnglishName)
             .ToListAsync(cancellationToken));
 
-        // Add the new voice lines.
-        db.VoiceLines.AddRange(voiceLines);
+        // Add the new quotes.
+        db.Quotes.AddRange(quotes);
 
         await db.SaveChangesAsync(cancellationToken);
     }
@@ -70,9 +70,9 @@ internal class VoiceLinesService
     /// <param name="cancellationToken">An optional cancellation token.</param>
     public async Task<IEnumerable<Ship>> GetShips(CancellationToken cancellationToken = default)
     {
-        return await db.VoiceLines
-            .Where(v => v.Source == Source.Kancolle)
-            .Select(v => new Ship(v.SpeakerEnglish, v.SpeakerJapanese))
+        return await db.Quotes
+            .Where(q => q.Source == Source.Kancolle)
+            .Select(q => new Ship(q.SpeakerEnglish, q.SpeakerJapanese))
             .ToListAsync(cancellationToken);
     }
 }

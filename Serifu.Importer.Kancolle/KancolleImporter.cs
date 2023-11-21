@@ -26,20 +26,20 @@ internal class KancolleImporter
     private readonly ShipListService shipListService;
     private readonly ShipService shipService;
     private readonly AudioFileService audioFileService;
-    private readonly VoiceLinesService voiceLinesService;
+    private readonly QuotesService quotesService;
     private readonly ILogger logger;
 
     public KancolleImporter(
         ShipListService shipListService,
         ShipService shipService,
         AudioFileService audioFileService,
-        VoiceLinesService voiceLinesService,
+        QuotesService quotesService,
         ILogger logger)
     {
         this.shipListService = shipListService;
         this.shipService = shipService;
         this.audioFileService = audioFileService;
-        this.voiceLinesService = voiceLinesService;
+        this.quotesService = quotesService;
         this.logger = logger.ForContext<KancolleImporter>();
     }
 
@@ -47,9 +47,9 @@ internal class KancolleImporter
     {
         Console.Title = "Kancolle Importer";
 
-        await voiceLinesService.Initialize();
+        await quotesService.Initialize();
 
-        var shipsAlreadyInDb = (await voiceLinesService.GetShips(cancellationToken)).ToHashSet();
+        var shipsAlreadyInDb = (await quotesService.GetShips(cancellationToken)).ToHashSet();
         bool skipShipsAlreadyInDb = false;
         if (shipsAlreadyInDb.Count > 0)
         {
@@ -89,24 +89,24 @@ internal class KancolleImporter
 
     private async Task ImportShip(Ship ship, CancellationToken cancellationToken = default)
     {
-        var voiceLines = await shipService.GetVoiceLines(ship, cancellationToken);
+        var quotes = await shipService.GetQuotes(ship, cancellationToken);
 
-        // Download each voice line's audio file while checking for 404s
-        foreach (VoiceLine voiceLine in voiceLines)
+        // Download each quote's audio file while checking for 404s
+        foreach (Quote quote in quotes)
         {
             try
             {
-                await audioFileService.DownloadAudioFile(voiceLine, cancellationToken: cancellationToken);
+                await audioFileService.DownloadAudioFile(quote, cancellationToken: cancellationToken);
             }
             catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.BadRequest)
             {
                 logger.Warning("{Ship}'s {Context} audio file {File} returned {StatusCode}. Setting to null.",
-                    voiceLine.SpeakerEnglish, voiceLine.Context, voiceLine.AudioFile, (int)ex.StatusCode);
+                    quote.SpeakerEnglish, quote.Context, quote.AudioFile, (int)ex.StatusCode);
 
-                voiceLine.AudioFile = null;
+                quote.AudioFile = null;
             }
         }
 
-        await voiceLinesService.UpdateVoiceLines(ship, voiceLines, cancellationToken);
+        await quotesService.UpdateQuotes(ship, quotes, cancellationToken);
     }
 }

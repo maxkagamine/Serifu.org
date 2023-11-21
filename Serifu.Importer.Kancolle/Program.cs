@@ -32,13 +32,13 @@ builder.Services.AddSerilog(config => config
     .WriteTo.Console()
     .WriteTo.File("kancolle-warnings.log", restrictedToMinimumLevel: LogEventLevel.Warning));
 
-builder.Services.AddDbContext<SerifuContext>(options => options.UseSqlite("Data Source=serifu.db"));
+builder.Services.AddDbContext<QuotesContext>(options => options.UseSqlite("Data Source=quotes.db"));
 
 builder.Services.AddSingleton<RateLimitingHttpHandler>();
 builder.Services.AddHttpClient(Options.DefaultName).AddHttpMessageHandler<RateLimitingHttpHandler>();
 
 builder.Services.AddScoped<AudioFileService>();
-builder.Services.AddScoped<VoiceLinesService>();
+builder.Services.AddScoped<QuotesService>();
 builder.Services.AddScoped<ShipListService>();
 builder.Services.AddScoped<ShipService>();
 builder.Services.AddScoped<WikiApiService>();

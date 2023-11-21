@@ -10,7 +10,7 @@ using Serifu.Data;
 
 namespace Serifu.Data.Migrations
 {
-    [DbContext(typeof(SerifuContext))]
+    [DbContext(typeof(QuotesContext))]
     [Migration("20231024092041_IndexSpeakerName")]
     partial class IndexSpeakerName
     {

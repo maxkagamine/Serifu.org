@@ -9,7 +9,7 @@ using Serifu.Data;
 
 namespace Serifu.Data.Migrations
 {
-    [DbContext(typeof(SerifuContext))]
+    [DbContext(typeof(QuotesContext))]
     partial class QuotesContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)
@@ -17,7 +17,7 @@ namespace Serifu.Data.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "7.0.12");
 
-            modelBuilder.Entity("Serifu.Data.Entities.VoiceLine", b =>
+            modelBuilder.Entity("Serifu.Data.Entities.Quote", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -31,6 +31,14 @@ namespace Serifu.Data.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Notes")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("QuoteEnglish")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("QuoteJapanese")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
@@ -49,14 +57,6 @@ namespace Serifu.Data.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("TextEnglish")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("TextJapanese")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
                     b.HasKey("Id");
 
                     b.HasIndex("Source");
@@ -65,7 +65,7 @@ namespace Serifu.Data.Migrations
 
                     b.HasIndex("SpeakerJapanese");
 
-                    b.ToTable("VoiceLines");
+                    b.ToTable("Quotes");
                 });
 #pragma warning restore 612, 618
         }
