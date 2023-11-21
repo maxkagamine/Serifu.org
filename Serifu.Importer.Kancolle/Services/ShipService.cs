@@ -43,19 +43,19 @@ internal partial class ShipService
     private static partial Regex EmptyOrQuestionMarks();
 
     /// <summary>
-    /// Fetches the given ship's wiki page and extracts their list of voice lines.
+    /// Fetches the given ship's wiki page and extracts their list of quotes.
     /// </summary>
     /// <param name="ship">The ship to look up.</param>
     /// <param name="cancellationToken">An optional cancellation token.</param>
-    /// <returns>A collection of newly-created <see cref="VoiceLine"/> entities (not yet added to the database).</returns>
-    public async Task<IEnumerable<VoiceLine>> GetVoiceLines(Ship ship, CancellationToken cancellationToken = default)
+    /// <returns>A collection of newly-created <see cref="Quote"/> entities (not yet added to the database).</returns>
+    public async Task<IEnumerable<Quote>> GetQuotes(Ship ship, CancellationToken cancellationToken = default)
     {
         logger.Information("Fetching wiki page for {Ship}.", ship);
         using var document = await wikiApiService.GetPage(ship.EnglishName, cancellationToken);
 
-        List<VoiceLine> voiceLines = new();
-        
-        foreach (var row in FindVoiceLineRows(document))
+        List<Quote> quotes = new();
+
+        foreach (var row in FindQuoteRows(document))
         {
             List<string> referenceIds = new();
 
@@ -66,13 +66,13 @@ internal partial class ShipService
 
             if (EmptyOrQuestionMarks().IsMatch(textEnglish))
             {
-                logger.Warning("{Ship}'s {Context} voice line is missing a translation.", ship, context);
+                logger.Warning("{Ship}'s {Context} quote is missing a translation.", ship, context);
                 continue;
             }
 
             if (EmptyOrQuestionMarks().IsMatch(textJapanese))
             {
-                logger.Warning("{Ship}'s {Context} voice line is missing the original Japanese.", ship, context);
+                logger.Warning("{Ship}'s {Context} quote is missing the original Japanese.", ship, context);
                 continue;
             }
 
@@ -81,59 +81,59 @@ internal partial class ShipService
                 .Where(el => !string.IsNullOrWhiteSpace(el.TextContent))
                 .Select(el => el.InnerHtml.Trim()));
 
-            var voiceLine = new VoiceLine()
+            var quote = new Quote()
             {
                 Source = Source.Kancolle,
                 Context = context,
                 SpeakerEnglish = ship.EnglishName,
                 SpeakerJapanese = ship.JapaneseName,
-                TextEnglish = textEnglish,
-                TextJapanese = textJapanese,
+                QuoteEnglish = textEnglish,
+                QuoteJapanese = textJapanese,
                 Notes = htmlSanitizer.Sanitize(unsafeNotes, document.BaseUri).Trim(),
                 AudioFile = audioFile,
-                SortOrder = voiceLines.Count,
+                SortOrder = quotes.Count,
             };
 
             // Check for duplicates (Kasuga Maru has a separate table for her Taiyou remodel with many of the same lines)
-            if (voiceLines.Any(v =>
-                v.Context == voiceLine.Context &&
-                v.TextEnglish == voiceLine.TextEnglish &&
-                v.TextJapanese == voiceLine.TextJapanese &&
-                v.AudioFile == voiceLine.AudioFile))
+            if (quotes.Any(q =>
+                q.Context == quote.Context &&
+                q.QuoteEnglish == quote.QuoteEnglish &&
+                q.QuoteJapanese == quote.QuoteJapanese &&
+                q.AudioFile == quote.AudioFile))
             {
                 continue;
             }
 
-            voiceLines.Add(voiceLine);
+            quotes.Add(quote);
         }
 
-        if (voiceLines.Count == 0)
+        if (quotes.Count == 0)
         {
-            logger.Warning("No voice lines found for {Ship}. Check whether the scraping code is broken or the page actually has no voice lines.", ship);
+            logger.Warning("No quotes found for {Ship}. Check whether the scraping code is broken or the page actually has no quotes.", ship);
         }
         else
         {
-            logger.Information("Found {Count} voice lines for {Ship}.", voiceLines.Count, ship);
+            logger.Information("Found {Count} quotes for {Ship}.", quotes.Count, ship);
         }
 
         // Log warnings for potential mistakes in the wiki
-        foreach (var group in voiceLines
-            .GroupBy(v => v.AudioFile)
-            .Where(g => g.Key is not null && g.DistinctBy(v => v.TextJapanese).Count() > 1))
+        foreach (var group in quotes
+            .GroupBy(q => q.AudioFile)
+            .Where(g => g.Key is not null && g.DistinctBy(q => q.QuoteJapanese).Count() > 1))
         {
-            logger.Warning("{Ship} has lines with different Japanese but same audio file {AudioFile}: {@VoiceLines}.",
-                ship, group.Key, group.Select(v => new { v.Context, v.TextJapanese }));
+            logger.Warning("{Ship} has quotes with different Japanese but same audio file {AudioFile}: {@Quotes}.",
+                ship, group.Key, group.Select(q => new { q.Context, q.QuoteJapanese }));
         }
 
-        return voiceLines;
+        return quotes;
     }
 
     /// <summary>
     /// Finds all ShipquoteKai and SeasonalQuote rows present in the document.
     /// </summary>
     /// <param name="document">The document.</param>
-    /// <returns>A collection of <see cref="VoiceLineTableRow"/> containing the relevant elements.</returns>
-    private IEnumerable<VoiceLineTableRow> FindVoiceLineRows(IDocument document)
+    /// <returns>A collection of <see cref="QuoteTableRow"/> containing the relevant elements.</returns>
+    private IEnumerable<QuoteTableRow> FindQuoteRows(IDocument document)
     {
         foreach (IElement tr in document.QuerySelectorAll(RowsOfTopLevelTablesSelector))
         {
@@ -153,11 +153,11 @@ internal partial class ShipService
                 }
                 if (nearestHeader?.TextContent.Trim() != "Voice Lines[edit]")
                 {
-                    logger.Warning("Returning a voice line that doesn't appear to be within the \"Voice Lines\" section... check {Url} and make sure this is ok. Header = {Header}, Scenario = {Scenario}, English = {English}",
+                    logger.Warning("Returning a quote that doesn't appear to be within the \"Voice Lines\" section... check {Url} and make sure this is ok. Header = {Header}, Scenario = {Scenario}, English = {English}",
                         document.Url, nearestHeader?.TextContent, scenario.TextContent, english.TextContent);
                 }
 
-                yield return new VoiceLineTableRow(scenario, playButton, english, japanese, notes);
+                yield return new QuoteTableRow(scenario, playButton, english, japanese, notes);
             }
         }
     }

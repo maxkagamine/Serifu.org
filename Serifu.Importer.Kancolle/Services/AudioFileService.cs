@@ -10,7 +10,7 @@ internal class AudioFileService
 {
     const string AudioDirectory = $"audio/{nameof(Source.Kancolle)}";
     const string FileRedirectBaseUrl = "https://en.kancollewiki.net/Special:Redirect/file/";
-    
+
     private readonly HttpClient httpClient;
     private readonly ILogger logger;
 
@@ -25,22 +25,22 @@ internal class AudioFileService
     }
 
     /// <summary>
-    /// Downloads the audio file specified in <see cref="VoiceLine.AudioFile"/>.
+    /// Downloads the audio file specified in <see cref="Quote.AudioFile"/>.
     /// </summary>
-    /// <param name="voiceLine">The voice line whose audio file to download.</param>
+    /// <param name="quote">The quote whose audio file to download.</param>
     /// <param name="overwrite">Whether to replace the file if it exists.</param>
     /// <param name="cancellationToken">An optional cancellation token.</param>
     /// <exception cref="HttpRequestException"></exception>
-    public async Task DownloadAudioFile(VoiceLine voiceLine, bool overwrite = false, CancellationToken cancellationToken = default)
+    public async Task DownloadAudioFile(Quote quote, bool overwrite = false, CancellationToken cancellationToken = default)
     {
-        var filename = voiceLine.AudioFile;
+        var filename = quote.AudioFile;
 
         if (filename is null)
         {
             return;
         }
 
-        var dir = Path.Combine(AudioDirectory, voiceLine.SpeakerEnglish);
+        var dir = Path.Combine(AudioDirectory, quote.SpeakerEnglish);
         var filePath = Path.Combine(dir, filename);
 
         if (!overwrite && File.Exists(filePath))
