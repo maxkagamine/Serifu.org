@@ -100,21 +100,32 @@ internal partial class ShipService
             {
                 Id = QuoteId.CreateKancolleId(ship.ShipNumber, index: quotes.Count),
                 Source = Source.Kancolle,
-                Context = context,
-                SpeakerEnglish = ship.EnglishName,
-                SpeakerJapanese = ship.JapaneseName,
-                QuoteEnglish = textEnglish,
-                QuoteJapanese = textJapanese,
-                Notes = htmlSanitizer.Sanitize(unsafeNotes, document.BaseUri).Trim(),
-                AudioFile = audioFile,
+                Translations = [
+                    new()
+                    {
+                        Language = "en",
+                        SpeakerName = ship.EnglishName,
+                        Context = context,
+                        Text = textEnglish,
+                        Notes = htmlSanitizer.Sanitize(unsafeNotes, document.BaseUri).Trim(),
+                    },
+                    new()
+                    {
+                        Language = "ja",
+                        SpeakerName = ship.JapaneseName,
+                        Context = context, // TODO: Find Japanese names for contexts
+                        Text = textJapanese,
+                        AudioFile = audioFile is null ? null : new AudioFile("", "", audioFile, DateTime.Now) // TODO: Hash files
+                    }
+                ]
             };
 
             // Check for duplicates (Kasuga Maru has a separate table for her Taiyou remodel with many of the same lines)
             if (quotes.Any(q =>
-                q.Context == quote.Context &&
-                q.QuoteEnglish == quote.QuoteEnglish &&
-                q.QuoteJapanese == quote.QuoteJapanese &&
-                q.AudioFile == quote.AudioFile))
+                q.Translations["en"].Context == quote.Translations["en"].Context &&
+                q.Translations["en"].Text == quote.Translations["en"].Text &&
+                q.Translations["ja"].Text == quote.Translations["ja"].Text &&
+                q.Translations["ja"].AudioFile?.OriginalName == quote.Translations["ja"].AudioFile?.OriginalName))
             {
                 continue;
             }
@@ -133,11 +144,11 @@ internal partial class ShipService
 
         // Log warnings for potential mistakes in the wiki
         foreach (var group in quotes
-            .GroupBy(q => q.AudioFile)
-            .Where(g => g.Key is not null && g.DistinctBy(q => q.QuoteJapanese).Count() > 1))
+            .GroupBy(q => q.Translations["ja"].AudioFile?.OriginalName)
+            .Where(g => g.Key is not null && g.DistinctBy(q => q.Translations["ja"].Text).Count() > 1))
         {
             logger.Warning("{Ship} has quotes with different Japanese but same audio file {AudioFile}: {@Quotes}.",
-                ship, group.Key, group.Select(q => new { q.Context, q.QuoteJapanese }));
+                ship, group.Key, group.Select(q => new { q.Translations["en"].Context, q.Translations["ja"].Text }));
         }
 
         return quotes;
@@ -166,6 +177,7 @@ internal partial class ShipService
                 {
                     nearestHeader = nearestHeader.PreviousElementSibling;
                 }
+
                 if (nearestHeader?.TextContent.Trim() != "Voice Lines[edit]")
                 {
                     logger.Warning("Returning a quote that doesn't appear to be within the \"Voice Lines\" section... check {Url} and make sure this is ok. Header = {Header}, Scenario = {Scenario}, English = {English}",

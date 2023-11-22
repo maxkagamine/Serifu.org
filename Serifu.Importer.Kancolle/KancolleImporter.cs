@@ -96,14 +96,17 @@ internal class KancolleImporter
         {
             try
             {
-                await audioFileService.DownloadAudioFile(quote, cancellationToken: cancellationToken);
+                await audioFileService.DownloadAudioFile(quote.Translations["ja"].AudioFile, ship, cancellationToken: cancellationToken);
             }
             catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.BadRequest)
             {
                 logger.Warning("{Ship}'s {Context} audio file {File} returned {StatusCode}. Setting to null.",
-                    quote.SpeakerEnglish, quote.Context, quote.AudioFile, (int)ex.StatusCode);
+                    quote.Translations["en"].SpeakerName,
+                    quote.Translations["en"].Context,
+                    quote.Translations["ja"].AudioFile?.OriginalName,
+                    (int)ex.StatusCode);
 
-                quote.AudioFile = null;
+                quote.Translations["ja"].AudioFile = null;
             }
         }
 

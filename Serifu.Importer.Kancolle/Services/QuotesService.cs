@@ -53,7 +53,7 @@ internal class QuotesService
         // Remove the ship's existing quotes (EF Core doesn't support Sqlite's UPSERT). Note that this assumes no two
         // ships will have the same English name.
         db.Quotes.RemoveRange(await db.Quotes
-            .Where(q => q.Source == Source.Kancolle && q.SpeakerEnglish == ship.EnglishName)
+            .Where(q => q.Source == Source.Kancolle && q.Translations.Any(t => t.Language == "en" && t.SpeakerName == ship.EnglishName))
             .ToListAsync(cancellationToken));
 
         // Add the new quotes.
@@ -70,7 +70,7 @@ internal class QuotesService
     {
         return await db.Quotes
             .Where(q => q.Source == Source.Kancolle)
-            .Select(q => q.SpeakerEnglish)
+            .Select(q => q.Translations["en"].SpeakerName)
             .ToListAsync(cancellationToken);
     }
 }

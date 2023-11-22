@@ -12,29 +12,22 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
-using System.Collections.ObjectModel;
 using System.Diagnostics;
 
 namespace Serifu.Data.Entities;
 
-[DebuggerDisplay($"{{{nameof(GetDebuggerDisplay)}(),nq}}")]
-public class Quote
+[DebuggerDisplay("{Language,nq} = {Text}")]
+public class Translation
 {
-    public required long Id { get; set; }
+    public required string Language { get; set; }
 
-    public required Source Source { get; set; }
+    public required string SpeakerName { get; set; }
 
-    public TranslationCollection Translations { get; set; } = [];
+    public required string Context { get; set; }
 
-    public DateTime DateImported { get; set; } = DateTime.Now;
+    public required string Text { get; set; }
 
-    private string GetDebuggerDisplay()
-    {
-        if (!Translations.TryGetValue("en", out var tl))
-        {
-            tl = Translations.FirstOrDefault();
-        }
+    public string Notes { get; set; } = "";
 
-        return $"Speaker = \"{tl?.SpeakerName}\", Context = \"{tl?.Context}\", Text = \"{tl?.Text}\"";
-    }
+    public AudioFile? AudioFile { get; set; }
 }
