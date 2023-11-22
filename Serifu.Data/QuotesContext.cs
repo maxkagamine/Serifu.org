@@ -21,9 +21,14 @@ public class QuotesContext(DbContextOptions<QuotesContext> options) : DbContext(
             .HasIndex(q => q.Source);
 
         modelBuilder.Entity<Quote>()
-            .HasIndex(q => q.SpeakerEnglish);
+            .HasMany(q => q.Translations)
+            .WithOne()
+            .HasForeignKey("QuoteId");
 
-        modelBuilder.Entity<Quote>()
-            .HasIndex(q => q.SpeakerJapanese);
+        modelBuilder.Entity<Translation>()
+            .HasKey("QuoteId", nameof(Translation.Language));
+
+        modelBuilder.Entity<Translation>()
+            .OwnsOne(t => t.AudioFile);
     }
 }

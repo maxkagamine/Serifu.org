@@ -1,25 +1,26 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.ObjectModel;
+using System.Diagnostics;
 
 namespace Serifu.Data.Entities;
 
-[DebuggerDisplay("Speaker = {SpeakerEnglish,nq}, Context = {Context,nq}, Quote = {QuoteEnglish,nq}")]
+[DebuggerDisplay($"{{{nameof(GetDebuggerDisplay)}(),nq}}")]
 public class Quote
 {
     public required long Id { get; set; }
 
     public required Source Source { get; set; }
 
-    public required string SpeakerEnglish { get; set; }
+    public TranslationCollection Translations { get; set; } = [];
 
-    public required string SpeakerJapanese { get; set; }
+    public DateTime DateImported { get; set; } = DateTime.Now;
 
-    public required string Context { get; set; }
+    private string GetDebuggerDisplay()
+    {
+        if (!Translations.TryGetValue("en", out var tl))
+        {
+            tl = Translations.FirstOrDefault();
+        }
 
-    public required string QuoteEnglish { get; set; }
-
-    public required string QuoteJapanese { get; set; }
-
-    public string Notes { get; set; } = "";
-
-    public string? AudioFile { get; set; }
+        return $"Speaker = \"{tl?.SpeakerName}\", Context = \"{tl?.Context}\", Text = \"{tl?.Text}\"";
+    }
 }
