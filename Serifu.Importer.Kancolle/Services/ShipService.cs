@@ -1,8 +1,9 @@
-﻿using System.Web;
+﻿using System.Net;
 using AngleSharp.Dom;
 using AngleSharp.Html.Dom;
 using Ganss.Xss;
 using Serifu.Data;
+using Serifu.Data.Local;
 using Serifu.Importer.Kancolle.Models;
 using Serilog;
 using static Serifu.Importer.Kancolle.Helpers.Regexes;
@@ -22,12 +23,14 @@ internal partial class ShipService
     private const string NotesSelector = "td[rowspan=2]:last-child"; // SeasonalQuote only
 
     private readonly WikiApiService wikiApiService;
+    private readonly ILocalDataService localDataService;
     private readonly ILogger logger;
     private readonly HtmlSanitizer htmlSanitizer;
 
-    public ShipService(WikiApiService wikiApiService, ILogger logger)
+    public ShipService(WikiApiService wikiApiService, ILocalDataService localDataService, ILogger logger)
     {
         this.wikiApiService = wikiApiService;
+        this.localDataService = localDataService;
         this.logger = logger.ForContext<ShipService>();
 
         htmlSanitizer = new HtmlSanitizer();
@@ -59,7 +62,6 @@ internal partial class ShipService
             string context = NormalizeContext(GetText(row.Scenario));
             string textEnglish = GetText(row.English, referenceIds);
             string textJapanese = GetText(row.Japanese);
-            string? audioFile = GetFilename(row.PlayButton);
 
             if (EmptyOrQuestionMarks.IsMatch(textEnglish))
             {
@@ -77,6 +79,21 @@ internal partial class ShipService
                 .Concat(GetReferences(document, referenceIds))
                 .Where(el => !string.IsNullOrWhiteSpace(el.TextContent))
                 .Select(el => el.InnerHtml.Trim()));
+
+            AudioFile? audioFile = null;
+            string? audioFileUrl = row.PlayButton?.Href;
+            if (audioFileUrl is not null)
+            {
+                try
+                {
+                    audioFile = await localDataService.DownloadAudioFile(audioFileUrl, useCache: true, cancellationToken);
+                }
+                catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.NotFound)
+                {
+                    logger.Warning("{Ship}'s {Context} audio file {File} returned {StatusCode}.",
+                        ship, context, audioFileUrl, (int)ex.StatusCode);
+                }
+            }
 
             var quote = new Quote()
             {
@@ -97,7 +114,7 @@ internal partial class ShipService
                         SpeakerName = ship.JapaneseName,
                         Context = context, // TODO: Find Japanese names for contexts
                         Text = textJapanese,
-                        OriginalAudioFile = audioFile, // TODO: Hash files, set date imported
+                        AudioFile = audioFile,
                     }
                 ]
             };
@@ -107,7 +124,7 @@ internal partial class ShipService
                 q.Translations["en"].Context == quote.Translations["en"].Context &&
                 q.Translations["en"].Text == quote.Translations["en"].Text &&
                 q.Translations["ja"].Text == quote.Translations["ja"].Text &&
-                q.Translations["ja"].OriginalAudioFile == quote.Translations["ja"].OriginalAudioFile))
+                q.Translations["ja"].AudioFile == quote.Translations["ja"].AudioFile))
             {
                 continue;
             }
@@ -126,7 +143,7 @@ internal partial class ShipService
 
         // Log warnings for potential mistakes in the wiki
         foreach (var group in quotes
-            .GroupBy(q => q.Translations["ja"].OriginalAudioFile)
+            .GroupBy(q => q.Translations["ja"].AudioFile?.OriginalName)
             .Where(g => g.Key is not null && g.DistinctBy(q => q.Translations["ja"].Text).Count() > 1))
         {
             logger.Warning("{Ship} has quotes with different Japanese but same audio file {AudioFile}: {@Quotes}.",
@@ -213,14 +230,6 @@ internal partial class ShipService
     /// <returns>The corresponding <c>.reference-text</c> elements.</returns>
     private static IEnumerable<IElement> GetReferences(IDocument document, IEnumerable<string> referenceIds)
         => referenceIds.Select(id => document.GetElementById(id)?.QuerySelector(".reference-text") ?? throw new Exception($"No reference for {id}."));
-
-    /// <summary>
-    /// Gets the name of the file the element links to, url decoded.
-    /// </summary>
-    /// <param name="element">The link element.</param>
-    /// <returns>The filename portion of the link element's href.</returns>
-    private static string? GetFilename(IHtmlAnchorElement? element)
-        => HttpUtility.UrlDecode(element?.Href.Split('/').Last());
 
     /// <summary>
     /// Title-cases the context and fixes some minor inconsistencies.

@@ -1,5 +1,4 @@
-﻿using System.Data.Common;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace Serifu.Data.Local;
 
@@ -11,19 +10,13 @@ public interface ILocalDataService
     Task Initialize();
 
     /// <summary>
-    /// Clears all quotes for <paramref name="source"/>.
+    /// Deletes all quotes for <paramref name="source"/> and replaces them with <paramref name="quotes"/>.
     /// </summary>
-    /// <param name="source">The source whose quotes to delete.</param>
-    /// <param name="cancellationToken">An optional cancellation token.</param>
-    Task DeleteQuotes(Source source, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Adds <paramref name="quotes"/> to the database.
-    /// </summary>
-    /// <param name="quotes">The quotes to add.</param>
+    /// <param name="source">The source whose quotes are being imported or updated.</param>
+    /// <param name="quotes">The new quotes to add.</param>
     /// <param name="cancellationToken">An optional cancellation token.</param>
     /// <exception cref="DbUpdateException"/>
-    Task AddQuotes(IEnumerable<Quote> quotes, CancellationToken cancellationToken = default);
+    Task ReplaceQuotes(Source source, IEnumerable<Quote> quotes, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets all quotes in the database.
@@ -34,26 +27,33 @@ public interface ILocalDataService
     IQueryable<Quote> GetQuotes();
 
     /// <summary>
-    /// Hashes the audio file and either moves or copies it into the local audio directory. If the same file already
-    /// exists and <paramref name="copy"/> is <see langword="false"/>, deletes the file at <paramref name="path"/>.
+    /// Hashes the audio file and either moves it into the local audio directory or, if it already exists, deletes
+    /// the copy at <paramref name="tempPath"/>.
     /// </summary>
-    /// <param name="path">The path to the audio file.</param>
-    /// <param name="copy">Whether to leave the original file as is.</param>
+    /// <param name="tempPath">The path to the audio file.</param>
+    /// <param name="originalName">The original filename or url.</param>
     /// <param name="cancellationToken">An optional cancellation token.</param>
-    /// <returns>
-    /// The new audio file path, relative to the audio directory. This will be the object name once uploaded to cloud
-    /// storage.
-    /// </returns>
-    Task<string> ImportAudioFile(string path, bool copy = false, CancellationToken cancellationToken = default);
+    /// <returns>A new <see cref="AudioFile"/> record.</returns>
+    Task<AudioFile> ImportAudioFile(string tempPath, string originalName, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Downloads and imports the audio file at <paramref name="url"/>.
+    /// Downloads and imports the audio file at <paramref name="url"/>. If <paramref name="useCache"/> is <see
+    /// langword="true"/> and an <see cref="AudioFile.OriginalName"/> with the requested <paramref name="url"/> is found
+    /// in the database, skips sending a request and returns a copy of that object instead.
     /// </summary>
     /// <param name="url">The audio file url.</param>
+    /// <param name="useCache">Whether to reuse an already-downloaded file from the same <paramref name="url"/>.</param>
     /// <param name="cancellationToken">An optional cancellation token.</param>
     /// <returns>
-    /// The new audio file path, relative to the audio directory. This will be the object name once uploaded to cloud
-    /// storage.
+    /// A new <see cref="AudioFile"/> record with <see cref="AudioFile.OriginalName"/> set to <paramref name="url"/>, or
+    /// a clone of an existing one.
     /// </returns>
-    Task<string> DownloadAudioFile(string url, CancellationToken cancellationToken = default);
+    /// <exception cref="HttpRequestException"/>
+    Task<AudioFile> DownloadAudioFile(string url, bool useCache = true, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Deletes audio files not linked to any <see cref="Translation"/>.
+    /// </summary>
+    /// <param name="cancellationToken">An optional cancellation token.</param>
+    Task DeleteOrphanedAudioFiles(CancellationToken cancellationToken = default);
 }
