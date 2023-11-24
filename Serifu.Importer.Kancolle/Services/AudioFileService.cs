@@ -28,15 +28,13 @@ internal class AudioFileService
     /// <summary>
     /// Downloads the audio file specified in <see cref="AudioFile.OriginalName"/>.
     /// </summary>
-    /// <param name="audioFile">The audio file to download.</param>
+    /// <param name="filename">The audio file to download.</param>
     /// <param name="ship">The ship to whom the audio file belongs.</param>
     /// <param name="overwrite">Whether to replace the file if it exists.</param>
     /// <param name="cancellationToken">An optional cancellation token.</param>
     /// <exception cref="HttpRequestException"></exception>
-    public async Task DownloadAudioFile(AudioFile? audioFile, Ship ship, bool overwrite = false, CancellationToken cancellationToken = default)
+    public async Task DownloadAudioFile(string? filename, Ship ship, bool overwrite = false, CancellationToken cancellationToken = default)
     {
-        var filename = audioFile?.OriginalName;
-
         if (filename is null)
         {
             return;

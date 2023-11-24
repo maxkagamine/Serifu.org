@@ -28,16 +28,15 @@ namespace Serifu.Data.Local.Migrations
                 name: "Translation",
                 columns: table => new
                 {
-                    QuoteId = table.Column<long>(type: "INTEGER", nullable: false),
                     Language = table.Column<string>(type: "TEXT", nullable: false),
+                    QuoteId = table.Column<long>(type: "INTEGER", nullable: false),
                     SpeakerName = table.Column<string>(type: "TEXT", nullable: false),
                     Context = table.Column<string>(type: "TEXT", nullable: false),
                     Text = table.Column<string>(type: "TEXT", nullable: false),
                     Notes = table.Column<string>(type: "TEXT", nullable: false),
-                    AudioFile_Hash = table.Column<string>(type: "TEXT", nullable: true),
-                    AudioFile_Extension = table.Column<string>(type: "TEXT", nullable: true),
-                    AudioFile_OriginalName = table.Column<string>(type: "TEXT", nullable: true),
-                    AudioFile_OriginalLastModified = table.Column<DateTime>(type: "TEXT", nullable: true)
+                    AudioFile = table.Column<string>(type: "TEXT", nullable: true),
+                    OriginalAudioFile = table.Column<string>(type: "TEXT", nullable: true),
+                    DateAudioFileImported = table.Column<DateTime>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {

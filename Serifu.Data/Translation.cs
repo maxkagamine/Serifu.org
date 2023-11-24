@@ -2,7 +2,7 @@
 
 namespace Serifu.Data;
 
-[DebuggerDisplay("{Language,nq} = {Text}")]
+[DebuggerDisplay("Language = {Language}, Text = {Text}")]
 public class Translation
 {
     public required string Language { get; set; }
@@ -15,5 +15,9 @@ public class Translation
 
     public string Notes { get; set; } = "";
 
-    public AudioFile? AudioFile { get; set; }
+    public string? AudioFile { get; set; }
+
+    public string? OriginalAudioFile { get; set; }
+
+    public DateTime? DateAudioFileImported { get; set; }
 }
