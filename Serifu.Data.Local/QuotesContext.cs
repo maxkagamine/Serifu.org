@@ -1,16 +1,16 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace Serifu.Data.Local;
 
 public class QuotesContext : DbContext
 {
-    public required DbSet<Quote> Quotes { get; set; }
+    public QuotesContext(IOptions<LocalDataOptions> options)
+        : base(new DbContextOptionsBuilder().UseSqlite(new SqliteConnectionStringBuilder() { DataSource = options.Value.DatabasePath }.ToString()).Options)
+    { }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        // Shared database, consuming projects are expected to start in their project dirs
-        optionsBuilder.UseSqlite("Data Source=../quotes.db");
-    }
+    public required DbSet<Quote> Quotes { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
