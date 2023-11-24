@@ -39,17 +39,11 @@ public class LocalDataService : ILocalDataService
         Directory.CreateDirectory(options.AudioDirectory);
     }
 
-    public async Task DeleteQuotes(Source source, CancellationToken cancellationToken = default)
+    public async Task ReplaceQuotes(Source source, IEnumerable<Quote> quotes, CancellationToken cancellationToken = default)
     {
-        logger.Information("Deleting all {Source} quotes.", source);
+        logger.Information("Saving {Count} quotes for {Source}.", quotes.Count(), source);
 
-        await db.Quotes.Where(q => q.Source == source).ExecuteDeleteAsync(cancellationToken);
-    }
-
-    public async Task AddQuotes(IEnumerable<Quote> quotes, CancellationToken cancellationToken = default)
-    {
-        logger.Information("Saving {Count} quotes.", quotes.Count());
-
+        db.Quotes.RemoveRange(db.Quotes.Where(q => q.Source == source));
         db.Quotes.AddRange(quotes);
         await db.SaveChangesAsync(cancellationToken);
     }
@@ -59,12 +53,17 @@ public class LocalDataService : ILocalDataService
         return db.Quotes.Include(q => q.Translations);
     }
 
-    public Task<string> ImportAudioFile(string path, bool copy = false, CancellationToken cancellationToken = default)
+    public Task<AudioFile> ImportAudioFile(string tempPath, string originalName, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
-    public Task<string> DownloadAudioFile(string url, CancellationToken cancellationToken = default)
+    public Task<AudioFile> DownloadAudioFile(string url, bool useCache = true, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task DeleteOrphanedAudioFiles(CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

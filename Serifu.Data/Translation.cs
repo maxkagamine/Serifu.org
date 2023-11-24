@@ -45,18 +45,7 @@ public class Translation
     public string Notes { get; set; } = "";
 
     /// <summary>
-    /// The audio file path, or <see langword="null"/> if audio is not available for this quote or language.
+    /// The audio file, or <see langword="null"/> if audio is not available for this quote or language.
     /// </summary>
-    public string? AudioFile { get; set; }
-
-    /// <summary>
-    /// The original audio file. Source-specific.
-    /// </summary>
-    public string? OriginalAudioFile { get; set; }
-
-    /// <summary>
-    /// The date the audio file was imported/downloaded. Can be compared to the original's modified date
-    /// (source-specific) to determine if the audio file needs to be updated.
-    /// </summary>
-    public DateTime? DateAudioFileImported { get; set; }
+    public AudioFile? AudioFile { get; set; }
 }
