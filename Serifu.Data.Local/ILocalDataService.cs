@@ -12,6 +12,9 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
+using System.Data.Common;
+using Microsoft.EntityFrameworkCore;
+
 namespace Serifu.Data.Local;
 
 public interface ILocalDataService
@@ -33,6 +36,7 @@ public interface ILocalDataService
     /// </summary>
     /// <param name="quotes">The quotes to add.</param>
     /// <param name="cancellationToken">An optional cancellation token.</param>
+    /// <exception cref="DbUpdateException"/>
     Task AddQuotes(IEnumerable<Quote> quotes, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -41,7 +45,7 @@ public interface ILocalDataService
     /// <returns>
     /// An <see cref="IQueryable"/> with <see cref="Quote.Translations"/> included.
     /// </returns>
-    Task<IQueryable<Quote>> GetQuotes();
+    IQueryable<Quote> GetQuotes();
 
     /// <summary>
     /// Hashes the audio file and either moves or copies it into the local audio directory. If the same file already
