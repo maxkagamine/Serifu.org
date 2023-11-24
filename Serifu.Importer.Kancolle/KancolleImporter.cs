@@ -14,6 +14,7 @@
 
 using System.Net;
 using Serifu.Data;
+using Serifu.Data.Local;
 using Serifu.Importer.Kancolle.Helpers;
 using Serifu.Importer.Kancolle.Models;
 using Serifu.Importer.Kancolle.Services;
@@ -23,23 +24,22 @@ using Spectre.Console;
 namespace Serifu.Importer.Kancolle;
 internal class KancolleImporter
 {
+    const string FileRedirectBaseUrl = "https://en.kancollewiki.net/Special:Redirect/file/";
+
     private readonly ShipListService shipListService;
     private readonly ShipService shipService;
-    private readonly AudioFileService audioFileService;
-    private readonly QuotesService quotesService;
+    private readonly ILocalDataService localDataService;
     private readonly ILogger logger;
 
     public KancolleImporter(
         ShipListService shipListService,
         ShipService shipService,
-        AudioFileService audioFileService,
-        QuotesService quotesService,
+        ILocalDataService localDataService,
         ILogger logger)
     {
         this.shipListService = shipListService;
         this.shipService = shipService;
-        this.audioFileService = audioFileService;
-        this.quotesService = quotesService;
+        this.localDataService = localDataService;
         this.logger = logger.ForContext<KancolleImporter>();
     }
 
@@ -47,24 +47,8 @@ internal class KancolleImporter
     {
         Console.Title = "Kancolle Importer";
 
-        await quotesService.Initialize();
-
-        var shipsAlreadyInDb = (await quotesService.GetShips(cancellationToken)).ToHashSet();
-        bool skipShipsAlreadyInDb = false;
-        if (shipsAlreadyInDb.Count > 0)
-        {
-            Console.Write("\a"); // Flashes the taskbar if the terminal's not in the foreground
-            skipShipsAlreadyInDb = await new SelectionPrompt<bool>()
-                .Title($"\nSkip [purple]{shipsAlreadyInDb.Count}[/] ships already in db?")
-                .AddChoices(false, true)
-                .UseConverter(x => x ? "Yes" : "No")
-                .ShowAsync(AnsiConsole.Console, cancellationToken);
-
-            if (skipShipsAlreadyInDb)
-            {
-                logger.Information("Skipping {Count} ships already in db", shipsAlreadyInDb.Count);
-            }
-        }
+        await localDataService.Initialize();
+        await localDataService.DeleteQuotes(Source.Kancolle);
 
         using (logger.BeginTimedOperation(nameof(Import)))
         using (var progress = new TerminalProgressBar())
@@ -74,13 +58,6 @@ internal class KancolleImporter
             for (int i = 0; i < ships.Count; i++)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-
-                if (skipShipsAlreadyInDb && shipsAlreadyInDb.Contains(ships[i].EnglishName))
-                {
-                    logger.Debug("{Ship} already in db", ships[i]);
-                    continue;
-                }
-
                 progress.SetProgress(i, ships.Count);
                 await ImportShip(ships[i], cancellationToken);
             }
@@ -94,22 +71,25 @@ internal class KancolleImporter
         // Download each quote's audio file while checking for 404s
         foreach (Quote quote in quotes)
         {
+            var (en, ja) = (quote.Translations["en"], quote.Translations["ja"]);
+
             try
             {
-                await audioFileService.DownloadAudioFile(quote.Translations["ja"].AudioFile, ship, cancellationToken: cancellationToken);
+                ja.AudioFile = await localDataService.DownloadAudioFile(FileRedirectBaseUrl + ja.OriginalAudioFile, cancellationToken);
+                ja.DateAudioFileImported = DateTime.Now;
             }
             catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.BadRequest)
             {
                 logger.Warning("{Ship}'s {Context} audio file {File} returned {StatusCode}. Setting to null.",
-                    quote.Translations["en"].SpeakerName,
-                    quote.Translations["en"].Context,
-                    quote.Translations["ja"].OriginalAudioFile,
+                    en.SpeakerName,
+                    en.Context,
+                    ja.OriginalAudioFile,
                     (int)ex.StatusCode);
 
-                quote.Translations["ja"].OriginalAudioFile = null;
+                ja.OriginalAudioFile = null;
             }
         }
 
-        await quotesService.UpdateQuotes(ship, quotes, cancellationToken);
+        await localDataService.AddQuotes(quotes, cancellationToken);
     }
 }
