@@ -19,24 +19,30 @@ public class LocalDataService : ILocalDataService
         logger.Information("Audio directory is {Path}", Path.GetFullPath(options.Value.AudioDirectory));
     }
 
-    public Task Initialize()
+    public async Task Initialize()
     {
-        throw new NotImplementedException();
+        await db.Database.MigrateAsync();
+        Directory.CreateDirectory(options.AudioDirectory);
     }
 
-    public Task DeleteQuotes(Source source, CancellationToken cancellationToken = default)
+    public async Task DeleteQuotes(Source source, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        logger.Information("Deleting all {Source} quotes.", source);
+
+        await db.Quotes.Where(q => q.Source == source).ExecuteDeleteAsync(cancellationToken);
     }
 
-    public Task AddQuotes(IEnumerable<Quote> quotes, CancellationToken cancellationToken = default)
+    public async Task AddQuotes(IEnumerable<Quote> quotes, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        logger.Information("Saving {Count} quotes.", quotes.Count());
+
+        db.Quotes.AddRange(quotes);
+        await db.SaveChangesAsync(cancellationToken);
     }
 
-    public Task<IQueryable<Quote>> GetQuotes()
+    public IQueryable<Quote> GetQuotes()
     {
-        throw new NotImplementedException();
+        return db.Quotes.Include(q => q.Translations);
     }
 
     public Task<string> ImportAudioFile(string path, bool copy = false, CancellationToken cancellationToken = default)
