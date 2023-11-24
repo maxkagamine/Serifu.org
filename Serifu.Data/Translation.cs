@@ -12,10 +12,22 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
-using System.Collections.ObjectModel;
+using System.Diagnostics;
 
-namespace Serifu.Data.Entities;
-public class TranslationCollection : KeyedCollection<string, Translation>
+namespace Serifu.Data;
+
+[DebuggerDisplay("{Language,nq} = {Text}")]
+public class Translation
 {
-    protected override string GetKeyForItem(Translation item) => item.Language;
+    public required string Language { get; set; }
+
+    public required string SpeakerName { get; set; }
+
+    public required string Context { get; set; }
+
+    public required string Text { get; set; }
+
+    public string Notes { get; set; } = "";
+
+    public AudioFile? AudioFile { get; set; }
 }

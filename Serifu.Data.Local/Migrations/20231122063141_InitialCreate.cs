@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Serifu.Data.Migrations
+namespace Serifu.Data.Local.Migrations
 {
     /// <inheritdoc />
     public partial class InitialCreate : Migration

@@ -13,7 +13,6 @@
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
 using System.Runtime.CompilerServices;
-using Serifu.Data.Entities;
 
 namespace Serifu.Data;
 

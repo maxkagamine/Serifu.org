@@ -12,22 +12,9 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
-using System.Diagnostics;
+namespace Serifu.Data;
 
-namespace Serifu.Data.Entities;
-
-[DebuggerDisplay("{Language,nq} = {Text}")]
-public class Translation
+public enum Source
 {
-    public required string Language { get; set; }
-
-    public required string SpeakerName { get; set; }
-
-    public required string Context { get; set; }
-
-    public required string Text { get; set; }
-
-    public string Notes { get; set; } = "";
-
-    public AudioFile? AudioFile { get; set; }
+    Kancolle,
 }

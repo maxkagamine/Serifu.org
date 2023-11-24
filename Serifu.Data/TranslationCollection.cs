@@ -12,9 +12,10 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
-namespace Serifu.Data.Entities;
+using System.Collections.ObjectModel;
 
-public enum Source
+namespace Serifu.Data;
+public class TranslationCollection : KeyedCollection<string, Translation>
 {
-    Kancolle,
+    protected override string GetKeyForItem(Translation item) => item.Language;
 }

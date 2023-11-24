@@ -2,17 +2,20 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Serifu.Data;
 
 #nullable disable
 
-namespace Serifu.Data.Migrations
+namespace Serifu.Data.Local.Migrations
 {
     [DbContext(typeof(QuotesContext))]
-    partial class QuotesContextModelSnapshot : ModelSnapshot
+    [Migration("20231122063141_InitialCreate")]
+    partial class InitialCreate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.0");

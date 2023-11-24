@@ -18,7 +18,6 @@ using AngleSharp.Dom;
 using AngleSharp.Html.Dom;
 using Ganss.Xss;
 using Serifu.Data;
-using Serifu.Data.Entities;
 using Serifu.Importer.Kancolle.Models;
 using Serilog;
 
