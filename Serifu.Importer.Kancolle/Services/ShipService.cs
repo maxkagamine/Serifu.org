@@ -1,11 +1,11 @@
-﻿using System.Text.RegularExpressions;
-using System.Web;
+﻿using System.Web;
 using AngleSharp.Dom;
 using AngleSharp.Html.Dom;
 using Ganss.Xss;
 using Serifu.Data;
 using Serifu.Importer.Kancolle.Models;
 using Serilog;
+using static Serifu.Importer.Kancolle.Helpers.Regexes;
 
 namespace Serifu.Importer.Kancolle.Services;
 
@@ -39,9 +39,6 @@ internal partial class ShipService
         htmlSanitizer.KeepChildNodes = true;
     }
 
-    [GeneratedRegex(@"^[\s\?]*$")]
-    private static partial Regex EmptyOrQuestionMarks();
-
     /// <summary>
     /// Fetches the given ship's wiki page and extracts their list of quotes.
     /// </summary>
@@ -59,18 +56,18 @@ internal partial class ShipService
         {
             List<string> referenceIds = [];
 
-            string context = GetText(row.Scenario);
+            string context = NormalizeContext(GetText(row.Scenario));
             string textEnglish = GetText(row.English, referenceIds);
             string textJapanese = GetText(row.Japanese);
             string? audioFile = GetFilename(row.PlayButton);
 
-            if (EmptyOrQuestionMarks().IsMatch(textEnglish))
+            if (EmptyOrQuestionMarks.IsMatch(textEnglish))
             {
                 logger.Warning("{Ship}'s {Context} quote is missing a translation.", ship, context);
                 continue;
             }
 
-            if (EmptyOrQuestionMarks().IsMatch(textJapanese))
+            if (EmptyOrQuestionMarks.IsMatch(textJapanese))
             {
                 logger.Warning("{Ship}'s {Context} quote is missing the original Japanese.", ship, context);
                 continue;
@@ -221,6 +218,38 @@ internal partial class ShipService
     /// Gets the name of the file the element links to, url decoded.
     /// </summary>
     /// <param name="element">The link element.</param>
+    /// <returns>The filename portion of the link element's href.</returns>
     private static string? GetFilename(IHtmlAnchorElement? element)
         => HttpUtility.UrlDecode(element?.Href.Split('/').Last());
+
+    /// <summary>
+    /// Title-cases the context and fixes some minor inconsistencies.
+    /// </summary>
+    /// <param name="context">The context.</param>
+    /// <returns>The normalized context.</returns>
+    private static string NormalizeContext(string context)
+    {
+        // Air Battle/ Daytime Spotting/ Night Battle Attack => Air Battle / Daytime Spotting / Night Battle Attack
+        context = Slash.Replace(context, " / ");
+
+        // Valentine’s Day 2017 => Valentine's Day 2017
+        context = context.Replace('’', '\'');
+
+        // Minor Damage2 => Minor Damage 2, NightBattle => Night Battle
+        context = PascalCasedLetters.Replace(context, x => " " + x.ToString());
+
+        // Title case
+        context = FirstCharacterOfWord.Replace(context, x => x.ToString().ToUpper());
+        context = LowercaseWords.Replace(context, x => x.ToString().ToLower());
+
+        // Normalize order
+        context = context.Replace(
+            "Daytime Spotting / Air Battle / Night Battle Attack",
+            "Air Battle / Daytime Spotting / Night Battle Attack");
+
+        // Docking (Major), Docking Major => Docking (Major Damage)
+        context = DockingMajorMinorDamage.Replace(context, x => $"Docking ({x.Groups[1]} Damage)");
+
+        return context;
+    }
 }
