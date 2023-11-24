@@ -114,7 +114,7 @@ internal partial class ShipService
                         SpeakerName = ship.JapaneseName,
                         Context = context, // TODO: Find Japanese names for contexts
                         Text = textJapanese,
-                        AudioFile = audioFile is null ? null : new AudioFile("", "", audioFile, DateTime.Now) // TODO: Hash files
+                        OriginalAudioFile = audioFile, // TODO: Hash files, set date imported
                     }
                 ]
             };
@@ -124,7 +124,7 @@ internal partial class ShipService
                 q.Translations["en"].Context == quote.Translations["en"].Context &&
                 q.Translations["en"].Text == quote.Translations["en"].Text &&
                 q.Translations["ja"].Text == quote.Translations["ja"].Text &&
-                q.Translations["ja"].AudioFile?.OriginalName == quote.Translations["ja"].AudioFile?.OriginalName))
+                q.Translations["ja"].OriginalAudioFile == quote.Translations["ja"].OriginalAudioFile))
             {
                 continue;
             }
@@ -143,7 +143,7 @@ internal partial class ShipService
 
         // Log warnings for potential mistakes in the wiki
         foreach (var group in quotes
-            .GroupBy(q => q.Translations["ja"].AudioFile?.OriginalName)
+            .GroupBy(q => q.Translations["ja"].OriginalAudioFile)
             .Where(g => g.Key is not null && g.DistinctBy(q => q.Translations["ja"].Text).Count() > 1))
         {
             logger.Warning("{Ship} has quotes with different Japanese but same audio file {AudioFile}: {@Quotes}.",

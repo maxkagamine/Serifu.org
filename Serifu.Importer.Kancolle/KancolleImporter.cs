@@ -103,10 +103,10 @@ internal class KancolleImporter
                 logger.Warning("{Ship}'s {Context} audio file {File} returned {StatusCode}. Setting to null.",
                     quote.Translations["en"].SpeakerName,
                     quote.Translations["en"].Context,
-                    quote.Translations["ja"].AudioFile?.OriginalName,
+                    quote.Translations["ja"].OriginalAudioFile,
                     (int)ex.StatusCode);
 
-                quote.Translations["ja"].AudioFile = null;
+                quote.Translations["ja"].OriginalAudioFile = null;
             }
         }
 

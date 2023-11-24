@@ -46,8 +46,5 @@ public class QuotesContext : DbContext
 
         modelBuilder.Entity<Translation>()
             .HasKey("QuoteId", nameof(Translation.Language));
-
-        modelBuilder.Entity<Translation>()
-            .OwnsOne(t => t.AudioFile);
     }
 }
