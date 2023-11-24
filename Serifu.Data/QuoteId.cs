@@ -1,5 +1,4 @@
 ﻿using System.Runtime.CompilerServices;
-using Serifu.Data.Entities;
 
 namespace Serifu.Data;
 

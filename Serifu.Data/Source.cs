@@ -1,4 +1,4 @@
-﻿namespace Serifu.Data.Entities;
+﻿namespace Serifu.Data;
 
 public enum Source
 {

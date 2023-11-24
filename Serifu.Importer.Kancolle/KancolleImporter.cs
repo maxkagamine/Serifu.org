@@ -1,5 +1,5 @@
 ﻿using System.Net;
-using Serifu.Data.Entities;
+using Serifu.Data;
 using Serifu.Importer.Kancolle.Helpers;
 using Serifu.Importer.Kancolle.Models;
 using Serifu.Importer.Kancolle.Services;

@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Serifu.Data;
-using Serifu.Data.Entities;
+using Serifu.Data.Local;
 using Serifu.Importer.Kancolle.Models;
 using Serilog;
 

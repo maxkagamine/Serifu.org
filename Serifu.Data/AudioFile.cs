@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
 
-namespace Serifu.Data.Entities;
+namespace Serifu.Data;
 
 [DebuggerDisplay("{OriginalName,nq}")]
 public record AudioFile(

@@ -1,7 +1,6 @@
-﻿using System.Collections.ObjectModel;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 
-namespace Serifu.Data.Entities;
+namespace Serifu.Data;
 
 [DebuggerDisplay($"{{{nameof(GetDebuggerDisplay)}(),nq}}")]
 public class Quote
