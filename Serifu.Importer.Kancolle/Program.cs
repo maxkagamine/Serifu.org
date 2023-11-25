@@ -35,6 +35,7 @@ builder.Services.AddSerifuLocalData();
 builder.Services.AddSingleton<RateLimitingHttpHandler>();
 builder.Services.AddHttpClient(Options.DefaultName).AddHttpMessageHandler<RateLimitingHttpHandler>();
 
+builder.Services.AddScoped<TranslationService>();
 builder.Services.AddScoped<ShipListService>();
 builder.Services.AddScoped<ShipService>();
 builder.Services.AddScoped<WikiApiService>();

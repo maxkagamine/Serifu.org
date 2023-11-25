@@ -37,13 +37,19 @@ internal partial class ShipService
     private const string NotesSelector = "td[rowspan=2]:last-child"; // SeasonalQuote only
 
     private readonly WikiApiService wikiApiService;
+    private readonly TranslationService translationService;
     private readonly ILocalDataService localDataService;
     private readonly ILogger logger;
     private readonly HtmlSanitizer htmlSanitizer;
 
-    public ShipService(WikiApiService wikiApiService, ILocalDataService localDataService, ILogger logger)
+    public ShipService(
+        WikiApiService wikiApiService,
+        TranslationService translationService,
+        ILocalDataService localDataService,
+        ILogger logger)
     {
         this.wikiApiService = wikiApiService;
+        this.translationService = translationService;
         this.localDataService = localDataService;
         this.logger = logger.ForContext<ShipService>();
 
@@ -73,7 +79,7 @@ internal partial class ShipService
         {
             List<string> referenceIds = [];
 
-            string context = NormalizeContext(GetText(row.Scenario));
+            string context = NormalizeContext(GetText(row.Scenario), ship);
             string textEnglish = GetText(row.English, referenceIds);
             string textJapanese = GetText(row.Japanese);
 
@@ -131,7 +137,7 @@ internal partial class ShipService
                     {
                         Language = "ja",
                         SpeakerName = ship.JapaneseName,
-                        Context = context, // TODO: Find Japanese names for contexts
+                        Context = translationService.TranslateContext(ship, context),
                         Text = textJapanese,
                         AudioFile = audioFile,
                     }
@@ -255,7 +261,7 @@ internal partial class ShipService
     /// </summary>
     /// <param name="context">The context.</param>
     /// <returns>The normalized context.</returns>
-    private static string NormalizeContext(string context)
+    private static string NormalizeContext(string context, Ship ship)
     {
         // Air Battle/ Daytime Spotting/ Night Battle Attack => Air Battle / Daytime Spotting / Night Battle Attack
         context = Slash.Replace(context, " / ");
@@ -270,13 +276,45 @@ internal partial class ShipService
         context = FirstCharacterOfWord.Replace(context, x => x.ToString().ToUpper());
         context = LowercaseWords.Replace(context, x => x.ToString().ToLower());
 
-        // Normalize order
-        context = context.Replace(
-            "Daytime Spotting / Air Battle / Night Battle Attack",
-            "Air Battle / Daytime Spotting / Night Battle Attack");
-
         // Docking (Major), Docking Major => Docking (Major Damage)
         context = DockingMajorMinorDamage.Replace(context, x => $"Docking ({x.Groups[1]} Damage)");
+
+        // Summer Event 2019 => Summer 2019, Hinamatsuri 2020 Mini-Event => Hinamatsuri 2020, 7th Anniversary 2020 => 7th Anniversary
+        context = EventNextToYear.Replace(context, "");
+        context = YearNextToAnniversary.Replace(context, "");
+
+        // Normalize specific patterns, based on most prominent usage in dataset
+        context = context
+            .Replace("Daytime Spotting / Air Battle / Night Battle Attack",
+                     "Air Battle / Daytime Spotting / Night Battle Attack")
+            .Replace("Night Attack", "Night Battle Attack")
+            .Replace("Secondary Attack", "Night Battle Attack")
+            .Replace("Starting Sortie", "Starting a Sortie")
+            .Replace("Starting Battle", "Starting a Battle")
+            .Replace("Battle Start", "Starting a Battle")
+            .Replace("Joining a Fleet", "Joining the Fleet")
+            .Replace("Saury Festival", "Saury")
+            .Replace("Secretary Married", "Secretary (Married)")
+            .Replace("Secretary (Idle)", "Secretary Idle")
+            .Replace("Looking at Scores", "Player's Score")
+            .Replace("New Years", "New Year")
+            .Replace("Return From Sortie", "Returning From Sortie")
+            .Replace($"{ship.EnglishName} Special Attack", "Special Attack");
+        
+        if (context.StartsWith("Idle"))
+        {
+            context = context.Replace("Idle", "Secretary Idle");
+        }
+
+        if (context.Contains("Special") && !context.Contains("Attack"))
+        {
+            context = context.Replace("Special", "Special Attack");
+        }
+        
+        if (context == "Intro")
+        {
+            context = "Introduction";
+        }
 
         return context;
     }
