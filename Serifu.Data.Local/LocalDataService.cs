@@ -12,6 +12,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
+using System.Net.Http;
 using System.Security.Cryptography;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -24,12 +25,18 @@ public class LocalDataService : ILocalDataService
 
     private readonly LocalDataOptions options;
     private readonly QuotesContext db;
+    private readonly HttpClient httpClient;
     private readonly ILogger logger;
 
-    public LocalDataService(IOptions<LocalDataOptions> options, QuotesContext db, ILogger logger)
+    public LocalDataService(
+        IOptions<LocalDataOptions> options,
+        QuotesContext db,
+        HttpClient httpClient,
+        ILogger logger)
     {
         this.options = options.Value;
         this.db = db;
+        this.httpClient = httpClient;
         this.logger = logger.ForContext<LocalDataService>();
 
         logger.Information("Database is {Path}", Path.GetFullPath(db.Database.GetDbConnection().DataSource));
@@ -63,29 +70,64 @@ public class LocalDataService : ILocalDataService
         string extension = GetAllowedExtension(tempPath);
         string hash = await ComputeHash(tempPath, cancellationToken);
         string path = CreateFilePath(hash, extension);
-        string destPath = Path.Combine(options.AudioDirectory, path);
+        string destPath = Path.GetFullPath(Path.Combine(options.AudioDirectory, path));
 
         if (File.Exists(destPath))
         {
+            logger.Verbose("{Path} already exists, comparing files.", destPath);
             if (!CompareFiles(tempPath, destPath)) // Just to be sure
             {
                 throw new Exception($"Holy crap a hash collision between \"{tempPath}\" and \"{destPath}\"!");
             }
 
             cancellationToken.ThrowIfCancellationRequested();
+
+            logger.Verbose("Deleting {Path}", tempPath);
             File.Delete(tempPath);
         }
         else
         {
+            logger.Verbose("Moving to {Path}", destPath);
+            Directory.CreateDirectory(Path.GetDirectoryName(destPath)!);
             File.Move(tempPath, destPath, overwrite: false);
         }
 
         return new AudioFile(path, originalName, DateTime.Now);
     }
 
-    public Task<AudioFile> DownloadAudioFile(string url, bool useCache = true, CancellationToken cancellationToken = default)
+    public async Task<AudioFile> DownloadAudioFile(string url, bool useCache = true, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        if (useCache)
+        {
+            logger.Verbose("Checking if {Url} has already been downloaded.", url);
+
+            var existing = await db.Quotes
+                .SelectMany(q => q.Translations)
+                .Select(t => t.AudioFile)
+                .Where(a => a != null && a.OriginalName == url)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (existing is not null)
+            {
+                logger.Information("Using cached audio file for {Url}", url);
+
+                // Clone the record, as EF uses reference equality for owned entities
+                return existing with { };
+            }
+        }
+
+        logger.Information("Downloading {Url}", url);
+
+        // TODO: Can't reliably determine extension from url; ImportAudioFile should check codec
+        string tempPath = Path.GetTempFileName();
+
+        using (var stream = await httpClient.GetStreamAsync(url, cancellationToken))
+        using (var file = File.OpenWrite(tempPath))
+        {
+            await stream.CopyToAsync(file, cancellationToken);
+        }
+
+        return await ImportAudioFile(tempPath, url, cancellationToken);
     }
 
     public Task DeleteOrphanedAudioFiles(CancellationToken cancellationToken = default)
