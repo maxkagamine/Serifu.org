@@ -30,7 +30,7 @@ public interface ILocalDataService
     /// Hashes the audio file and either moves it into the local audio directory or, if it already exists, deletes
     /// the copy at <paramref name="tempPath"/>.
     /// </summary>
-    /// <param name="tempPath">The path to the audio file.</param>
+    /// <param name="tempPath">The path to the audio file. Must have a valid file extension.</param>
     /// <param name="originalName">The original filename or url.</param>
     /// <param name="cancellationToken">An optional cancellation token.</param>
     /// <returns>A new <see cref="AudioFile"/> record.</returns>
