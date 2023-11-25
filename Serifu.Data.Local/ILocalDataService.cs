@@ -48,6 +48,9 @@ public interface ILocalDataService
     /// <param name="originalName">The original filename or url.</param>
     /// <param name="cancellationToken">An optional cancellation token.</param>
     /// <returns>A new <see cref="AudioFile"/> record.</returns>
+    /// <exception cref="FileNotFoundException"><paramref name="tempPath"/> does not exist.</exception>
+    /// <exception cref="IOException">An exception occurred while moving or deleting the file.</exception>
+    /// <exception cref="UnsupportedAudioFormatException">File does not contain a supported audio format.</exception>
     Task<AudioFile> ImportAudioFile(string tempPath, string originalName, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -62,7 +65,9 @@ public interface ILocalDataService
     /// A new <see cref="AudioFile"/> record with <see cref="AudioFile.OriginalName"/> set to <paramref name="url"/>, or
     /// a clone of an existing one.
     /// </returns>
-    /// <exception cref="HttpRequestException"/>
+    /// <exception cref="HttpRequestException">An exception occurred while making the request, or the server returned a non-OK status code.</exception>
+    /// <exception cref="IOException">An exception occurred while moving or deleting the file.</exception>
+    /// <exception cref="UnsupportedAudioFormatException">File does not contain a supported audio format.</exception>
     Task<AudioFile> DownloadAudioFile(string url, bool useCache = true, CancellationToken cancellationToken = default);
 
     /// <summary>

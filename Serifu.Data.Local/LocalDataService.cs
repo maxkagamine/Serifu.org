@@ -12,7 +12,6 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
-using System.Net.Http;
 using System.Security.Cryptography;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -21,8 +20,6 @@ using Serilog;
 namespace Serifu.Data.Local;
 public class LocalDataService : ILocalDataService
 {
-    private static readonly string[] AllowedExtensions = ["mp3", "ogg", "opus"];
-
     private readonly LocalDataOptions options;
     private readonly QuotesContext db;
     private readonly HttpClient httpClient;
@@ -67,7 +64,7 @@ public class LocalDataService : ILocalDataService
     {
         logger.Information("Importing audio file {OriginalName} located at {TempPath}", originalName, tempPath);
 
-        string extension = GetAllowedExtension(tempPath);
+        string extension = AudioFormatUtility.GetExtension(tempPath); // Throws if unsupported
         string hash = await ComputeHash(tempPath, cancellationToken);
         string path = CreateFilePath(hash, extension);
         string destPath = Path.GetFullPath(Path.Combine(options.AudioDirectory, path));
@@ -118,7 +115,6 @@ public class LocalDataService : ILocalDataService
 
         logger.Information("Downloading {Url}", url);
 
-        // TODO: Can't reliably determine extension from url; ImportAudioFile should check codec
         string tempPath = Path.GetTempFileName();
 
         using (var stream = await httpClient.GetStreamAsync(url, cancellationToken))
@@ -133,29 +129,6 @@ public class LocalDataService : ILocalDataService
     public Task DeleteOrphanedAudioFiles(CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
-    }
-
-    /// <summary>
-    /// Gets the extension from <paramref name="path"/> and makes sure it's one of the <see cref="AllowedExtensions"/>.
-    /// </summary>
-    /// <param name="path">The file path.</param>
-    /// <returns>The lowercase extension without leading dot.</returns>
-    /// <exception cref="ArgumentException">The extension is not allowed.</exception>
-    private static string GetAllowedExtension(string path)
-    {
-        string extension = Path.GetExtension(path).TrimStart('.').ToLowerInvariant();
-
-        if (extension == "oga")
-        {
-            extension = "ogg"; // Normalizing Vorbis to .ogg
-        }
-
-        if (!AllowedExtensions.Contains(extension))
-        {
-            throw new ArgumentException($"\"{path}\" does not have an allowed extension.", nameof(path));
-        }
-
-        return extension;
     }
 
     /// <summary>

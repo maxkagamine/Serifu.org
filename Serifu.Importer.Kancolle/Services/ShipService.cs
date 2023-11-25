@@ -107,6 +107,11 @@ internal partial class ShipService
                     logger.Warning("{Ship}'s {Context} audio file {File} returned {StatusCode}.",
                         ship, context, audioFileUrl, (int)ex.StatusCode);
                 }
+                catch (UnsupportedAudioFormatException ex)
+                {
+                    logger.Warning("{Ship}'s {Context} audio file {File} is invalid: {Message}",
+                        ship, context, audioFileUrl, ex.Message);
+                }
             }
 
             var quote = new Quote()
