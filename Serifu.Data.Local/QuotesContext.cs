@@ -45,6 +45,7 @@ public class QuotesContext : DbContext
             .HasForeignKey("QuoteId");
 
         modelBuilder.Entity<Translation>()
+            .ToTable("Translations")
             .HasKey("QuoteId", nameof(Translation.Language));
 
         modelBuilder.Entity<Translation>()
