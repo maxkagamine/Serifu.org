@@ -34,9 +34,9 @@ namespace Serifu.Data.Local.Migrations
                     Context = table.Column<string>(type: "TEXT", nullable: false),
                     Text = table.Column<string>(type: "TEXT", nullable: false),
                     Notes = table.Column<string>(type: "TEXT", nullable: false),
-                    AudioFile = table.Column<string>(type: "TEXT", nullable: true),
-                    OriginalAudioFile = table.Column<string>(type: "TEXT", nullable: true),
-                    DateAudioFileImported = table.Column<DateTime>(type: "TEXT", nullable: true)
+                    AudioFile_Path = table.Column<string>(type: "TEXT", nullable: true),
+                    AudioFile_OriginalName = table.Column<string>(type: "TEXT", nullable: true),
+                    AudioFile_LastModified = table.Column<DateTime>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
