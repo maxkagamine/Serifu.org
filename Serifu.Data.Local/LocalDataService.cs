@@ -75,7 +75,7 @@ public class LocalDataService : ILocalDataService
             File.Move(tempPath, destPath, overwrite: false);
         }
 
-        return new AudioFile(path, originalName, DateTime.Now);
+        return new AudioFile(path, originalName, File.GetLastWriteTime(tempPath));
     }
 
     public async Task<AudioFile> DownloadAudioFile(string url, bool useCache = true, CancellationToken cancellationToken = default)
