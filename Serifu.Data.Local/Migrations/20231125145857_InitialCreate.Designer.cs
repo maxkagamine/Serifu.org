@@ -11,7 +11,7 @@ using Serifu.Data.Local;
 namespace Serifu.Data.Local.Migrations
 {
     [DbContext(typeof(QuotesContext))]
-    [Migration("20231124060633_InitialCreate")]
+    [Migration("20231125145857_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -47,21 +47,12 @@ namespace Serifu.Data.Local.Migrations
                     b.Property<string>("Language")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("AudioFile")
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("Context")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("DateAudioFileImported")
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("Notes")
                         .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("OriginalAudioFile")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("SpeakerName")
@@ -84,6 +75,34 @@ namespace Serifu.Data.Local.Migrations
                         .HasForeignKey("QuoteId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.OwnsOne("Serifu.Data.AudioFile", "AudioFile", b1 =>
+                        {
+                            b1.Property<long>("TranslationQuoteId")
+                                .HasColumnType("INTEGER");
+
+                            b1.Property<string>("TranslationLanguage")
+                                .HasColumnType("TEXT");
+
+                            b1.Property<DateTime?>("LastModified")
+                                .HasColumnType("TEXT");
+
+                            b1.Property<string>("OriginalName")
+                                .HasColumnType("TEXT");
+
+                            b1.Property<string>("Path")
+                                .IsRequired()
+                                .HasColumnType("TEXT");
+
+                            b1.HasKey("TranslationQuoteId", "TranslationLanguage");
+
+                            b1.ToTable("Translation");
+
+                            b1.WithOwner()
+                                .HasForeignKey("TranslationQuoteId", "TranslationLanguage");
+                        });
+
+                    b.Navigation("AudioFile");
                 });
 
             modelBuilder.Entity("Serifu.Data.Quote", b =>
