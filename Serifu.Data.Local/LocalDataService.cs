@@ -50,8 +50,24 @@ public class LocalDataService : ILocalDataService
     {
         logger.Information("Saving {Count} quotes for {Source}.", quotes.Count(), source);
 
-        db.Quotes.RemoveRange(db.Quotes.Where(q => q.Source == source));
-        db.Quotes.AddRange(quotes);
+        var existing = await GetQuotes()
+            .Where(q => q.Source == source)
+            .ToDictionaryAsync(q => q.Id, cancellationToken);
+
+        foreach (var quote in quotes)
+        {
+            if (existing.Remove(quote.Id, out var existingQuote))
+            {
+                db.Quotes.Update(existingQuote, quote);
+            }
+            else
+            {
+                db.Quotes.Add(quote);
+            }
+        }
+
+        db.Quotes.RemoveRange(existing.Values);
+
         await db.SaveChangesAsync(cancellationToken);
     }
 
