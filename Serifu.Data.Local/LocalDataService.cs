@@ -68,8 +68,8 @@ public class LocalDataService : ILocalDataService
 
         string extension = AudioFormatUtility.GetExtension(tempPath); // Throws if unsupported
         string hash = await ComputeHash(tempPath, cancellationToken);
-        string path = CreateFilePath(hash, extension);
-        string destPath = Path.GetFullPath(Path.Combine(options.AudioDirectory, path));
+        string path = CreateAudioFilePath(hash, extension);
+        string destPath = GetAbsolutePath(path);
 
         if (File.Exists(destPath))
         {
@@ -127,9 +127,38 @@ public class LocalDataService : ILocalDataService
         return await ImportAudioFile(tempPath, url, cancellationToken);
     }
 
-    public Task DeleteOrphanedAudioFiles(CancellationToken cancellationToken = default)
+    public async Task DeleteOrphanedAudioFiles(CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var filesInDb = (await db.Quotes
+            .SelectMany(q => q.Translations)
+            .Where(t => t.AudioFile != null)
+            .Select(t => t.AudioFile!.Path)
+            .ToArrayAsync(cancellationToken))
+            .Select(GetAbsolutePath)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var file in Directory.EnumerateFiles(Path.GetFullPath(options.AudioDirectory), "*", SearchOption.AllDirectories))
+        {
+            if (!filesInDb.Contains(file))
+            {
+                logger.Warning("Deleting orphaned file {Path}", file);
+                File.Delete(file);
+            }
+        }
+
+        static void RemoveEmptyDirectories(string containingDirectory)
+        {
+            foreach (string directory in Directory.EnumerateDirectories(containingDirectory))
+            {
+                RemoveEmptyDirectories(directory);
+                if (!Directory.EnumerateFileSystemEntries(directory).Any())
+                {
+                    Directory.Delete(directory);
+                }
+            }
+        }
+
+        RemoveEmptyDirectories(options.AudioDirectory);
     }
 
     /// <summary>
@@ -159,10 +188,17 @@ public class LocalDataService : ILocalDataService
     /// <param name="hash">The file hash, as a lowercase hex string.</param>
     /// <param name="extension">The file extension, lowercase without leading dot.</param>
     /// <returns>The file path, without any leading slash.</returns>
-    private static string CreateFilePath(string hash, string extension)
+    private static string CreateAudioFilePath(string hash, string extension)
     {
         return $"{hash[..2]}/{hash[2..4]}/{hash[4..]}.{extension}";
     }
+
+    /// <summary>
+    /// Returns the absolute path of <see cref="AudioFile.Path"/> within <see cref="LocalDataOptions.AudioDirectory"/>.
+    /// </summary>
+    /// <param name="path">The audio file path.</param>
+    /// <returns>A fully-qualified path with normalized slashes.</returns>
+    private string GetAbsolutePath(string path) => Path.GetFullPath(Path.Combine(options.AudioDirectory, path));
 
     /// <summary>
     /// Performs a byte-for-byte comparison of two files.
