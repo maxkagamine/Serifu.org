@@ -100,8 +100,7 @@ public class LocalDataService : ILocalDataService
 
             var existing = await db.Quotes
                 .SelectMany(q => q.Translations)
-                .Select(t => t.AudioFile)
-                .Where(a => a != null && a.OriginalName == url)
+                .Where(t => t.AudioFile != null && t.AudioFile.OriginalName == url)
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (existing is not null)
@@ -109,7 +108,7 @@ public class LocalDataService : ILocalDataService
                 logger.Information("Using cached audio file for {Url}", url);
 
                 // Clone the record, as EF uses reference equality for owned entities
-                return existing with { };
+                return existing.AudioFile! with { };
             }
         }
 
