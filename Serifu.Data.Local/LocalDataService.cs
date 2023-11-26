@@ -66,10 +66,16 @@ public class LocalDataService : ILocalDataService
     {
         logger.Information("Importing audio file {OriginalName} located at {TempPath}", originalName, tempPath);
 
+        if (!File.Exists(tempPath))
+        {
+            throw new FileNotFoundException(null, tempPath);
+        }
+
         string extension = AudioFormatUtility.GetExtension(tempPath); // Throws if unsupported
         string hash = await ComputeHash(tempPath, cancellationToken);
         string path = CreateAudioFilePath(hash, extension);
         string destPath = GetAbsolutePath(path);
+        DateTime lastModified = File.GetLastWriteTime(tempPath);
 
         if (File.Exists(destPath))
         {
@@ -91,7 +97,7 @@ public class LocalDataService : ILocalDataService
             File.Move(tempPath, destPath, overwrite: false);
         }
 
-        return new AudioFile(path, originalName, File.GetLastWriteTime(tempPath));
+        return new AudioFile(path, originalName, lastModified);
     }
 
     public async Task<AudioFile> DownloadAudioFile(string url, bool useCache = true, CancellationToken cancellationToken = default)
