@@ -12,6 +12,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
+using System.Text;
 using Serifu.Data;
 using Serifu.Data.Local;
 using Serifu.Importer.Kancolle.Helpers;
@@ -41,6 +42,7 @@ internal class KancolleImporter
     public async Task Import(CancellationToken cancellationToken)
     {
         Console.Title = "Kancolle Importer";
+        Console.OutputEncoding = Encoding.UTF8;
 
         await localDataService.Initialize();
 
