@@ -1,4 +1,5 @@
-﻿using Serifu.Data;
+﻿using System.Text;
+using Serifu.Data;
 using Serifu.Data.Local;
 using Serifu.Importer.Kancolle.Helpers;
 using Serifu.Importer.Kancolle.Services;
@@ -27,6 +28,7 @@ internal class KancolleImporter
     public async Task Import(CancellationToken cancellationToken)
     {
         Console.Title = "Kancolle Importer";
+        Console.OutputEncoding = Encoding.UTF8;
 
         await localDataService.Initialize();
 
