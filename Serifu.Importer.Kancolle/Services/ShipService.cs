@@ -270,11 +270,14 @@ internal partial class ShipService
         context = context.Replace('’', '\'');
 
         // Minor Damage2 => Minor Damage 2, NightBattle => Night Battle
-        context = PascalCasedLetters.Replace(context, x => " " + x.ToString());
+        context = FirstCharacterOfPascalCaseWord.Replace(context, x => " " + x.ToString());
 
         // Title case
         context = FirstCharacterOfWord.Replace(context, x => x.ToString().ToUpper());
-        context = LowercaseWords.Replace(context, x => x.ToString().ToLower());
+        context = TitleCaseLowercaseWords.Replace(context, x => x.ToString().ToLower());
+
+        // Equipment 2 => Equipment (excludes numbers in parenthesis in case someone writes Kai 2 instead of Kai Ni)
+        context = SingleDigitNumberAfterContext.Replace(context, "");
 
         // Docking (Major), Docking Major => Docking (Major Damage)
         context = DockingMajorMinorDamage.Replace(context, x => $"Docking ({x.Groups[1]} Damage)");
@@ -282,6 +285,9 @@ internal partial class ShipService
         // Summer Event 2019 => Summer 2019, Hinamatsuri 2020 Mini-Event => Hinamatsuri 2020, 7th Anniversary 2020 => 7th Anniversary
         context = EventNextToYear.Replace(context, "");
         context = YearNextToAnniversary.Replace(context, "");
+
+        // Special => Special Attack (but not when followed by other words, so no "Special Attack Attack" or "Special Attack Event")
+        context = JustSpecial.Replace(context, "Special Attack");
 
         // Normalize specific patterns, based on most prominent usage in dataset
         context = context
@@ -304,11 +310,6 @@ internal partial class ShipService
         if (context.StartsWith("Idle"))
         {
             context = context.Replace("Idle", "Secretary Idle");
-        }
-
-        if (context.Contains("Special") && !context.Contains("Attack"))
-        {
-            context = context.Replace("Special", "Special Attack");
         }
         
         if (context == "Intro")
