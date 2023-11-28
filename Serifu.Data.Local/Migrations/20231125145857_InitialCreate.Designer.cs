@@ -65,7 +65,7 @@ namespace Serifu.Data.Local.Migrations
 
                     b.HasKey("QuoteId", "Language");
 
-                    b.ToTable("Translation");
+                    b.ToTable("Translations");
                 });
 
             modelBuilder.Entity("Serifu.Data.Translation", b =>
@@ -96,7 +96,7 @@ namespace Serifu.Data.Local.Migrations
 
                             b1.HasKey("TranslationQuoteId", "TranslationLanguage");
 
-                            b1.ToTable("Translation");
+                            b1.ToTable("Translations");
 
                             b1.WithOwner()
                                 .HasForeignKey("TranslationQuoteId", "TranslationLanguage");

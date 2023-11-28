@@ -25,7 +25,7 @@ namespace Serifu.Data.Local.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Translation",
+                name: "Translations",
                 columns: table => new
                 {
                     Language = table.Column<string>(type: "TEXT", nullable: false),
@@ -40,9 +40,9 @@ namespace Serifu.Data.Local.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Translation", x => new { x.QuoteId, x.Language });
+                    table.PrimaryKey("PK_Translations", x => new { x.QuoteId, x.Language });
                     table.ForeignKey(
-                        name: "FK_Translation_Quotes_QuoteId",
+                        name: "FK_Translations_Quotes_QuoteId",
                         column: x => x.QuoteId,
                         principalTable: "Quotes",
                         principalColumn: "Id",
@@ -59,7 +59,7 @@ namespace Serifu.Data.Local.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "Translation");
+                name: "Translations");
 
             migrationBuilder.DropTable(
                 name: "Quotes");
