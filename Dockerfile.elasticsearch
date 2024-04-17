@@ -1,0 +1,37 @@
+ARG ES_VERSION=8.13.0
+FROM elasticsearch:${ES_VERSION}
+
+ARG INDEX_NAME=quotes
+
+RUN bin/elasticsearch-plugin install \
+  analysis-icu \
+  analysis-kuromoji
+
+RUN --mount=source=elasticsearch-index.json,target=/mnt/index.json \
+    --mount=source=data,target=/mnt/data \
+  # Download jq
+  curl -fsSL https://github.com/stedolan/jq/releases/download/jq-1.7.1/jq-linux-$(dpkg --print-architecture) -o /tmp/jq && \
+  chmod +x /tmp/jq && \
+  # Start elasticsearch
+  ES_JAVA_OPTS='-Xlog:disable' bin/elasticsearch -d -E discovery.type=single-node -E xpack.security.enabled=false -p /tmp/elasticsearch-pid && \
+  while ! $(curl -f localhost:9200 &>/dev/null); do sleep 1; done && \
+  # Create index
+  curl -fsS -X PUT "localhost:9200/$INDEX_NAME" \
+    -H 'Content-Type: application/json' --data-binary @/mnt/index.json && \
+  # Import data
+  find /mnt/data -type f -not -name cache.json -exec /tmp/jq -c \
+    ".[]|{index:{_index:\"$INDEX_NAME\",_id:.id|tostring}},." {} + >/tmp/bulk.json && \
+  curl -fsS -X POST "localhost:9200/$INDEX_NAME/_bulk?filter_path=items.*.error" \
+    -H 'Content-Type: application/x-ndjson' --data-binary @/tmp/bulk.json && \
+  rm /tmp/bulk.json && \
+  # Flush to disk
+  curl -fsS -X POST localhost:9200/_refresh && \
+  curl -fsS -X POST localhost:9200/_flush && \
+  # Stop elasticsearch
+  kill $(</tmp/elasticsearch-pid) && \
+  while [[ -f /tmp/elasticsearch-pid ]]; do sleep 1; done && \
+  rm -rf /tmp/* && \
+  find data -name '*.lock' -delete
+
+HEALTHCHECK --start-period=30s --start-interval=1s \
+  CMD ["curl", "-f", "localhost:9200/_cluster/health?wait_for_status=green"]
