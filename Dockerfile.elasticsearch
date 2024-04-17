@@ -1,5 +1,5 @@
-ARG ES_VERSION=8.13.0
-FROM elasticsearch:${ES_VERSION}
+ARG ES_VERSION
+FROM elasticsearch:$ES_VERSION
 
 ARG INDEX_NAME=quotes
 
