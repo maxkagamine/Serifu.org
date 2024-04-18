@@ -1,5 +1,156 @@
 {
+  "mappings": {
+    "dynamic": "strict",
+    "properties": {
+      "id": {
+        "type": "keyword"
+      },
+      "source": {
+        "type": "keyword"
+      },
+      "english": {
+        "properties": {
+          "speakerName": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword"
+              }
+            }
+          },
+          "context": {
+            "type": "text"
+          },
+          "text": {
+            "type": "text",
+            "analyzer": "english_default",
+            "fields": {
+              "conjugations": {
+                "type": "text",
+                "analyzer": "english"
+              }
+            }
+          },
+          "notes": {
+            "type": "keyword",
+            "index": false
+          },
+          "audioFile": {
+            "type": "keyword",
+            "index": false
+          }
+        }
+      },
+      "japanese": {
+        "properties": {
+          "speakerName": {
+            "type": "text",
+            "analyzer": "japanese_default",
+            "fields": {
+              "keyword": {
+                "type": "keyword"
+              }
+            }
+          },
+          "context": {
+            "type": "text",
+            "analyzer": "japanese_default"
+          },
+          "text": {
+            "type": "text",
+            "analyzer": "japanese_default",
+            "fields": {
+              "conjugations": {
+                "type": "text",
+                "analyzer": "japanese_conjugations"
+              },
+              "kanji": {
+                "type": "text",
+                "analyzer": "japanese_kanji"
+              }
+            }
+          },
+          "notes": {
+            "type": "keyword",
+            "index": false
+          },
+          "audioFile": {
+            "type": "keyword",
+            "index": false
+          }
+        }
+      }
+    }
+  },
   "settings": {
+    "analysis": {
+      "analyzer": {
+        "english_default": {
+          "tokenizer": "standard",
+          "filter": [
+            "icu_folding", // Normalizes unicode, strips accents, and lowercases
+            "desdiv"
+          ]
+        },
+        "japanese_default": {
+          "char_filter": [
+            "normalize_unicode"
+          ],
+          "tokenizer": "ja_kuromoji_tokenizer",
+          "filter": [
+            "cjk_width",
+            "lowercase"
+          ]
+        },
+        "japanese_conjugations": {
+          "char_filter": [
+            "normalize_unicode"
+          ],
+          "tokenizer": "ja_kuromoji_tokenizer",
+          "filter": [
+            "kuromoji_number",
+            "kuromoji_baseform",
+            "kuromoji_part_of_speech",
+            "cjk_width",
+            "ja_stop",
+            "kuromoji_stemmer",
+            "lowercase"
+          ]
+        },
+        "japanese_kanji": {
+          "tokenizer": "kanji"
+        }
+      },
+      "char_filter": {
+        "normalize_unicode": {
+          "type": "icu_normalizer",
+          "name": "nfkc",
+          "mode": "compose"
+        }
+      },
+      "tokenizer": {
+        "ja_kuromoji_tokenizer": {
+          "mode": "search",
+          "type": "kuromoji_tokenizer",
+          "discard_compound_token": true,
+          "user_dictionary_rules": []
+        },
+        "kanji": {
+          "type": "pattern",
+          "pattern": "(\\p{IsHan})",
+          "group": 0
+        }
+      },
+      "filter": {
+        "desdiv": {
+          // A search for "desdiv" should pull up "DesDiv3" etc.
+          "type": "pattern_capture",
+          "patterns": [
+            "^((?:bat|car|cru|des|dru)div)\\d+$"
+          ]
+        }
+      }
+    },
     "index": {
       "number_of_shards": 1,
       "number_of_replicas": 0,
