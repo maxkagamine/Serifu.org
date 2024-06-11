@@ -3,18 +3,17 @@
 namespace Serifu.Data;
 
 /// <summary>
-/// Static methods for generating stable IDs for a given quote. The resulting ID is eight bytes (in practice only five
-/// are used) combining the <see cref="Source"/> with a source-specific series of bits.
-///
-/// This approach allows for updating specific rows in Elasticsearch when re-importing an entire Source's quotes.
+/// Static methods for generating stable quote IDs. The resulting ID is eight bytes combining the <see cref="Source"/>
+/// with a source-specific series of bits. This allows for efficient updates compared to GUIDs when re-importing a
+/// source's quotes, and can act as an implicit sort order when filtering to a single source.
 /// </summary>
 /// <remarks>
 /// ID format:
 /// <code>
-///   [      Source      ] [ Ship # ] [ Index ]  // Kancolle
-///   [      Source      ] [ Form ID          ]  // Skyrim, Oblivion
+///   [ Ship #      ] [ Index       ] [ Source ]  // Kancolle
+///   [ Form ID                     ] [ Source ]  // Skyrim, Oblivion
 /// </code>
-/// Example: 4378853375 → Skyrim form id 04FFFFFF
+/// Example: 21474836225 → Skyrim form id 04FFFFFF
 /// </remarks>
 public static class QuoteId
 {
@@ -30,6 +29,6 @@ public static class QuoteId
         ArgumentOutOfRangeException.ThrowIfGreaterThan(shipNumber, 0xFFFF);
         ArgumentOutOfRangeException.ThrowIfGreaterThan(index, 0xFFFF);
 
-        return ((long)Source.Kancolle << 32) | ((uint)(ushort)shipNumber << 16) | (ushort)index;
+        return (shipNumber << 24) | (index << 8) | (byte)Source.Kancolle;
     }
 }
