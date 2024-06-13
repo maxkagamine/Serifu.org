@@ -16,7 +16,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using System.Runtime.InteropServices;
 
-namespace Serifu.Data.Local;
+namespace Serifu.Data.Sqlite;
 
 public class SerifuContext : DbContext
 {
