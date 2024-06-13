@@ -12,6 +12,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
+using System.Collections.Immutable;
+
 namespace Serifu.Data;
 
 /// <summary>
@@ -47,10 +49,10 @@ public record AudioFile
     /// <summary>
     /// The length of <see cref="Data"/>, required for sqlar compatibility. This table will never store compressed data.
     /// </summary>
-    public int Size { get => Data.Count; private set { } }
+    public int Size { get => Data.Length; private set { } }
 
     /// <summary>
     /// The audio file data.
     /// </summary>
-    public required IReadOnlyCollection<byte> Data { get; init; }
+    public required ImmutableArray<byte> Data { get; init; }
 }

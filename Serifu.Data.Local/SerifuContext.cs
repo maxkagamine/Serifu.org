@@ -14,6 +14,7 @@
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using System.Runtime.InteropServices;
 
 namespace Serifu.Data.Local;
 
@@ -79,7 +80,9 @@ public class SerifuContext : DbContext
 
             entity.Property(a => a.Data)
                 .HasColumnName("data")
-                .HasConversion(model => (byte[])model, column => column)
+                .HasConversion(
+                    model => ImmutableCollectionsMarshal.AsArray(model),
+                    column => ImmutableCollectionsMarshal.AsImmutableArray(column))
                 .Metadata.SetValueComparer(ValueComparer.CreateDefault<object>(false));
         });
 
