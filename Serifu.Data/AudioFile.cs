@@ -1,4 +1,6 @@
-﻿namespace Serifu.Data;
+﻿using System.Collections.Immutable;
+
+namespace Serifu.Data;
 
 /// <summary>
 /// An audio file for a particular <see cref="Translation"/>, as stored in the sqlite database. In production <see
@@ -33,10 +35,10 @@ public record AudioFile
     /// <summary>
     /// The length of <see cref="Data"/>, required for sqlar compatibility. This table will never store compressed data.
     /// </summary>
-    public int Size { get => Data.Count; private set { } }
+    public int Size { get => Data.Length; private set { } }
 
     /// <summary>
     /// The audio file data.
     /// </summary>
-    public required IReadOnlyCollection<byte> Data { get; init; }
+    public required ImmutableArray<byte> Data { get; init; }
 }
