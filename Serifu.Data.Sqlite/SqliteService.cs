@@ -12,6 +12,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
+using Microsoft.EntityFrameworkCore;
 using Serilog;
 
 namespace Serifu.Data.Sqlite;
@@ -31,7 +32,29 @@ public class SqliteService : ISqliteService
 
     public async Task SaveQuotes(Source source, IEnumerable<Quote> quotes, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        // This avoids having to fetch all existing entities just so we can delete them, but it has to be done in a
+        // transaction because ExecuteDeleteAsync will execute immediately (there's no way to delete via SaveChanges
+        // without having a reference to an entity)
+        using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
+
+        var existingIds = (await db.Quotes.Select(s => s.Id).ToArrayAsync(cancellationToken)).ToHashSet();
+
+        foreach (var quote in quotes)
+        {
+            if (existingIds.Remove(quote.Id))
+            {
+                db.Quotes.Update(quote);
+            }
+            else
+            {
+                db.Quotes.Add(quote);
+            }
+        }
+
+        await db.Quotes.Where(q => existingIds.Contains(q.Id)).ExecuteDeleteAsync(cancellationToken);
+        await db.SaveChangesAsync(cancellationToken);
+
+        await transaction.CommitAsync(cancellationToken);
     }
 
     public async Task<string?> GetCachedAudioFile(Uri uri, CancellationToken cancellationToken = default)
