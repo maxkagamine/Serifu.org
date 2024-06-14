@@ -12,6 +12,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
+using Kagamine.Extensions.EntityFramework;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using System.Collections.Immutable;
@@ -42,7 +43,7 @@ public class SqliteService : ISqliteService
         // without having a reference to an entity)
         using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
 
-        var existingIds = (await db.Quotes.Select(s => s.Id).ToArrayAsync(cancellationToken)).ToHashSet();
+        var existingIds = await db.Quotes.Select(s => s.Id).ToHashSetAsync(cancellationToken);
 
         foreach (var quote in quotes)
         {
@@ -162,7 +163,24 @@ public class SqliteService : ISqliteService
 
     public async Task DeleteOrphanedAudioFiles(CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var referencedAudioFiles = await db.Quotes
+            .SelectMany(q => new[] { q.English.AudioFile, q.Japanese.AudioFile })
+            .Where(a => a != null)
+            .ToHashSetAsync(cancellationToken);
+
+        var audioFilesInDb = await db.AudioFiles.Select(a => a.ObjectName).ToListAsync(cancellationToken);
+        var audioFilesToDelete = new List<string>();
+
+        foreach (string audioFile in audioFilesInDb)
+        {
+            if (!referencedAudioFiles.Contains(audioFile))
+            {
+                logger.Information("Deleting orphaned audio file {ObjectName}", audioFile);
+                audioFilesInDb.Add(audioFile);
+            }
+        }
+
+        await db.AudioFiles.Where(a => audioFilesToDelete.Contains(a.ObjectName)).ExecuteDeleteAsync(cancellationToken);
     }
 
     /// <summary>
