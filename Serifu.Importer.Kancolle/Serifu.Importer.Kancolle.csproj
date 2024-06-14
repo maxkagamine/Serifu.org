@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Serifu.Data.Local\Serifu.Data.Local.csproj" />
+    <ProjectReference Include="..\Serifu.Data.Sqlite\Serifu.Data.Sqlite.csproj" />
   </ItemGroup>
 
 </Project>
