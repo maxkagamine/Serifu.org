@@ -1,11 +1,11 @@
-﻿using System.Net;
-using AngleSharp.Dom;
+﻿using AngleSharp.Dom;
 using AngleSharp.Html.Dom;
 using Ganss.Xss;
 using Serifu.Data;
-using Serifu.Data.Local;
+using Serifu.Data.Sqlite;
 using Serifu.Importer.Kancolle.Models;
 using Serilog;
+using System.Net;
 using static Serifu.Importer.Kancolle.Helpers.Regexes;
 
 namespace Serifu.Importer.Kancolle.Services;
@@ -24,19 +24,19 @@ internal partial class ShipService
 
     private readonly WikiApiService wikiApiService;
     private readonly TranslationService translationService;
-    private readonly ILocalDataService localDataService;
+    private readonly ISqliteService sqliteService;
     private readonly ILogger logger;
     private readonly HtmlSanitizer htmlSanitizer;
 
     public ShipService(
         WikiApiService wikiApiService,
         TranslationService translationService,
-        ILocalDataService localDataService,
+        ISqliteService sqliteService,
         ILogger logger)
     {
         this.wikiApiService = wikiApiService;
         this.translationService = translationService;
-        this.localDataService = localDataService;
+        this.sqliteService = sqliteService;
         this.logger = logger.ForContext<ShipService>();
 
         htmlSanitizer = new HtmlSanitizer();
@@ -86,13 +86,13 @@ internal partial class ShipService
                 .Where(el => !string.IsNullOrWhiteSpace(el.TextContent))
                 .Select(el => el.InnerHtml.Trim()));
 
-            AudioFile? audioFile = null;
+            string? audioFile = null;
             string? audioFileUrl = row.PlayButton?.Href;
             if (audioFileUrl is not null)
             {
                 try
                 {
-                    audioFile = await localDataService.DownloadAudioFile(audioFileUrl, useCache: true, cancellationToken);
+                    audioFile = await sqliteService.DownloadAudioFile(audioFileUrl, cancellationToken);
                 }
                 catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.NotFound)
                 {
@@ -110,32 +110,28 @@ internal partial class ShipService
             {
                 Id = QuoteId.CreateKancolleId(ship.ShipNumber, index: quotes.Count),
                 Source = Source.Kancolle,
-                Translations = [
-                    new()
-                    {
-                        Language = "en",
-                        SpeakerName = ship.EnglishName,
-                        Context = context,
-                        Text = textEnglish,
-                        Notes = htmlSanitizer.Sanitize(unsafeNotes, document.BaseUri).Trim(),
-                    },
-                    new()
-                    {
-                        Language = "ja",
-                        SpeakerName = ship.JapaneseName,
-                        Context = translationService.TranslateContext(ship, context),
-                        Text = textJapanese,
-                        AudioFile = audioFile,
-                    }
-                ]
+                English = new()
+                {
+                    SpeakerName = ship.EnglishName,
+                    Context = context,
+                    Text = textEnglish,
+                    Notes = htmlSanitizer.Sanitize(unsafeNotes, document.BaseUri).Trim(),
+                },
+                Japanese = new()
+                {
+                    SpeakerName = ship.JapaneseName,
+                    Context = translationService.TranslateContext(ship, context),
+                    Text = textJapanese,
+                    AudioFile = audioFile,
+                }
             };
 
             // Check for duplicates (Kasuga Maru has a separate table for her Taiyou remodel with many of the same lines)
             if (quotes.Any(q =>
-                q.Translations["en"].Context == quote.Translations["en"].Context &&
-                q.Translations["en"].Text == quote.Translations["en"].Text &&
-                q.Translations["ja"].Text == quote.Translations["ja"].Text &&
-                q.Translations["ja"].AudioFile == quote.Translations["ja"].AudioFile))
+                q.English.Context == quote.English.Context &&
+                q.English.Text == quote.English.Text &&
+                q.Japanese.Text == quote.Japanese.Text &&
+                q.Japanese.AudioFile == quote.Japanese.AudioFile))
             {
                 continue;
             }
@@ -154,11 +150,11 @@ internal partial class ShipService
 
         // Log warnings for potential mistakes in the wiki
         foreach (var group in quotes
-            .GroupBy(q => q.Translations["ja"].AudioFile?.OriginalName)
-            .Where(g => g.Key is not null && g.DistinctBy(q => q.Translations["ja"].Text).Count() > 1))
+            .GroupBy(q => q.Japanese.AudioFile)
+            .Where(g => g.Key is not null && g.DistinctBy(q => q.Japanese.Text).Count() > 1))
         {
             logger.Warning("{Ship} has quotes with different Japanese but same audio file {AudioFile}: {@Quotes}.",
-                ship, group.Key, group.Select(q => new { q.Translations["en"].Context, q.Translations["ja"].Text }));
+                ship, group.Key, group.Select(q => new { q.English.Context, q.Japanese.Text }));
         }
 
         return quotes;
