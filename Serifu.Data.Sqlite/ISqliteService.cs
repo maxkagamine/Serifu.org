@@ -8,8 +8,10 @@ public interface ISqliteService
     /// Deletes all quotes for <paramref name="source"/> and replaces them with <paramref name="quotes"/>.
     /// </summary>
     /// <param name="source">The source whose quotes are being imported or updated.</param>
-    /// <param name="quotes">The new quotes to add.</param>
+    /// <param name="quotes">The new quotes to add. <see cref="Quote.Source"/> must match <paramref
+    /// name="source"/>.</param>
     /// <param name="cancellationToken">An optional cancellation token.</param>
+    /// <exception cref="ArgumentException"/>
     /// <exception cref="DbUpdateException"/>
     Task SaveQuotes(Source source, IEnumerable<Quote> quotes, CancellationToken cancellationToken = default);
 
@@ -26,14 +28,14 @@ public interface ISqliteService
     Task<string?> GetCachedAudioFile(Uri uri, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Constructs an object name for the given audio file <paramref name="stream"/> consisting of its hash and detected
-    /// file extension and saves the file to the database.
+    /// Constructs an object name for the given audio file consisting of its hash and detected file extension and saves
+    /// the file to the database if it does not already exist.
     /// <para/>
-    /// If an <paramref name="originalUri"/> is provided, saves a
-    /// cache entry so that the next call to <see cref="GetCachedAudioFile(Uri, CancellationToken)"/> or <see
-    /// cref="DownloadAudioFile(string, CancellationToken)"/> can retreive the object name and skip re-importing.
+    /// If an <paramref name="originalUri"/> is provided, also saves a cache entry so that the next call to <see
+    /// cref="GetCachedAudioFile(Uri, CancellationToken)"/> or <see cref="DownloadAudioFile(string,
+    /// CancellationToken)"/> can retreive the object name and skip re-importing.
     /// </summary>
-    /// <param name="stream">The file stream.</param>
+    /// <param name="stream">The file stream. Must be seekable.</param>
     /// <param name="originalUri">
     /// The original audio file URL, if downloading from the web, or local file path, to avoid re-extracting/converting.
     /// <para/>
@@ -41,7 +43,9 @@ public interface ISqliteService
     /// </param>
     /// <param name="cancellationToken">An optional cancellation token.</param>
     /// <returns>The imported <see cref="AudioFile.ObjectName"/>.</returns>
+    /// <exception cref="ArgumentException"/>
     /// <exception cref="DbUpdateException"/>
+    /// <exception cref="UnsupportedAudioFormatException"/>
     Task<string> ImportAudioFile(Stream stream, Uri? originalUri = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -51,8 +55,9 @@ public interface ISqliteService
     /// <param name="url">The remote audio file URL.</param>
     /// <param name="cancellationToken">An optional cancellation token.</param>
     /// <returns>The imported <see cref="AudioFile.ObjectName"/>.</returns>
-    /// <exception cref="DbUpdateException"/>
     /// <exception cref="UriFormatException"/>
+    /// <exception cref="DbUpdateException"/>
+    /// <exception cref="UnsupportedAudioFormatException"/>
     Task<string> DownloadAudioFile(string url, CancellationToken cancellationToken = default);
 
     /// <summary>
