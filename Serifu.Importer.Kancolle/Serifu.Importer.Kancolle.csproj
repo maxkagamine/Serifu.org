@@ -6,6 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <RunWorkingDirectory>$(MSBuildProjectDirectory)</RunWorkingDirectory>
+    <UserSecretsId>d6af4df9-9298-4b78-b14f-3d842e66360d</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
