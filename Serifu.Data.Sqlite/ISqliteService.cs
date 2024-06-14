@@ -70,6 +70,7 @@ public interface ISqliteService
     /// <param name="cancellationToken">An optional cancellation token.</param>
     /// <returns>The imported <see cref="AudioFile.ObjectName"/>.</returns>
     /// <exception cref="UriFormatException"/>
+    /// <exception cref="HttpRequestException"/>
     /// <exception cref="DbUpdateException"/>
     /// <exception cref="UnsupportedAudioFormatException"/>
     Task<string> DownloadAudioFile(string url, CancellationToken cancellationToken = default);

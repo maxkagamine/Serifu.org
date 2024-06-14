@@ -19,7 +19,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Serifu.Data;
-using Serifu.Data.Local;
+using Serifu.Data.Sqlite;
 using Serifu.Importer.Kancolle.Helpers;
 using Serifu.Importer.Kancolle.Services;
 using Serilog;
@@ -34,7 +34,7 @@ builder.Services.AddSerilog(config => config
     .WriteTo.Console()
     .WriteTo.File("../kancolle-warnings.log", restrictedToMinimumLevel: LogEventLevel.Warning));
 
-builder.Services.AddSerifuLocalData();
+builder.Services.AddSerifuSqlite();
 
 builder.Services.AddSingleton<RateLimitingHttpHandler>();
 builder.Services.AddHttpClient(Options.DefaultName).AddHttpMessageHandler<RateLimitingHttpHandler>();
@@ -47,13 +47,11 @@ builder.Services.AddScoped<WikiApiService>();
 builder.Run(async (
     ShipListService shipListService,
     ShipService shipService,
-    ILocalDataService localDataService,
+    ISqliteService sqliteService,
     ILogger logger,
     CancellationToken cancellationToken) =>
 {
     Console.Title = "Kancolle Importer";
-
-    await localDataService.Initialize();
 
     using (logger.BeginTimedOperation("Import"))
     using (var progress = new TerminalProgressBar())
@@ -71,8 +69,8 @@ builder.Run(async (
             quotes.AddRange(shipQuotes);
         }
 
-        await localDataService.ReplaceQuotes(Source.Kancolle, quotes, cancellationToken);
+        await sqliteService.SaveQuotes(Source.Kancolle, quotes, cancellationToken);
     }
 
-    await localDataService.DeleteOrphanedAudioFiles(cancellationToken);
+    await sqliteService.DeleteOrphanedAudioFiles(cancellationToken);
 });
