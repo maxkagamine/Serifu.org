@@ -23,17 +23,13 @@ using Serifu.Data.Sqlite;
 using Serifu.Importer.Kancolle.Helpers;
 using Serifu.Importer.Kancolle.Services;
 using Serilog;
-using Serilog.Events;
 
-var builder = ConsoleApplication.CreateBuilder();
+var builder = ConsoleApplication.CreateBuilder(new HostApplicationBuilderSettings()
+{
+    EnvironmentName = Environments.Development
+});
 
-builder.Services.AddSerilog(config => config
-    .MinimumLevel.Debug()
-    .MinimumLevel.Override("System", LogEventLevel.Warning)
-    .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
-    .WriteTo.Console()
-    .WriteTo.File("../kancolle-warnings.log", restrictedToMinimumLevel: LogEventLevel.Warning));
-
+builder.Services.AddSerifuSerilog();
 builder.Services.AddSerifuSqlite();
 
 builder.Services.AddSingleton<RateLimitingHttpHandler>();
