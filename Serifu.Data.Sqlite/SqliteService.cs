@@ -118,9 +118,32 @@ public class SqliteService : ISqliteService
         return objectName;
     }
 
-    public async Task<string> DownloadAudioFile(string uri, CancellationToken cancellationToken = default)
+    public async Task<string> DownloadAudioFile(string url, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        Uri uri = new(url, UriKind.Absolute);
+
+        logger.Information("Checking if {Url} has already been downloaded.", url);
+
+        string? objectName = await GetCachedAudioFile(uri, cancellationToken);
+        if (objectName is not null)
+        {
+            // TODO: Add an option to try downloading with If-Modified-Since. The kancolle wiki doesn't appear to
+            // support this (it gives us a Last-Modified and ETag but never responds with 304).
+            logger.Information("Using cached audio file {ObjectName}", objectName);
+        }
+
+        logger.Information("Downloading {Url}", url);
+
+        HttpResponseMessage response = await httpClient.GetAsync(uri, cancellationToken);
+
+        // If we got a content length, initialize the memory stream to that capacity. HttpClient.GetByteArrayAsync()
+        // does the same thing, but it lets us have a stream but also use its underlying byte array without copying.
+        long? contentLength = response.Content.Headers.ContentLength;
+        using var stream = new MemoryStream(checked((int)contentLength.GetValueOrDefault()));
+
+        await response.Content.CopyToAsync(stream, cancellationToken);
+
+        return await ImportAudioFile(stream, uri, cancellationToken);
     }
 
     public async Task DeleteOrphanedAudioFiles(CancellationToken cancellationToken = default)
