@@ -6,7 +6,6 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Serifu.Data;
 using Serifu.Data.Sqlite;
-using Serifu.Importer.Kancolle.Helpers;
 using Serifu.Importer.Kancolle.Services;
 using Serilog;
 
