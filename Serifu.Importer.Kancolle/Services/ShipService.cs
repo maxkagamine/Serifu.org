@@ -20,6 +20,7 @@ using Serifu.Data.Sqlite;
 using Serifu.Importer.Kancolle.Models;
 using Serilog;
 using System.Net;
+
 using static Serifu.Importer.Kancolle.Helpers.Regexes;
 
 namespace Serifu.Importer.Kancolle.Services;
@@ -82,7 +83,7 @@ internal class ShipService
             // Extract text from page
             List<string> referenceIds = [];
 
-            string context = NormalizeContext(GetText(row.Scenario), ship);
+            string scenario = GetText(row.Scenario);
             string textEnglish = GetText(row.English, referenceIds);
             string textJapanese = GetText(row.Japanese);
             string? audioFileUrl = row.PlayButton?.Href;
@@ -95,19 +96,19 @@ internal class ShipService
             // Validate
             if (EmptyOrQuestionMarks.IsMatch(textEnglish))
             {
-                logger.Warning("{Ship}'s {Context} quote is missing a translation.", ship, context);
+                logger.Warning("{Ship}'s {Context} quote is missing a translation.", ship, scenario);
                 continue;
             }
 
             if (EmptyOrQuestionMarks.IsMatch(textJapanese))
             {
-                logger.Warning("{Ship}'s {Context} quote is missing the original Japanese.", ship, context);
+                logger.Warning("{Ship}'s {Context} quote is missing the original Japanese.", ship, scenario);
                 continue;
             }
 
             if (JapaneseCharacters.Count(textEnglish) / textEnglish.Length > 0.5) // May contain kaomoji
             {
-                logger.Warning("{Ship}'s {Context} quote has Japanese on the English side.", ship, context);
+                logger.Warning("{Ship}'s {Context} quote has Japanese on the English side.", ship, scenario);
                 continue;
             }
 
@@ -122,16 +123,19 @@ internal class ShipService
                 catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.NotFound)
                 {
                     logger.Warning("{Ship}'s {Context} audio file {Url} returned {StatusCode}.",
-                        ship, context, audioFileUrl, (int)ex.StatusCode);
+                        ship, scenario, audioFileUrl, (int)ex.StatusCode);
                 }
                 catch (UnsupportedAudioFormatException ex)
                 {
                     logger.Warning("{Ship}'s {Context} audio file {Url} is invalid: {Message}",
-                        ship, context, audioFileUrl, ex.Message);
+                        ship, scenario, audioFileUrl, ex.Message);
                 }
             }
 
             // Create quote
+            (string contextEnglish, string contextJapanese) = translationService.TranslateContext(ship, scenario);
+            string sanitizedNotes = htmlSanitizer.Sanitize(unsafeNotes, document.BaseUri).Trim();
+
             var quote = new Quote()
             {
                 Id = QuoteId.CreateKancolleId(ship.ShipNumber, index: quotes.Count),
@@ -139,14 +143,14 @@ internal class ShipService
                 English = new()
                 {
                     SpeakerName = ship.EnglishName,
-                    Context = context,
+                    Context = contextEnglish,
                     Text = textEnglish,
-                    Notes = htmlSanitizer.Sanitize(unsafeNotes, document.BaseUri).Trim(),
+                    Notes = sanitizedNotes,
                 },
                 Japanese = new()
                 {
                     SpeakerName = ship.JapaneseName,
-                    Context = translationService.TranslateContext(ship, context),
+                    Context = contextJapanese,
                     Text = textJapanese,
                     AudioFile = audioFile,
                 }
@@ -263,68 +267,4 @@ internal class ShipService
     /// <returns>The corresponding <c>.reference-text</c> elements.</returns>
     private static IEnumerable<IElement> GetReferences(IDocument document, IEnumerable<string> referenceIds)
         => referenceIds.Select(id => document.GetElementById(id)?.QuerySelector(".reference-text") ?? throw new Exception($"No reference for {id}."));
-
-    /// <summary>
-    /// Title-cases the context and fixes some minor inconsistencies.
-    /// </summary>
-    /// <param name="context">The context.</param>
-    /// <returns>The normalized context.</returns>
-    private static string NormalizeContext(string context, Ship ship)
-    {
-        // Air Battle/ Daytime Spotting/ Night Battle Attack => Air Battle / Daytime Spotting / Night Battle Attack
-        context = Slash.Replace(context, " / ");
-
-        // Valentine’s Day 2017 => Valentine's Day 2017
-        context = context.Replace('’', '\'');
-
-        // Minor Damage2 => Minor Damage 2, NightBattle => Night Battle
-        context = FirstCharacterOfPascalCaseWord.Replace(context, x => " " + x.ToString());
-
-        // Title case
-        context = FirstCharacterOfWord.Replace(context, x => x.ToString().ToUpper());
-        context = TitleCaseLowercaseWords.Replace(context, x => x.ToString().ToLower());
-
-        // Equipment 2 => Equipment (excludes numbers in parenthesis in case someone writes Kai 2 instead of Kai Ni)
-        context = SingleDigitNumberAfterContext.Replace(context, "");
-
-        // Docking (Major), Docking Major => Docking (Major Damage)
-        context = DockingMajorMinorDamage.Replace(context, x => $"Docking ({x.Groups[1]} Damage)");
-
-        // Summer Event 2019 => Summer 2019, Hinamatsuri 2020 Mini-Event => Hinamatsuri 2020, 7th Anniversary 2020 => 7th Anniversary
-        context = EventNextToYear.Replace(context, "");
-        context = YearNextToAnniversary.Replace(context, "");
-
-        // Special => Special Attack (but not when followed by other words, so no "Special Attack Attack" or "Special Attack Event")
-        context = JustSpecial.Replace(context, "Special Attack");
-
-        // Normalize specific patterns, based on most prominent usage in dataset
-        context = context
-            .Replace("Daytime Spotting / Air Battle / Night Battle Attack",
-                     "Air Battle / Daytime Spotting / Night Battle Attack")
-            .Replace("Night Attack", "Night Battle Attack")
-            .Replace("Secondary Attack", "Night Battle Attack")
-            .Replace("Starting Sortie", "Starting a Sortie")
-            .Replace("Starting Battle", "Starting a Battle")
-            .Replace("Battle Start", "Starting a Battle")
-            .Replace("Joining a Fleet", "Joining the Fleet")
-            .Replace("Saury Festival", "Saury")
-            .Replace("Secretary Married", "Secretary (Married)")
-            .Replace("Secretary (Idle)", "Secretary Idle")
-            .Replace("Looking at Scores", "Player's Score")
-            .Replace("New Years", "New Year")
-            .Replace("Return From Sortie", "Returning From Sortie")
-            .Replace($"{ship.EnglishName} Special Attack", "Special Attack");
-        
-        if (context.StartsWith("Idle"))
-        {
-            context = context.Replace("Idle", "Secretary Idle");
-        }
-        
-        if (context == "Intro")
-        {
-            context = "Introduction";
-        }
-
-        return context;
-    }
 }
