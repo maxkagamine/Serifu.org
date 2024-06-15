@@ -6,6 +6,9 @@ internal static partial class Regexes
     [GeneratedRegex(@"\d+(st|nd|rd|th)|(?! )[^\d():/]+(?<! )")]
     private static partial Regex ContextTokenizerRegex();
 
+    [GeneratedRegex(@"[一-龠ぁ-ゔァ-ヴー々〆〤ヶ]")]
+    private static partial Regex JapaneseCharactersRegex();
+
     [GeneratedRegex(@"(?<=[一-龠ぁ-ゔァ-ヴー々〆〤ヶ])\s+(?=[一-龠ぁ-ゔァ-ヴー々〆〤ヶ])")]
     private static partial Regex SpacesBetweenJapaneseCharactersRegex();
 
@@ -41,6 +44,9 @@ internal static partial class Regexes
 
     /// <inheritdoc cref="ContextTokenizerRegex"/>
     public static Regex ContextTokenizer => ContextTokenizerRegex();
+
+    /// <inheritdoc cref="JapaneseCharactersRegex()"/>
+    public static Regex JapaneseCharacters => JapaneseCharactersRegex();
 
     /// <inheritdoc cref="SpacesBetweenJapaneseCharactersRegex"/>
     public static Regex SpacesBetweenJapaneseCharacters => SpacesBetweenJapaneseCharactersRegex();

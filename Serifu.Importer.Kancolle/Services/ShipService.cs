@@ -13,7 +13,7 @@ namespace Serifu.Importer.Kancolle.Services;
 /// <summary>
 /// Handles scraping the individual ship pages.
 /// </summary>
-internal partial class ShipService
+internal class ShipService
 {
     private const string RowsOfTopLevelTablesSelector = ".mw-parser-output > table tr";
     private const string ScenarioSelector = "td[rowspan=2]:first-child b";
@@ -63,12 +63,22 @@ internal partial class ShipService
 
         foreach (var row in FindQuoteRows(document))
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // Extract text from page
             List<string> referenceIds = [];
 
             string context = NormalizeContext(GetText(row.Scenario), ship);
             string textEnglish = GetText(row.English, referenceIds);
             string textJapanese = GetText(row.Japanese);
+            string? audioFileUrl = row.PlayButton?.Href;
 
+            string unsafeNotes = string.Join("<br>\n", (row.Notes is null ? [] : new[] { row.Notes })
+                .Concat(GetReferences(document, referenceIds))
+                .Where(el => !string.IsNullOrWhiteSpace(el.TextContent))
+                .Select(el => el.InnerHtml.Trim()));
+
+            // Validate
             if (EmptyOrQuestionMarks.IsMatch(textEnglish))
             {
                 logger.Warning("{Ship}'s {Context} quote is missing a translation.", ship, context);
@@ -81,13 +91,14 @@ internal partial class ShipService
                 continue;
             }
 
-            string unsafeNotes = string.Join("<br>\n", (row.Notes is null ? [] : new[] { row.Notes })
-                .Concat(GetReferences(document, referenceIds))
-                .Where(el => !string.IsNullOrWhiteSpace(el.TextContent))
-                .Select(el => el.InnerHtml.Trim()));
+            if (JapaneseCharacters.Count(textEnglish) / textEnglish.Length > 0.5) // May contain kaomoji
+            {
+                logger.Warning("{Ship}'s {Context} quote has Japanese on the English side.", ship, context);
+                continue;
+            }
 
+            // Download audio file
             string? audioFile = null;
-            string? audioFileUrl = row.PlayButton?.Href;
             if (audioFileUrl is not null)
             {
                 try
@@ -96,16 +107,17 @@ internal partial class ShipService
                 }
                 catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.NotFound)
                 {
-                    logger.Warning("{Ship}'s {Context} audio file {File} returned {StatusCode}.",
+                    logger.Warning("{Ship}'s {Context} audio file {Url} returned {StatusCode}.",
                         ship, context, audioFileUrl, (int)ex.StatusCode);
                 }
                 catch (UnsupportedAudioFormatException ex)
                 {
-                    logger.Warning("{Ship}'s {Context} audio file {File} is invalid: {Message}",
+                    logger.Warning("{Ship}'s {Context} audio file {Url} is invalid: {Message}",
                         ship, context, audioFileUrl, ex.Message);
                 }
             }
 
+            // Create quote
             var quote = new Quote()
             {
                 Id = QuoteId.CreateKancolleId(ship.ShipNumber, index: quotes.Count),
@@ -141,7 +153,7 @@ internal partial class ShipService
 
         if (quotes.Count == 0)
         {
-            logger.Warning("No quotes found for {Ship}. Check whether the scraping code is broken or the page actually has no quotes.", ship);
+            logger.Warning("No quotes found for {Ship}.", ship);
         }
         else
         {
