@@ -29,7 +29,7 @@ internal class ShipListService
     /// </summary>
     /// <param name="cancellationToken">An optional cancellation token.</param>
     /// <returns>A collection of <see cref="Ship"/>.</returns>
-    public async Task<IEnumerable<Ship>> GetShips(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<Ship>> GetShips(CancellationToken cancellationToken = default)
     {
         logger.Information("Getting ship list.");
         using var document = await wikiApiService.GetPage(ShipListPage, cancellationToken);
@@ -61,8 +61,13 @@ internal class ShipListService
             throw new Exception("No ship has a Japanese name. This probably means the table structure has changed.");
         }
 
+        if (ships.DistinctBy(s => s.ShipNumber).Count() != ships.Count)
+        {
+            throw new Exception("Duplicate ship numbers. This will result in non-unique IDs.");
+        }
+
         logger.Information("Found {Count} ships.", ships.Count);
-        return ships;
+        return ships.AsReadOnly();
     }
 
     /// <summary>

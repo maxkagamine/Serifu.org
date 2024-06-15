@@ -38,7 +38,7 @@ builder.Run(async (
     using (var progress = new TerminalProgressBar())
     {
         List<Quote> quotes = [];
-        var ships = (await shipListService.GetShips(cancellationToken)).ToList();
+        var ships = await shipListService.GetShips(cancellationToken);
 
         for (int i = 0; i < ships.Count; i++)
         {

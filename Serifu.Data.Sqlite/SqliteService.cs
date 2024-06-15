@@ -9,13 +9,13 @@ namespace Serifu.Data.Sqlite;
 
 public class SqliteService : ISqliteService
 {
-    private readonly SerifuContext db;
+    private readonly IDbContextFactory<SerifuDbContext> dbFactory;
     private readonly HttpClient httpClient;
     private readonly ILogger logger;
 
-    public SqliteService(SerifuContext db, HttpClient httpClient, ILogger logger)
+    public SqliteService(IDbContextFactory<SerifuDbContext> dbFactory, HttpClient httpClient, ILogger logger)
     {
-        this.db = db;
+        this.dbFactory = dbFactory;
         this.httpClient = httpClient;
         this.logger = logger.ForContext<SqliteService>();
     }
@@ -27,6 +27,7 @@ public class SqliteService : ISqliteService
         // This avoids having to fetch all existing entities just so we can delete them, but it has to be done in a
         // transaction because ExecuteDeleteAsync will execute immediately (there's no way to delete via SaveChanges
         // without having a reference to an entity)
+        using var db = dbFactory.CreateDbContext();
         using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
 
         var existingIds = await db.Quotes.Select(s => s.Id).ToHashSetAsync(cancellationToken);
@@ -56,6 +57,7 @@ public class SqliteService : ISqliteService
 
     public async Task<string?> GetCachedAudioFile(Uri uri, CancellationToken cancellationToken = default)
     {
+        using var db = dbFactory.CreateDbContext();
         return (await db.AudioFileCache.FindAsync([uri], cancellationToken))?.ObjectName;
     }
 
@@ -65,6 +67,8 @@ public class SqliteService : ISqliteService
         {
             throw new ArgumentException("Stream is not seekable.", nameof(stream));
         }
+
+        using var db = dbFactory.CreateDbContext();
 
         // Compose the object name; this will throw if it's not a supported audio format
         string objectName = await CreateObjectName(stream, cancellationToken);
@@ -102,14 +106,10 @@ public class SqliteService : ISqliteService
 
             if (uriHasExistingCacheEntry)
             {
-                logger.Debug("Updating cache entry {OriginalUri} -> {ObjectName}", originalUri, objectName);
-
                 db.AudioFileCache.Update(cacheEntry);
             }
             else
             {
-                logger.Debug("Saving cache entry {OriginalUri} -> {ObjectName}", originalUri, objectName);
-
                 db.AudioFileCache.Add(cacheEntry);
             }
         }
@@ -123,19 +123,19 @@ public class SqliteService : ISqliteService
     {
         Uri uri = new(url, UriKind.Absolute);
 
-        logger.Information("Checking if {Url} has already been downloaded.", url);
-
         string? objectName = await GetCachedAudioFile(uri, cancellationToken);
         if (objectName is not null)
         {
             // TODO: Add an option to try downloading with If-Modified-Since. The kancolle wiki doesn't appear to
             // support this (it gives us a Last-Modified and ETag but never responds with 304).
-            logger.Information("Using cached audio file {ObjectName}", objectName);
+            logger.Debug("Using cached audio file {ObjectName} for {Url}", objectName, url);
+            return objectName;
         }
 
         logger.Information("Downloading {Url}", url);
 
         HttpResponseMessage response = await httpClient.GetAsync(uri, cancellationToken);
+        response.EnsureSuccessStatusCode();
 
         // If we got a content length, initialize the memory stream to that capacity. HttpClient.GetByteArrayAsync()
         // does the same thing, but it lets us have a stream but also use its underlying byte array without copying.
@@ -143,16 +143,21 @@ public class SqliteService : ISqliteService
         using var stream = new MemoryStream(checked((int)contentLength.GetValueOrDefault()));
 
         await response.Content.CopyToAsync(stream, cancellationToken);
+        stream.Seek(0, SeekOrigin.Begin);
 
         return await ImportAudioFile(stream, uri, cancellationToken);
     }
 
     public async Task DeleteOrphanedAudioFiles(CancellationToken cancellationToken = default)
     {
-        var referencedAudioFiles = await db.Quotes
-            .SelectMany(q => new[] { q.English.AudioFile, q.Japanese.AudioFile })
-            .Where(a => a != null)
-            .ToHashSetAsync(cancellationToken);
+        using var db = dbFactory.CreateDbContext();
+
+        HashSet<string> referencedAudioFiles = (await db.Quotes
+            .Select(q => new { English = q.English.AudioFile, Japanese = q.Japanese.AudioFile })
+            .ToArrayAsync(cancellationToken))
+            .SelectMany(x => new[] { x.English, x.Japanese })
+            .OfType<string>()
+            .ToHashSet();
 
         var audioFilesInDb = await db.AudioFiles.Select(a => a.ObjectName).ToListAsync(cancellationToken);
         var audioFilesToDelete = new List<string>();

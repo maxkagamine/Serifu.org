@@ -29,6 +29,6 @@ public static class QuoteId
         ArgumentOutOfRangeException.ThrowIfGreaterThan(shipNumber, 0xFFFF);
         ArgumentOutOfRangeException.ThrowIfGreaterThan(index, 0xFFFF);
 
-        return (shipNumber << 24) | (index << 8) | (byte)Source.Kancolle;
+        return ((long)shipNumber << 24) | ((long)index << 8) | (byte)Source.Kancolle;
     }
 }
