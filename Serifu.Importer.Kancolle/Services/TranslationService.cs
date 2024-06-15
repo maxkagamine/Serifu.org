@@ -1,6 +1,7 @@
-﻿using Serifu.Importer.Kancolle.Helpers;
-using Serifu.Importer.Kancolle.Models;
+﻿using Serifu.Importer.Kancolle.Models;
 using Serilog;
+
+using static Serifu.Importer.Kancolle.Helpers.Regexes;
 
 namespace Serifu.Importer.Kancolle.Services;
 
@@ -11,7 +12,7 @@ namespace Serifu.Importer.Kancolle.Services;
 /// JP wiki and find the matching quotes would add a whole 'nother layer of fragility, and probably isn't possible
 /// anyway due to slight variances in the Japanese text.)
 /// </summary>
-/// <seealso cref="Regexes.ContextTokenizer"/>
+/// <seealso cref="ContextTokenizer"/>
 internal class TranslationService
 {
     private static readonly Dictionary<string, string> Translations = new()
@@ -116,18 +117,20 @@ internal class TranslationService
     }
 
     /// <summary>
-    /// Translates the given <paramref name="context"/> into Japanese. If any part of the string can't be translated,
-    /// logs a warning and returns the original string.
+    /// Normalizes the <paramref name="context"/> and translates it into Japanese. If any part of the string can't be
+    /// translated, logs a warning and returns the normalized context for both.
     /// </summary>
     /// <param name="ship">The ship, for logging.</param>
     /// <param name="context">The context in English.</param>
-    /// <returns>The translated context, if successful; otherwise the original string.</returns>
-    public string TranslateContext(Ship ship, string context)
+    /// <returns>The normalized and translated context.</returns>
+    public (string NormalizedContext, string TranslatedContext) TranslateContext(Ship ship, string context)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(context);
 
+        context = NormalizeContext(ship, context);
+
         bool success = true;
-        string translatedContext = Regexes.ContextTokenizer.Replace(context, match =>
+        string translatedContext = ContextTokenizer.Replace(context, match =>
         {
             if (Translations.TryGetValue(match.Value, out var translatedToken))
             {
@@ -144,9 +147,73 @@ internal class TranslationService
         if (success)
         {
             // 10th Anniversary -> 十周年 記念 -> 十周年記念
-            return Regexes.SpacesBetweenJapaneseCharacters.Replace(translatedContext, "");
+            return (context, SpacesBetweenJapaneseCharacters.Replace(translatedContext, ""));
         }
         
+        return (context, context);
+    }
+
+    /// <summary>
+    /// Title-cases the context and fixes some minor inconsistencies.
+    /// </summary>
+    /// <param name="context">The context.</param>
+    /// <returns>The normalized context.</returns>
+    private static string NormalizeContext(Ship ship, string context)
+    {
+        // Air Battle/ Daytime Spotting/ Night Battle Attack => Air Battle / Daytime Spotting / Night Battle Attack
+        context = Slash.Replace(context, " / ");
+
+        // Valentine’s Day 2017 => Valentine's Day 2017
+        context = context.Replace('’', '\'');
+
+        // Minor Damage2 => Minor Damage 2, NightBattle => Night Battle
+        context = FirstCharacterOfPascalCaseWord.Replace(context, x => " " + x.ToString());
+
+        // Title case
+        context = FirstCharacterOfWord.Replace(context, x => x.ToString().ToUpper());
+        context = TitleCaseLowercaseWords.Replace(context, x => x.ToString().ToLower());
+
+        // Equipment 2 => Equipment (excludes numbers in parenthesis in case someone writes Kai 2 instead of Kai Ni)
+        context = SingleDigitNumberAfterContext.Replace(context, "");
+
+        // Docking (Major), Docking Major => Docking (Major Damage)
+        context = DockingMajorMinorDamage.Replace(context, x => $"Docking ({x.Groups[1]} Damage)");
+
+        // Summer Event 2019 => Summer 2019, Hinamatsuri 2020 Mini-Event => Hinamatsuri 2020, 7th Anniversary 2020 => 7th Anniversary
+        context = EventNextToYear.Replace(context, "");
+        context = YearNextToAnniversary.Replace(context, "");
+
+        // Special => Special Attack (but not when followed by other words, so no "Special Attack Attack" or "Special Attack Event")
+        context = JustSpecial.Replace(context, "Special Attack");
+
+        // Normalize specific patterns, based on most prominent usage in dataset
+        context = context
+            .Replace("Daytime Spotting / Air Battle / Night Battle Attack",
+                     "Air Battle / Daytime Spotting / Night Battle Attack")
+            .Replace("Night Attack", "Night Battle Attack")
+            .Replace("Secondary Attack", "Night Battle Attack")
+            .Replace("Starting Sortie", "Starting a Sortie")
+            .Replace("Starting Battle", "Starting a Battle")
+            .Replace("Battle Start", "Starting a Battle")
+            .Replace("Joining a Fleet", "Joining the Fleet")
+            .Replace("Saury Festival", "Saury")
+            .Replace("Secretary Married", "Secretary (Married)")
+            .Replace("Secretary (Idle)", "Secretary Idle")
+            .Replace("Looking at Scores", "Player's Score")
+            .Replace("New Years", "New Year")
+            .Replace("Return From Sortie", "Returning From Sortie")
+            .Replace($"{ship.EnglishName} Special Attack", "Special Attack");
+
+        if (context.StartsWith("Idle"))
+        {
+            context = context.Replace("Idle", "Secretary Idle");
+        }
+
+        if (context == "Intro")
+        {
+            context = "Introduction";
+        }
+
         return context;
     }
 }
