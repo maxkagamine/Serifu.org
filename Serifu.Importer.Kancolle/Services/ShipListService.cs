@@ -1,6 +1,5 @@
 ﻿using AngleSharp.Dom;
 using AngleSharp.Html.Dom;
-using Serifu.Importer.Kancolle.Helpers;
 using Serifu.Importer.Kancolle.Models;
 using Serilog;
 
@@ -40,9 +39,9 @@ internal class ShipListService
             .Select(link =>
             {
                 var englishName = link.TextContent.Trim();
-                var japaneseName = link.ParentElement?.GetTextNodes();
+                var japaneseName = GetTextNodes(link.ParentElement);
 
-                var shipNumberStr = link.Closest("tr")?.FirstElementChild?.GetTextNodes();
+                var shipNumberStr = GetTextNodes(link.Closest("tr")?.FirstElementChild);
                 if (shipNumberStr is null || !int.TryParse(shipNumberStr, out int shipNumber))
                 {
                     throw new Exception($"Failed to extract ship number for {englishName}. The table may have changed.");
@@ -65,4 +64,13 @@ internal class ShipListService
         logger.Information("Found {Count} ships.", ships.Count);
         return ships;
     }
+
+    /// <summary>
+    /// Gets the content of an element's text nodes (the inner text excluding children) and returns the trimmed string,
+    /// or null if <paramref name="element"/> is null.
+    /// </summary>
+    public static string? GetTextNodes(IElement? element)
+        => element is null ? null : string.Join("", element.ChildNodes
+            .Where(node => node.NodeType == NodeType.Text)
+            .Select(node => node.TextContent)).Trim();
 }

@@ -1,6 +1,10 @@
 ﻿using System.Text.RegularExpressions;
 
-namespace Serifu.Importer.Kancolle.Helpers;
+namespace Serifu.Importer.Kancolle;
+
+// This can be simplified once partial properties are available:
+// https://github.com/dotnet/csharplang/issues/6420
+// https://github.com/dotnet/runtime/pull/102977
 internal static partial class Regexes
 {
     [GeneratedRegex(@"\d+(st|nd|rd|th)|(?! )[^\d():/]+(?<! )")]
