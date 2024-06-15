@@ -12,18 +12,47 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
+using System.Collections.Immutable;
+
 namespace Serifu.Data;
 
 /// <summary>
-/// Represents an audio file for a particular <see cref="Translation"/>.
+/// An audio file for a particular <see cref="Translation"/>, as stored in the sqlite database. In production <see
+/// cref="Translation.AudioFile"/> will refer to an object in S3.
 /// </summary>
 /// <remarks>
-/// Multiple quotes may have the same audio <paramref name="Path"/> (undesirable, as it means we got differing
-/// translations for the same voice line), and multiple <paramref name="OriginalName"/> may refer to the same <paramref
-/// name="Path"/> as well if their contents were identical. Rather than manage a separate index of audio files, this
-/// type is embedded in the <see cref="Translation"/> as an owned entity.
+/// This entity includes properties necessary for <a href="https://sqlite.org/sqlar.html">sqlar</a> compatibility. This
+/// enables use of not only the sqlite3 CLI's archive options for extracting files, but more importantly <a
+/// href="https://github.com/maxkagamine/sqlarserver">sqlarserver</a> for serving the sqlite database as a drop-in
+/// replacement for S3 in dev.
 /// </remarks>
-/// <param name="Path">The file path relative to the audio directory; in cloud storage, this is the object name.</param>
-/// <param name="OriginalName">The original filename or url to identify already-downloaded/processed files.</param>
-/// <param name="LastModified">The date the audio file was last imported.</param>
-public record AudioFile(string Path, string? OriginalName, DateTime? LastModified);
+public record AudioFile
+{
+    /// <summary>
+    /// The audio file's object name.
+    /// </summary>
+    public required string ObjectName { get; init; }
+
+    /// <summary>
+    /// Unix file mode, required for sqlar compatibility.
+    /// </summary>
+    /// <returns>
+    /// A file mode indicating a regular file with 0777 permissions.
+    /// </returns>
+    public int Mode { get; private set; } = 0x81ff;
+
+    /// <summary>
+    /// The date the audio file was imported.
+    /// </summary>
+    public DateTime DateImported { get; init; } = DateTime.UtcNow;
+
+    /// <summary>
+    /// The length of <see cref="Data"/>, required for sqlar compatibility. This table will never store compressed data.
+    /// </summary>
+    public int Size { get => Data.Length; private set { } }
+
+    /// <summary>
+    /// The audio file data.
+    /// </summary>
+    public required ImmutableArray<byte> Data { get; init; }
+}

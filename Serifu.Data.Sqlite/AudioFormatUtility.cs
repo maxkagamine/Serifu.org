@@ -12,7 +12,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
-namespace Serifu.Data.Local;
+namespace Serifu.Data.Sqlite;
+
 internal static class AudioFormatUtility
 {
     private static readonly byte[] Mpeg1Layer3Header = [0xff, 0xfb];
@@ -29,13 +30,12 @@ internal static class AudioFormatUtility
     /// <summary>
     /// Determines the extension for a given file, based on a list of supported audio formats.
     /// </summary>
-    /// <param name="path">The file to read.</param>
+    /// <param name="file">The file stream.</param>
     /// <returns>The lowercase extension without a leading dot.</returns>
     /// <exception cref="UnsupportedAudioFormatException">File does not contain a supported audio format.</exception>
-    public static string GetExtension(string path)
+    /// <exception cref="NotSupportedException">The provided stream is not seekable.</exception>
+    public static string GetExtension(Stream file)
     {
-        using var file = File.OpenRead(path);
-
         if (file.Length == 0)
         {
             throw new UnsupportedAudioFormatException("File is zero bytes.");
