@@ -12,6 +12,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -39,9 +40,7 @@ public static class DependencyInjectionExtensions
         => services.AddSerilog((IServiceProvider provider, LoggerConfiguration config) =>
         {
             string appName = provider.GetRequiredService<IHostEnvironment>().ApplicationName;
-
-            string seqUrl = provider.GetRequiredService<IConfiguration>()["SeqUrl"] ??
-                throw new Exception("SeqUrl not set in configuration (user secrets)");
+            string? seqUrl = provider.GetRequiredService<IConfiguration>()["SeqUrl"];
 
             config
                 .MinimumLevel.Debug()
@@ -56,8 +55,12 @@ public static class DependencyInjectionExtensions
                         .WriteTo.Console();
 
                     configureConsoleLogger?.Invoke(config);
-                })
-                .WriteTo.Seq(seqUrl);
+                });
+
+            if (!EF.IsDesignTime)
+            {
+                config.WriteTo.Seq(seqUrl ?? throw new Exception("SeqUrl not set in configuration (user secrets)"));
+            }
 
             configureLogger?.Invoke(config);
         });
