@@ -18,12 +18,10 @@ using System.Runtime.InteropServices;
 
 namespace Serifu.Data.Sqlite;
 
-public class SerifuContext : DbContext
+public class SerifuDbContext : DbContext
 {
-    public SerifuContext(DbContextOptions options) : base(options)
-    {
-        SavedChanges += OnSavedChanges;
-    }
+    public SerifuDbContext(DbContextOptions options) : base(options)
+    { }
 
     public required DbSet<Quote> Quotes { get; set; }
 
@@ -31,13 +29,8 @@ public class SerifuContext : DbContext
 
     public required DbSet<AudioFileCache> AudioFileCache { get; set; }
 
-    private void OnSavedChanges(object? sender, SavedChangesEventArgs e)
-    {
-        ChangeTracker.Clear(); // Immutable records
-    }
-
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) => optionsBuilder
-        .UseSqlite("Data Source=../Serifu.db; Pooling=false")
+        .UseSqlite("Data Source=../Serifu.db")
         .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTrackingWithIdentityResolution) // Immutable records
         .EnableSensitiveDataLogging();
 
@@ -85,7 +78,6 @@ public class SerifuContext : DbContext
                     column => ImmutableCollectionsMarshal.AsImmutableArray(column))
                 .Metadata.SetValueComparer(ValueComparer.CreateDefault<object>(false));
         });
-
 
         modelBuilder.Entity<AudioFileCache>(entity =>
         {

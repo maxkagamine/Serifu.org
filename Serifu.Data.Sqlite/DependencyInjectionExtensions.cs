@@ -26,7 +26,7 @@ public static class DependencyInjectionExtensions
 {
     public static IServiceCollection AddSerifuSqlite(this IServiceCollection services)
     {
-        services.AddDbContext<SerifuContext>();
+        services.AddDbContextFactory<SerifuDbContext>();
         services.AddScoped<ISqliteService, SqliteService>();
 
         return services;

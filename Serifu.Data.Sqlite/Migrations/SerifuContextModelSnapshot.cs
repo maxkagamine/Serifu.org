@@ -10,7 +10,7 @@ using Serifu.Data.Sqlite;
 
 namespace Serifu.Data.Sqlite.Migrations
 {
-    [DbContext(typeof(SerifuContext))]
+    [DbContext(typeof(SerifuDbContext))]
     partial class SerifuContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)
