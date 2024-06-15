@@ -1,37 +1,29 @@
-﻿using System.Diagnostics;
+﻿namespace Serifu.Data;
 
-namespace Serifu.Data;
-
-[DebuggerDisplay("Language = {Language}, Text = {Text}")]
-public class Translation
+public record Translation
 {
-    /// <summary>
-    /// Two-letter language code.
-    /// </summary>
-    public required string Language { get; set; }
-
     /// <summary>
     /// The localized name of the character to whom this quote belongs. May be empty if unknown or generic.
     /// </summary>
-    public required string SpeakerName { get; set; }
+    public required string SpeakerName { get; init; }
 
     /// <summary>
     /// A short, translated description of when this quote is spoken. May be empty if unknown or generic.
     /// </summary>
-    public required string Context { get; set; }
+    public required string Context { get; init; }
 
     /// <summary>
     /// The translated quote.
     /// </summary>
-    public required string Text { get; set; }
+    public required string Text { get; init; }
 
     /// <summary>
     /// Translation notes, if any. Contains sanitized HTML.
     /// </summary>
-    public string Notes { get; set; } = "";
+    public string Notes { get; init; } = "";
 
     /// <summary>
-    /// The audio file, or <see langword="null"/> if audio is not available for this quote or language.
+    /// The audio file object name, or <see langword="null"/> if audio is not available for this quote or language.
     /// </summary>
-    public AudioFile? AudioFile { get; set; }
+    public string? AudioFile { get; init; }
 }

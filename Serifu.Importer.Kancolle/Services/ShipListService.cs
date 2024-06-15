@@ -1,6 +1,5 @@
 ﻿using AngleSharp.Dom;
 using AngleSharp.Html.Dom;
-using Serifu.Importer.Kancolle.Helpers;
 using Serifu.Importer.Kancolle.Models;
 using Serilog;
 
@@ -30,7 +29,7 @@ internal class ShipListService
     /// </summary>
     /// <param name="cancellationToken">An optional cancellation token.</param>
     /// <returns>A collection of <see cref="Ship"/>.</returns>
-    public async Task<IEnumerable<Ship>> GetShips(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<Ship>> GetShips(CancellationToken cancellationToken = default)
     {
         logger.Information("Getting ship list.");
         using var document = await wikiApiService.GetPage(ShipListPage, cancellationToken);
@@ -40,9 +39,9 @@ internal class ShipListService
             .Select(link =>
             {
                 var englishName = link.TextContent.Trim();
-                var japaneseName = link.ParentElement?.GetTextNodes();
+                var japaneseName = GetTextNodes(link.ParentElement);
 
-                var shipNumberStr = link.Closest("tr")?.FirstElementChild?.GetTextNodes();
+                var shipNumberStr = GetTextNodes(link.Closest("tr")?.FirstElementChild);
                 if (shipNumberStr is null || !int.TryParse(shipNumberStr, out int shipNumber))
                 {
                     throw new Exception($"Failed to extract ship number for {englishName}. The table may have changed.");
@@ -62,7 +61,21 @@ internal class ShipListService
             throw new Exception("No ship has a Japanese name. This probably means the table structure has changed.");
         }
 
+        if (ships.DistinctBy(s => s.ShipNumber).Count() != ships.Count)
+        {
+            throw new Exception("Duplicate ship numbers. This will result in non-unique IDs.");
+        }
+
         logger.Information("Found {Count} ships.", ships.Count);
-        return ships;
+        return ships.AsReadOnly();
     }
+
+    /// <summary>
+    /// Gets the content of an element's text nodes (the inner text excluding children) and returns the trimmed string,
+    /// or null if <paramref name="element"/> is null.
+    /// </summary>
+    public static string? GetTextNodes(IElement? element)
+        => element is null ? null : string.Join("", element.ChildNodes
+            .Where(node => node.NodeType == NodeType.Text)
+            .Select(node => node.TextContent)).Trim();
 }

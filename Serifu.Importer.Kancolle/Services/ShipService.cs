@@ -1,19 +1,20 @@
-﻿using System.Net;
-using AngleSharp.Dom;
+﻿using AngleSharp.Dom;
 using AngleSharp.Html.Dom;
 using Ganss.Xss;
 using Serifu.Data;
-using Serifu.Data.Local;
+using Serifu.Data.Sqlite;
 using Serifu.Importer.Kancolle.Models;
 using Serilog;
-using static Serifu.Importer.Kancolle.Helpers.Regexes;
+using System.Net;
+
+using static Serifu.Importer.Kancolle.Regexes;
 
 namespace Serifu.Importer.Kancolle.Services;
 
 /// <summary>
 /// Handles scraping the individual ship pages.
 /// </summary>
-internal partial class ShipService
+internal class ShipService
 {
     private const string RowsOfTopLevelTablesSelector = ".mw-parser-output > table tr";
     private const string ScenarioSelector = "td[rowspan=2]:first-child b";
@@ -24,19 +25,19 @@ internal partial class ShipService
 
     private readonly WikiApiService wikiApiService;
     private readonly TranslationService translationService;
-    private readonly ILocalDataService localDataService;
+    private readonly ISqliteService sqliteService;
     private readonly ILogger logger;
     private readonly HtmlSanitizer htmlSanitizer;
 
     public ShipService(
         WikiApiService wikiApiService,
         TranslationService translationService,
-        ILocalDataService localDataService,
+        ISqliteService sqliteService,
         ILogger logger)
     {
         this.wikiApiService = wikiApiService;
         this.translationService = translationService;
-        this.localDataService = localDataService;
+        this.sqliteService = sqliteService;
         this.logger = logger.ForContext<ShipService>();
 
         htmlSanitizer = new HtmlSanitizer();
@@ -63,79 +64,90 @@ internal partial class ShipService
 
         foreach (var row in FindQuoteRows(document))
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // Extract text from page
             List<string> referenceIds = [];
 
-            string context = NormalizeContext(GetText(row.Scenario), ship);
+            string scenario = GetText(row.Scenario);
             string textEnglish = GetText(row.English, referenceIds);
             string textJapanese = GetText(row.Japanese);
-
-            if (EmptyOrQuestionMarks.IsMatch(textEnglish))
-            {
-                logger.Warning("{Ship}'s {Context} quote is missing a translation.", ship, context);
-                continue;
-            }
-
-            if (EmptyOrQuestionMarks.IsMatch(textJapanese))
-            {
-                logger.Warning("{Ship}'s {Context} quote is missing the original Japanese.", ship, context);
-                continue;
-            }
+            string? audioFileUrl = row.PlayButton?.Href;
 
             string unsafeNotes = string.Join("<br>\n", (row.Notes is null ? [] : new[] { row.Notes })
                 .Concat(GetReferences(document, referenceIds))
                 .Where(el => !string.IsNullOrWhiteSpace(el.TextContent))
                 .Select(el => el.InnerHtml.Trim()));
 
-            AudioFile? audioFile = null;
-            string? audioFileUrl = row.PlayButton?.Href;
+            // Validate
+            if (EmptyOrQuestionMarks.IsMatch(textEnglish))
+            {
+                logger.Warning("{Ship}'s {Context} quote is missing a translation.", ship, scenario);
+                continue;
+            }
+
+            if (EmptyOrQuestionMarks.IsMatch(textJapanese))
+            {
+                logger.Warning("{Ship}'s {Context} quote is missing the original Japanese.", ship, scenario);
+                continue;
+            }
+
+            if (JapaneseCharacters.Count(textEnglish) / textEnglish.Length > 0.5) // May contain kaomoji
+            {
+                logger.Warning("{Ship}'s {Context} quote has Japanese on the English side.", ship, scenario);
+                continue;
+            }
+
+            // Download audio file
+            string? audioFile = null;
             if (audioFileUrl is not null)
             {
                 try
                 {
-                    audioFile = await localDataService.DownloadAudioFile(audioFileUrl, useCache: true, cancellationToken);
+                    audioFile = await sqliteService.DownloadAudioFile(audioFileUrl, cancellationToken);
                 }
                 catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.NotFound)
                 {
-                    logger.Warning("{Ship}'s {Context} audio file {File} returned {StatusCode}.",
-                        ship, context, audioFileUrl, (int)ex.StatusCode);
+                    logger.Warning("{Ship}'s {Context} audio file {Url} returned {StatusCode}.",
+                        ship, scenario, audioFileUrl, (int)ex.StatusCode);
                 }
                 catch (UnsupportedAudioFormatException ex)
                 {
-                    logger.Warning("{Ship}'s {Context} audio file {File} is invalid: {Message}",
-                        ship, context, audioFileUrl, ex.Message);
+                    logger.Warning("{Ship}'s {Context} audio file {Url} is invalid: {Message}",
+                        ship, scenario, audioFileUrl, ex.Message);
                 }
             }
+
+            // Create quote
+            (string contextEnglish, string contextJapanese) = translationService.TranslateContext(ship, scenario);
+            string sanitizedNotes = htmlSanitizer.Sanitize(unsafeNotes, document.BaseUri).Trim();
 
             var quote = new Quote()
             {
                 Id = QuoteId.CreateKancolleId(ship.ShipNumber, index: quotes.Count),
                 Source = Source.Kancolle,
-                Translations = [
-                    new()
-                    {
-                        Language = "en",
-                        SpeakerName = ship.EnglishName,
-                        Context = context,
-                        Text = textEnglish,
-                        Notes = htmlSanitizer.Sanitize(unsafeNotes, document.BaseUri).Trim(),
-                    },
-                    new()
-                    {
-                        Language = "ja",
-                        SpeakerName = ship.JapaneseName,
-                        Context = translationService.TranslateContext(ship, context),
-                        Text = textJapanese,
-                        AudioFile = audioFile,
-                    }
-                ]
+                English = new()
+                {
+                    SpeakerName = ship.EnglishName,
+                    Context = contextEnglish,
+                    Text = textEnglish,
+                    Notes = sanitizedNotes,
+                },
+                Japanese = new()
+                {
+                    SpeakerName = ship.JapaneseName,
+                    Context = contextJapanese,
+                    Text = textJapanese,
+                    AudioFile = audioFile,
+                }
             };
 
             // Check for duplicates (Kasuga Maru has a separate table for her Taiyou remodel with many of the same lines)
             if (quotes.Any(q =>
-                q.Translations["en"].Context == quote.Translations["en"].Context &&
-                q.Translations["en"].Text == quote.Translations["en"].Text &&
-                q.Translations["ja"].Text == quote.Translations["ja"].Text &&
-                q.Translations["ja"].AudioFile == quote.Translations["ja"].AudioFile))
+                q.English.Context == quote.English.Context &&
+                q.English.Text == quote.English.Text &&
+                q.Japanese.Text == quote.Japanese.Text &&
+                q.Japanese.AudioFile == quote.Japanese.AudioFile))
             {
                 continue;
             }
@@ -145,7 +157,7 @@ internal partial class ShipService
 
         if (quotes.Count == 0)
         {
-            logger.Warning("No quotes found for {Ship}. Check whether the scraping code is broken or the page actually has no quotes.", ship);
+            logger.Warning("No quotes found for {Ship}.", ship);
         }
         else
         {
@@ -154,11 +166,11 @@ internal partial class ShipService
 
         // Log warnings for potential mistakes in the wiki
         foreach (var group in quotes
-            .GroupBy(q => q.Translations["ja"].AudioFile?.OriginalName)
-            .Where(g => g.Key is not null && g.DistinctBy(q => q.Translations["ja"].Text).Count() > 1))
+            .GroupBy(q => q.Japanese.AudioFile)
+            .Where(g => g.Key is not null && g.DistinctBy(q => q.Japanese.Text).Count() > 1))
         {
             logger.Warning("{Ship} has quotes with different Japanese but same audio file {AudioFile}: {@Quotes}.",
-                ship, group.Key, group.Select(q => new { q.Translations["en"].Context, q.Translations["ja"].Text }));
+                ship, group.Key, group.Select(q => new { q.English.Context, q.Japanese.Text }));
         }
 
         return quotes;
@@ -241,68 +253,4 @@ internal partial class ShipService
     /// <returns>The corresponding <c>.reference-text</c> elements.</returns>
     private static IEnumerable<IElement> GetReferences(IDocument document, IEnumerable<string> referenceIds)
         => referenceIds.Select(id => document.GetElementById(id)?.QuerySelector(".reference-text") ?? throw new Exception($"No reference for {id}."));
-
-    /// <summary>
-    /// Title-cases the context and fixes some minor inconsistencies.
-    /// </summary>
-    /// <param name="context">The context.</param>
-    /// <returns>The normalized context.</returns>
-    private static string NormalizeContext(string context, Ship ship)
-    {
-        // Air Battle/ Daytime Spotting/ Night Battle Attack => Air Battle / Daytime Spotting / Night Battle Attack
-        context = Slash.Replace(context, " / ");
-
-        // Valentine’s Day 2017 => Valentine's Day 2017
-        context = context.Replace('’', '\'');
-
-        // Minor Damage2 => Minor Damage 2, NightBattle => Night Battle
-        context = FirstCharacterOfPascalCaseWord.Replace(context, x => " " + x.ToString());
-
-        // Title case
-        context = FirstCharacterOfWord.Replace(context, x => x.ToString().ToUpper());
-        context = TitleCaseLowercaseWords.Replace(context, x => x.ToString().ToLower());
-
-        // Equipment 2 => Equipment (excludes numbers in parenthesis in case someone writes Kai 2 instead of Kai Ni)
-        context = SingleDigitNumberAfterContext.Replace(context, "");
-
-        // Docking (Major), Docking Major => Docking (Major Damage)
-        context = DockingMajorMinorDamage.Replace(context, x => $"Docking ({x.Groups[1]} Damage)");
-
-        // Summer Event 2019 => Summer 2019, Hinamatsuri 2020 Mini-Event => Hinamatsuri 2020, 7th Anniversary 2020 => 7th Anniversary
-        context = EventNextToYear.Replace(context, "");
-        context = YearNextToAnniversary.Replace(context, "");
-
-        // Special => Special Attack (but not when followed by other words, so no "Special Attack Attack" or "Special Attack Event")
-        context = JustSpecial.Replace(context, "Special Attack");
-
-        // Normalize specific patterns, based on most prominent usage in dataset
-        context = context
-            .Replace("Daytime Spotting / Air Battle / Night Battle Attack",
-                     "Air Battle / Daytime Spotting / Night Battle Attack")
-            .Replace("Night Attack", "Night Battle Attack")
-            .Replace("Secondary Attack", "Night Battle Attack")
-            .Replace("Starting Sortie", "Starting a Sortie")
-            .Replace("Starting Battle", "Starting a Battle")
-            .Replace("Battle Start", "Starting a Battle")
-            .Replace("Joining a Fleet", "Joining the Fleet")
-            .Replace("Saury Festival", "Saury")
-            .Replace("Secretary Married", "Secretary (Married)")
-            .Replace("Secretary (Idle)", "Secretary Idle")
-            .Replace("Looking at Scores", "Player's Score")
-            .Replace("New Years", "New Year")
-            .Replace("Return From Sortie", "Returning From Sortie")
-            .Replace($"{ship.EnglishName} Special Attack", "Special Attack");
-        
-        if (context.StartsWith("Idle"))
-        {
-            context = context.Replace("Idle", "Secretary Idle");
-        }
-        
-        if (context == "Intro")
-        {
-            context = "Introduction";
-        }
-
-        return context;
-    }
 }
