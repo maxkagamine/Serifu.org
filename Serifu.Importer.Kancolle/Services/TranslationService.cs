@@ -15,7 +15,7 @@
 using Serifu.Importer.Kancolle.Models;
 using Serilog;
 
-using static Serifu.Importer.Kancolle.Helpers.Regexes;
+using static Serifu.Importer.Kancolle.Regexes;
 
 namespace Serifu.Importer.Kancolle.Services;
 
