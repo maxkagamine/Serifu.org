@@ -14,6 +14,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Serifu.Data.Sqlite", "Serifu.Data.Sqlite\Serifu.Data.Sqlite.csproj", "{19AFB2F0-6BA0-4D2B-B636-2CD82AB8BDF8}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Serifu.Data.Elasticsearch", "Serifu.Data.Elasticsearch\Serifu.Data.Elasticsearch.csproj", "{441B9A37-447F-4330-B71C-612479B278D0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Serifu.Data.Elasticsearch.Build", "Serifu.Data.Elasticsearch.Build\Serifu.Data.Elasticsearch.Build.csproj", "{2275100B-213F-4817-ABE3-3947428B732A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -32,6 +36,14 @@ Global
 		{19AFB2F0-6BA0-4D2B-B636-2CD82AB8BDF8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{19AFB2F0-6BA0-4D2B-B636-2CD82AB8BDF8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{19AFB2F0-6BA0-4D2B-B636-2CD82AB8BDF8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{441B9A37-447F-4330-B71C-612479B278D0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{441B9A37-447F-4330-B71C-612479B278D0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{441B9A37-447F-4330-B71C-612479B278D0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{441B9A37-447F-4330-B71C-612479B278D0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2275100B-213F-4817-ABE3-3947428B732A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2275100B-213F-4817-ABE3-3947428B732A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2275100B-213F-4817-ABE3-3947428B732A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2275100B-213F-4817-ABE3-3947428B732A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
