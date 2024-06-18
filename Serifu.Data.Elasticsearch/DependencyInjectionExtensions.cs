@@ -13,24 +13,42 @@
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
 using Elastic.Clients.Elasticsearch;
+using Elastic.Clients.Elasticsearch.Serialization;
+using Elastic.Transport;
 using Microsoft.Extensions.DependencyInjection;
+using System.Text.Json;
 
 namespace Serifu.Data.Elasticsearch;
 
 public static class DependencyInjectionExtensions
 {
-    public static IServiceCollection AddSerifuElasticsearch(this IServiceCollection services)
+    public static IServiceCollection AddSerifuElasticsearch(this IServiceCollection services, string serverUrl)
     {
-        // TODO: ES server defaults to localhost:9200, should get from configuration
-        services.AddSingleton<IElasticsearchClientSettings>(new ElasticsearchClientSettings()
-#if DEBUG
-            .EnableDebugMode()
-#endif
-            .DefaultIndex("quotes")
-            .ThrowExceptions());
-
+        // TODO: Get ES server url from configuration
+        services.AddSingleton<IElasticsearchClientSettings>(CreateElasticsearchSettings(serverUrl));
         services.AddSingleton<ElasticsearchClient>();
 
         return services;
+    }
+
+    private static ElasticsearchClientSettings CreateElasticsearchSettings(string serverUrl)
+    {
+        static void ConfigureJsonSerializerOptions(JsonSerializerOptions options)
+        {
+            options.TypeInfoResolver = JsonSourceGenerationContext.Default;
+        }
+
+        var settings = new ElasticsearchClientSettings(
+            new SingleNodePool(new Uri(serverUrl)),
+            (_, settings) => new DefaultSourceSerializer(settings, ConfigureJsonSerializerOptions));
+
+        settings.DefaultIndex("quotes");
+        settings.ThrowExceptions();
+
+#if DEBUG
+        settings.EnableDebugMode();
+#endif
+
+        return settings;
     }
 }
