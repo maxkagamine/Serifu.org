@@ -10,9 +10,12 @@ namespace Serifu.Data.Sqlite;
 
 public static class DependencyInjectionExtensions
 {
-    public static IServiceCollection AddSerifuSqlite(this IServiceCollection services)
+    public static IServiceCollection AddSerifuSqlite(this IServiceCollection services,
+        string connectionString = "Data Source=../Serifu.db")
     {
-        services.AddDbContextFactory<SerifuDbContext>();
+        services.AddDbContextFactory<SerifuDbContext>(options => options
+            .UseSqlite(connectionString));
+
         services.AddScoped<ISqliteService, SqliteService>();
 
         return services;

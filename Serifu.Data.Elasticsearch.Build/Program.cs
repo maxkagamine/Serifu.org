@@ -12,8 +12,8 @@ builder.Services.AddSerilog(config => config
     .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
     .WriteTo.Console(outputTemplate: "{Message:lj}{NewLine}{Exception}"));
 
-builder.Services.AddSerifuElasticsearch();
-builder.Services.AddSerifuSqlite();
+builder.Services.AddSerifuElasticsearch("http://localhost:9200");
+builder.Services.AddSerifuSqlite("Data Source=../../../../Serifu.db"); // TODO: Replace with path in container
 
 builder.Run(async (
     ElasticsearchClient elasticsearch,
