@@ -15,6 +15,7 @@
 using Elastic.Clients.Elasticsearch;
 using Kagamine.Extensions.Hosting;
 using Serifu.Data.Elasticsearch;
+using Serifu.Data.Elasticsearch.Build;
 using Serifu.Data.Sqlite;
 using Serilog;
 using Serilog.Events;
@@ -36,7 +37,6 @@ builder.Run(async (
     CancellationToken cancellationToken) =>
 {
     logger.Information("Waiting for elasticsearch to start...");
-
     while (true)
     {
         try
@@ -46,9 +46,10 @@ builder.Run(async (
         }
         catch
         {
-            await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
+            await Task.Delay(500, cancellationToken);
         }
     }
 
-    logger.Information("Ready.");
+    logger.Information("Creating index.");
+    await elasticsearch.Indices.CreateAsync(QuotesIndex.Descriptor, cancellationToken);
 });
