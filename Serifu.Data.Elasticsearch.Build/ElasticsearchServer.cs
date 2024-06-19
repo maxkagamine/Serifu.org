@@ -45,6 +45,10 @@ internal partial class ElasticsearchServer : IDisposable
             RedirectStandardInput = true,
         })!;
 
+        // Need to consume stdout/stderr so execution on the server doesn't block once the buffer is full
+        process.BeginOutputReadLine();
+        process.BeginErrorReadLine();
+
         // Wait for server to start
         while (true)
         {
