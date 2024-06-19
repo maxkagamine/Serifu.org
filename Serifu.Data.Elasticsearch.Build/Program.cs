@@ -14,6 +14,7 @@
 
 using Elastic.Clients.Elasticsearch;
 using Kagamine.Extensions.Hosting;
+using Microsoft.Extensions.DependencyInjection;
 using Serifu.Data.Elasticsearch;
 using Serifu.Data.Elasticsearch.Build;
 using Serifu.Data.Sqlite;
@@ -28,28 +29,24 @@ builder.Services.AddSerilog(config => config
     .WriteTo.Console(outputTemplate: "{Message:lj}{NewLine}{Exception}"));
 
 builder.Services.AddSerifuElasticsearch("http://localhost:9200");
-builder.Services.AddSerifuSqlite("Data Source=../../../../Serifu.db"); // TODO: Replace with path in container
+builder.Services.AddSerifuSqlite("Data Source=/mnt/Serifu.db");
+
+builder.Services.AddSingleton<ElasticsearchServer>();
 
 builder.Run(async (
+    ElasticsearchServer server,
     ElasticsearchClient elasticsearch,
     SerifuDbContext sqlite,
     ILogger logger,
     CancellationToken cancellationToken) =>
 {
-    logger.Information("Waiting for elasticsearch to start...");
-    while (true)
-    {
-        try
-        {
-            await elasticsearch.PingAsync(cancellationToken);
-            break;
-        }
-        catch
-        {
-            await Task.Delay(500, cancellationToken);
-        }
-    }
+    logger.Information("Starting elasticsearch...");
+    await server.Start(cancellationToken);
 
     logger.Information("Creating index.");
     await elasticsearch.Indices.CreateAsync(QuotesIndex.Descriptor, cancellationToken);
+
+    logger.Information("Stopping elasticsearch...");
+    await server.Stop(cancellationToken);
 });
+
