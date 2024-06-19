@@ -1,6 +1,8 @@
 ﻿using Elastic.Clients.Elasticsearch;
 using Kagamine.Extensions.Hosting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Serifu.Data;
 using Serifu.Data.Elasticsearch;
 using Serifu.Data.Elasticsearch.Build;
 using Serifu.Data.Sqlite;
@@ -26,13 +28,30 @@ builder.Run(async (
     ILogger logger,
     CancellationToken cancellationToken) =>
 {
-    logger.Information("Starting elasticsearch...");
+    logger.Information("Starting elasticsearch");
     await server.Start(cancellationToken);
 
-    logger.Information("Creating index.");
+    logger.Information("Creating index");
     await elasticsearch.Indices.CreateAsync(QuotesIndex.Descriptor, cancellationToken);
 
-    logger.Information("Stopping elasticsearch...");
+    logger.Information("Loading quotes from sqlite db");
+    List<Quote> quotes = await sqlite.Quotes.ToListAsync(cancellationToken);
+
+    logger.Information("Indexing quotes");
+    await elasticsearch.BulkAsync(x => x.IndexMany(quotes), cancellationToken);
+
+    logger.Information("Flushing index to disk");
+    await elasticsearch.Indices.RefreshAsync(cancellationToken);
+    await elasticsearch.Indices.FlushAsync(cancellationToken);
+
+    logger.Information("Stopping elasticsearch");
     await server.Stop(cancellationToken);
+
+    logger.Information("Deleting lock files");
+    var lockFiles = Directory.GetFiles("/usr/share/elasticsearch", "*.lock", SearchOption.AllDirectories);
+    foreach (var file in lockFiles)
+    {
+        File.Delete(file);
+    }
 });
 
