@@ -30,7 +30,7 @@ public record AudioFile
     /// <summary>
     /// The date the audio file was imported.
     /// </summary>
-    public DateTime DateImported { get; init; } = DateTime.UtcNow;
+    public DateTime DateImported { get; init; } = DateTime.Now;
 
     /// <summary>
     /// The length of <see cref="Data"/>, required for sqlar compatibility. This table will never store compressed data.
