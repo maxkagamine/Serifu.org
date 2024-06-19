@@ -5,6 +5,8 @@ services:
       dockerfile: 'Dockerfile.elasticsearch'
       args:
         ES_VERSION: '8.13.0'
+      secrets:
+        - nugetconfig
     cpus: 1
     mem_limit: '1G'
     ulimits:
@@ -41,3 +43,7 @@ services:
         -H 'kbn-xsrf: blah'
         -d '{"data_view":{"title":"quotes","name":"quotes"},"override":true}'
         -o /dev/null
+
+secrets:
+  nugetconfig:
+    file: /mnt/c/Users/max/AppData/Roaming/NuGet/NuGet.Config
