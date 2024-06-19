@@ -17,7 +17,7 @@ builder.Services.AddSerilog(config => config
     .WriteTo.Console(outputTemplate: "{Message:lj}{NewLine}{Exception}"));
 
 builder.Services.AddSerifuElasticsearch("http://localhost:9200");
-builder.Services.AddSerifuSqlite("Data Source=/mnt/Serifu.db");
+builder.Services.AddSerifuSqlite("Data Source=/Serifu.db");
 
 builder.Services.AddSingleton<ElasticsearchServer>();
 
