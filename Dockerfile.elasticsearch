@@ -1,0 +1,33 @@
+# syntax=docker/dockerfile:1.7-labs
+
+ARG ES_VERSION
+
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS dotnet
+
+ARG RUNTIME_IDENTIFIER=linux-x64
+WORKDIR /src
+
+COPY --parents */*.csproj .
+
+RUN --mount=type=secret,id=nugetconfig \
+    dotnet restore Serifu.Data.Elasticsearch.Build/Serifu.Data.Elasticsearch.Build.csproj \
+      --configfile /run/secrets/nugetconfig -r $RUNTIME_IDENTIFIER
+
+COPY . .
+
+RUN dotnet publish Serifu.Data.Elasticsearch.Build/Serifu.Data.Elasticsearch.Build.csproj \
+      --no-restore -c Release -r $RUNTIME_IDENTIFIER -o /builder
+
+# Final image
+FROM elasticsearch:$ES_VERSION
+
+RUN bin/elasticsearch-plugin install \
+      analysis-icu \
+      analysis-kuromoji
+
+RUN --mount=type=bind,from=dotnet,source=/builder,target=/builder \
+    --mount=type=bind,source=Serifu.db,target=/Serifu.db \
+    /builder/Serifu.Data.Elasticsearch.Build
+
+HEALTHCHECK --start-period=60s --start-interval=1s \
+  CMD curl -f localhost:9200/_cluster/health?wait_for_status=green || exit 1

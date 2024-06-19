@@ -16,7 +16,6 @@ public class SerifuDbContext : DbContext
     public required DbSet<AudioFileCache> AudioFileCache { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) => optionsBuilder
-        .UseSqlite("Data Source=../Serifu.db")
         .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTrackingWithIdentityResolution) // Immutable records
         .EnableSensitiveDataLogging();
 

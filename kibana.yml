@@ -1,0 +1,30 @@
+server:
+  host: '0.0.0.0'
+  shutdownTimeout: '5s'
+elasticsearch:
+  hosts:
+    - http://elasticsearch:9200
+monitoring:
+  ui:
+    container:
+      elasticsearch:
+        enabled: true
+logging:
+  root:
+    level: 'off'
+security:
+  showInsecureClusterWarning: false
+telemetry:
+  optIn: false
+  allowChangingOptInStatus: false
+uiSettings:
+  overrides:
+    theme:darkMode: true
+    defaultIndex: 'quotes' # Data view needs to be created
+    defaultColumns:
+      - english.speakerName
+      - english.context
+      - english.text
+      - japanese.text
+    defaultRoute: '/app/discover'
+    hideAnnouncements: true
