@@ -28,8 +28,9 @@ services:
     volumes:
       - './kibana.yml:/usr/share/kibana/config/kibana.yml'
     healthcheck:
-      test: ['CMD', 'curl', '-f', 'localhost:5601/api/status']
-      start_period: '30s'
+      test: 'curl -f localhost:5601/api/status || exit 1'
+      start_period: '60s'
+      start_interval: '1s'
   kibana-init:
     image: 'kibana:8.13.0'
     restart: 'no'
