@@ -29,5 +29,5 @@ RUN --mount=type=bind,from=dotnet,source=/builder,target=/builder \
     --mount=type=bind,source=Serifu.db,target=/Serifu.db \
     /builder/Serifu.Data.Elasticsearch.Build
 
-HEALTHCHECK --start-period=30s --start-interval=1s \
-  CMD ["curl", "-f", "localhost:9200/_cluster/health?wait_for_status=green"]
+HEALTHCHECK --start-period=60s --start-interval=1s \
+  CMD curl -f localhost:9200/_cluster/health?wait_for_status=green || exit 1
