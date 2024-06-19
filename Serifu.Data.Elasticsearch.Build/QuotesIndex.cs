@@ -92,6 +92,15 @@ internal static class QuotesIndex
                         ])
                         .Tokenizer(JapaneseKuromojiTokenizer)
                         .Filter([
+                            "cjk_width",
+                            "lowercase"
+                        ]))
+                    .Custom(JapaneseConjugationsAnalyzer, x => x
+                        .CharFilter([
+                            NormalizeUnicodeCharFilter
+                        ])
+                        .Tokenizer(JapaneseKuromojiTokenizer)
+                        .Filter([
                             "kuromoji_number",
                             "kuromoji_baseform",
                             "kuromoji_part_of_speech",
