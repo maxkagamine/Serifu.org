@@ -76,6 +76,8 @@ internal static class QuotesIndex
                         .Keyword(q => q.Japanese.AudioFile!, x => x
                             .Index(false))))
                 .Date(q => q.DateImported, x => x
+                    .Index(false))
+                .Keyword(q => q.AlignmentData, x => x
                     .Index(false))))
         .Settings(x => x
             .Analysis(x => x

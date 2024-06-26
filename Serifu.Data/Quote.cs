@@ -12,6 +12,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
+using Kagamine.Extensions.Collections;
+
 namespace Serifu.Data;
 
 public record Quote
@@ -35,6 +37,11 @@ public record Quote
     /// The quote's Japanese translation.
     /// </summary>
     public required Translation Japanese { get; init; }
+
+    /// <summary>
+    /// Word alignment data mapping from English to Japanese.
+    /// </summary>
+    public ValueArray<Alignment> AlignmentData { get; init; }
 
     /// <summary>
     /// The date this quote was imported. May be used to determine if quotes need to be updated.
