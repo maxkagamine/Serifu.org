@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Serifu.Data\Serifu.Data.csproj" />
+    <ProjectReference Include="..\Serifu.ML\Serifu.ML.csproj" />
   </ItemGroup>
   
 </Project>
