@@ -1,4 +1,5 @@
 ﻿using Python.Runtime;
+using Serifu.ML.Abstractions;
 using Serilog;
 using System.Runtime.Serialization;
 
@@ -12,7 +13,7 @@ namespace Serifu.ML;
 /// Python modules (like numpy, at least &lt;2.0.0) mess with the SIGINT handler. Ensure this class is only constructed
 /// once our own handlers are set up (which is the normal DI flow).
 /// </remarks>
-public sealed class TransformersContext : IDisposable
+public sealed class TransformersContext : ITransformersContext
 {
     private readonly ILogger logger;
     private readonly int device = 0; // -1 = CPU, 0 = GPU (CUDA)
@@ -21,7 +22,7 @@ public sealed class TransformersContext : IDisposable
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0300:Simplify collection initialization", Justification = "Analyzer doesn't seem to understand 'dynamic'.")]
     public TransformersContext(ILogger logger)
     {
-        this.logger = logger.ForContext<TransformersContext>();
+        this.logger = logger = logger.ForContext<TransformersContext>();
 
         // Python.NET doesn't have good support for venv's. The below hack of deferring the "site" module and setting
         // prefixes comes courtesy of https://github.com/pythonnet/pythonnet/issues/1478#issuecomment-897933730
@@ -78,8 +79,10 @@ public sealed class TransformersContext : IDisposable
     /// <param name="cancellationToken">A cancellation token that can be used to abort the thread.</param>
     /// <returns>The return value of <paramref name="action"/>.</returns>
     /// <exception cref="OperationCanceledException"/>
-    internal static async Task<T> Run<T>(Func<T> action, CancellationToken cancellationToken)
+    internal async Task<T> Run<T>(Func<T> action, CancellationToken cancellationToken)
     {
+        ObjectDisposedException.ThrowIf(disposed, this);
+
         ulong? pythonThreadId = new();
 
         try
@@ -109,6 +112,17 @@ public sealed class TransformersContext : IDisposable
             throw;
         }
     }
+
+    public async Task<IQuestionAnsweringPipeline> QuestionAnswering(
+        string model,
+        int batchSize = 1,
+        CancellationToken cancellationToken = default) => await Run(() =>
+        {
+            dynamic transformers = Py.Import("transformers");
+            dynamic pipe = transformers.pipeline("question-answering", model: model, batch_size: batchSize, device: device);
+
+            return new QuestionAnsweringPipeline(this, pipe);
+        }, cancellationToken);
 
     private void Dispose(bool disposing)
     {

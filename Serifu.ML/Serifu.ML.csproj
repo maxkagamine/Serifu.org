@@ -1,9 +1,16 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <PackageReference Include="python" Version="[3.11.7]" PrivateAssets="all" GeneratePathProperty="true" />
+    <PackageReference Include="python" Version="[3.11.7]" Condition="'$(OS)' == 'Windows_NT'">
+      <PrivateAssets>all</PrivateAssets>
+      <GeneratePathProperty>true</GeneratePathProperty>
+    </PackageReference>
     <PackageReference Include="pythonnet" Version="3.0.3" />
     <PackageReference Include="Serilog" Version="4.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Serifu.Data\Serifu.Data.csproj" />
   </ItemGroup>
 
   <!-- Because python will only be run locally, we can place the venv in the solution dir to share it between projects. -->
