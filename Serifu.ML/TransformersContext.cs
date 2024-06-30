@@ -14,23 +14,29 @@
 
 using Python.Runtime;
 using Serilog;
+using System.Runtime.Serialization;
 
 namespace Serifu.ML;
 
-public class TransformersContext
+/// <summary>
+/// Encapsulates the Python transformers interop and provides methods for running machine learning tasks.
+/// </summary>
+/// <remarks>
+/// This class can only be instantiated once and must be disposed when stopping the application. Note: Some native
+/// Python modules (like numpy, at least &lt;2.0.0) mess with the SIGINT handler. Ensure this class is only constructed
+/// once our own handlers are set up (which is the normal DI flow).
+/// </remarks>
+public sealed class TransformersContext : IDisposable
 {
     private readonly ILogger logger;
+    private readonly int device = 0; // -1 = CPU, 0 = GPU (CUDA)
+    private bool disposed;
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0300:Simplify collection initialization", Justification = "Analyzer doesn't seem to understand 'dynamic'.")]
     public TransformersContext(ILogger logger)
     {
         this.logger = logger.ForContext<TransformersContext>();
 
-        Initialize();
-    }
-
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0300:Simplify collection initialization", Justification = "Analyzer doesn't seem to understand 'dynamic'.")]
-    private void Initialize()
-    {
         // Python.NET doesn't have good support for venv's. The below hack of deferring the "site" module and setting
         // prefixes comes courtesy of https://github.com/pythonnet/pythonnet/issues/1478#issuecomment-897933730
         Runtime.PythonDLL = VirtualEnv.PythonDll;
@@ -38,7 +44,11 @@ public class TransformersContext
         _ = PythonEngine.Version; // Load the dll
         PythonEngine.SetNoSiteFlag(); // Disable running the "site" module on startup
 
-        PythonEngine.Initialize();
+        // https://github.com/pythonnet/pythonnet/issues/2107
+        RuntimeData.FormatterType = typeof(NoopFormatter);
+
+        PythonEngine.Initialize(initSigs: false);
+        PythonEngine.BeginAllowThreads();
 
         using (Py.GIL())
         {
@@ -52,13 +62,13 @@ public class TransformersContext
             site.main();
 
             // Ensure packages are installed and print version info
-            logger.Information("python version: {Version}", sys.version);
+            logger.Information("Python version: {Version}", sys.version);
 
             dynamic torch = Py.Import("torch");
-            logger.Information("torch version: {Version}", torch.__version__);
+            logger.Information("PyTorch version: {Version}", torch.__version__);
 
             PyObject transformers = Py.Import("transformers");
-            logger.Information("transformers version: {Version}", transformers.GetAttr("__version__"));
+            logger.Information("Transformers version: {Version}", transformers.GetAttr("__version__"));
 
             // Check if we can use the GPU
             if (torch.cuda.is_available())
@@ -68,7 +78,48 @@ public class TransformersContext
             else
             {
                 logger.Warning("CUDA is not available. PyTorch will run on the CPU.");
+                device = -1;
             }
         }
     }
+
+    private void Dispose(bool disposing)
+    {
+        if (!disposed)
+        {
+            if (disposing)
+            {
+                // No managed resources to free
+            }
+
+            PythonEngine.Shutdown();
+            disposed = true;
+        }
+    }
+
+    ~TransformersContext()
+    {
+        Dispose(disposing: false);
+    }
+
+    public void Dispose()
+    {
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
+    }
 }
+
+// https://github.com/pythonnet/pythonnet/issues/2107
+#pragma warning disable SYSLIB0011 // Type or member is obsolete
+#pragma warning disable SYSLIB0050 // Type or member is obsolete
+internal class NoopFormatter : IFormatter
+{
+    public object Deserialize(Stream s) => throw new NotImplementedException();
+    public void Serialize(Stream s, object o) { }
+
+    public SerializationBinder? Binder { get; set; }
+    public StreamingContext Context { get; set; }
+    public ISurrogateSelector? SurrogateSelector { get; set; }
+}
+#pragma warning restore SYSLIB0050 // Type or member is obsolete
+#pragma warning restore SYSLIB0011 // Type or member is obsolete
