@@ -69,6 +69,47 @@ public sealed class TransformersContext : IDisposable
         }
     }
 
+    /// <summary>
+    /// Runs <paramref name="action"/> within a Python global interpreter lock, sending an interrupt to the Python
+    /// thread (raises <c>KeyboardInterrupt</c>) if <paramref name="cancellationToken"/> is canceled.
+    /// </summary>
+    /// <typeparam name="T">The return type.</typeparam>
+    /// <param name="action">A single-threaded, interruptible operation to perform within the GIL.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used to abort the thread.</param>
+    /// <returns>The return value of <paramref name="action"/>.</returns>
+    /// <exception cref="OperationCanceledException"/>
+    internal static async Task<T> Run<T>(Func<T> action, CancellationToken cancellationToken)
+    {
+        ulong? pythonThreadId = new();
+
+        try
+        {
+            Task<T> task = Task.Run(() =>
+            {
+                using (Py.GIL())
+                {
+                    pythonThreadId = PythonEngine.GetPythonThreadID();
+                    cancellationToken.ThrowIfCancellationRequested();
+                    return action();
+                }
+            }, cancellationToken);
+
+            return await task.WaitAsync(cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            if (pythonThreadId.HasValue)
+            {
+                using (Py.GIL())
+                {
+                    PythonEngine.Interrupt(pythonThreadId.Value);
+                }
+            }
+
+            throw;
+        }
+    }
+
     private void Dispose(bool disposing)
     {
         if (!disposed)
