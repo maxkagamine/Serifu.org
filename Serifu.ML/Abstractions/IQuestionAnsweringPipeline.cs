@@ -17,7 +17,7 @@ public interface IQuestionAnsweringPipeline
     /// <param name="questions">Questions to ask given the <paramref name="context"/>.</param>
     /// <param name="context">The context for the given <paramref name="questions"/>.</param>
     /// <param name="cancellationToken">An optional cancellation token.</param>
-    /// <returns>A collection of <see cref="QuestionAnsweringPrediction"/> corresponding to the <paramref
+    /// <returns>An array of <see cref="QuestionAnsweringPrediction"/> corresponding to the <paramref
     /// name="questions"/>.</returns>
-    Task<IEnumerable<QuestionAnsweringPrediction>> Pipe(string[] questions, string context, CancellationToken cancellationToken = default);
+    Task<QuestionAnsweringPrediction[]> Pipe(string[] questions, string context, CancellationToken cancellationToken = default);
 }
