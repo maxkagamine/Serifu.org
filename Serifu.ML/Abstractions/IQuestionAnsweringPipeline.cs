@@ -19,8 +19,5 @@ public interface IQuestionAnsweringPipeline
     /// <param name="cancellationToken">An optional cancellation token.</param>
     /// <returns>A collection of <see cref="QuestionAnsweringPrediction"/> corresponding to the <paramref
     /// name="questions"/>.</returns>
-    Task<IEnumerable<QuestionAnsweringPrediction>> Pipe(
-        IEnumerable<string> questions,
-        string context,
-        CancellationToken cancellationToken = default);
+    Task<IEnumerable<QuestionAnsweringPrediction>> Pipe(string[] questions, string context, CancellationToken cancellationToken = default);
 }

@@ -14,13 +14,12 @@ internal class QuestionAnsweringPipeline : IQuestionAnsweringPipeline
     }
 
     public async Task<IEnumerable<QuestionAnsweringPrediction>> Pipe(
-        IEnumerable<string> questions,
-        string context,
+        string[] questions, string context,
         CancellationToken cancellationToken = default) => await ctx.Run(() =>
         {
-            List<QuestionAnsweringPrediction> predictions = new(questions.Count());
+            List<QuestionAnsweringPrediction> predictions = new(questions.Length);
 
-            foreach (dynamic prediction in pipe(question: questions, context: context))
+            foreach (dynamic prediction in pipe(question: questions.ToPyList(), context: context))
             {
                 predictions.Add(new(
                     Score: prediction["score"],
