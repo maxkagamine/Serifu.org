@@ -1,12 +1,16 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <PackageReference Include="MeCab.DotNet" Version="1.2.0" />
     <PackageReference Include="python" Version="[3.11.7]" Condition="'$(OS)' == 'Windows_NT'">
       <PrivateAssets>all</PrivateAssets>
       <GeneratePathProperty>true</GeneratePathProperty>
     </PackageReference>
     <PackageReference Include="pythonnet" Version="3.0.3" />
     <PackageReference Include="Serilog" Version="4.0.0" />
+    <PackageReference Include="VeParse.DotNet" Version="5.0.4">
+      <ExcludeAssets>contentFiles</ExcludeAssets>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>
