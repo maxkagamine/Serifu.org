@@ -12,6 +12,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
+using Python.Runtime;
 using Serifu.ML.Abstractions;
 
 namespace Serifu.ML;
@@ -27,7 +28,7 @@ internal class QuestionAnsweringPipeline : IQuestionAnsweringPipeline
         this.pipe = pipe;
     }
 
-    public async Task<IEnumerable<QuestionAnsweringPrediction>> Pipe(
+    public async Task<QuestionAnsweringPrediction[]> Pipe(
         string[] questions, string context,
         CancellationToken cancellationToken = default) => await ctx.Run(() =>
         {
@@ -38,15 +39,36 @@ internal class QuestionAnsweringPipeline : IQuestionAnsweringPipeline
             // https://github.com/huggingface/transformers/blob/v4.36.2/src/transformers/pipelines/base.py#L1052-L1120
             pipe.call_count = 0;
 
-            foreach (dynamic prediction in pipe(question: questions.ToPyList(), context: context))
+            dynamic result = pipe(question: questions.ToPyList(), context: context);
+
+            // Return type is inconsistent; if you give it a list that happens to have only one element, it will return
+            // just the prediction rather than a list
+            // https://github.com/huggingface/transformers/blob/v4.36.2/src/transformers/pipelines/question_answering.py#L392
+            if (PyDict.IsDictType(result))
             {
                 predictions.Add(new(
-                    Score: prediction["score"],
-                    Start: prediction["start"],
-                    End: prediction["end"],
-                    Answer: prediction["answer"]));
+                    Score: result["score"],
+                    Start: result["start"],
+                    End: result["end"],
+                    Answer: result["answer"]));
+            }
+            else
+            {
+                foreach (dynamic prediction in result)
+                {
+                    predictions.Add(new(
+                        Score: prediction["score"],
+                        Start: prediction["start"],
+                        End: prediction["end"],
+                        Answer: prediction["answer"]));
+                }
             }
 
-            return predictions;
+            if (predictions.Count != questions.Length)
+            {
+                throw new Exception("Number of predictions does not match the number of questions.");
+            }
+
+            return predictions.ToArray();
         }, cancellationToken);
 }
