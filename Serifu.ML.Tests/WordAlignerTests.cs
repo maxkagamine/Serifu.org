@@ -2,22 +2,38 @@
 using Serifu.Data;
 using Serifu.ML.Abstractions;
 using Serilog;
+using Xunit.Abstractions;
 
 namespace Serifu.ML.Tests;
 
-public class WordAlignerTests
+public sealed class WordAlignerTests : IDisposable
 {
     private readonly Mock<IQuestionAnsweringPipeline> pipeline;
     private readonly WordAligner aligner;
+    private readonly ILogger logger;
 
-    public WordAlignerTests()
+    public WordAlignerTests(ITestOutputHelper output)
     {
         pipeline = new Mock<IQuestionAnsweringPipeline>(MockBehavior.Strict);
 
         var transformers = Mock.Of<ITransformersContext>(x =>
             x.QuestionAnswering(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()) == Task.FromResult(pipeline.Object));
 
-        aligner = new WordAligner(transformers, new LoggerConfiguration().CreateLogger());
+        logger = output.CreateTestLogger();
+        aligner = new WordAligner(transformers, logger);
+    }
+
+    [Fact]
+    public async Task IntegrationTest()
+    {
+        string englishText = "I'm Zuihou. Even though I'm a light carrier, I can show you that I'll be as good as standard carriers with some experience.";
+        string japaneseText = "瑞鳳です。軽空母ですが、練度が上がれば、正規空母並の活躍をお見せできます。";
+
+        var aligner = new WordAligner(new TransformersContext(logger), logger);
+
+        IEnumerable<Alignment> result = await aligner.AlignSymmetric(englishText, japaneseText);
+
+        logger.Information("Result: {Result}", string.Join(',', result.Select(x => $"{x.FromStart},{x.FromEnd},{x.ToStart},{x.ToEnd}")));
     }
 
     [Fact]
@@ -206,4 +222,6 @@ public class WordAlignerTests
     /// </summary>
     private static Alignment[] StringToAlignments(string str) =>
         str.Split(',').Select(ushort.Parse).Chunk(4).Select(x => new Alignment(x[0], x[1], x[2], x[3])).ToArray();
+
+    public void Dispose() => aligner.Dispose();
 }

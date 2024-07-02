@@ -6,6 +6,11 @@
 public interface ITransformersContext : IDisposable
 {
     /// <summary>
+    /// Gets the name of the GPU or CPU that PyTorch is running on.
+    /// </summary>
+    string DeviceName { get; }
+
+    /// <summary>
     /// Creates a pipeline for question-answering.
     /// </summary>
     /// <remarks>

@@ -1,4 +1,5 @@
-﻿using Python.Runtime;
+﻿using Microsoft.Win32;
+using Python.Runtime;
 using Serifu.ML.Abstractions;
 using Serilog;
 using System.Runtime.Serialization;
@@ -61,14 +62,23 @@ public sealed class TransformersContext : ITransformersContext
             if (torch.cuda.is_available())
             {
                 logger.Information("CUDA is available.");
+
+                DeviceName = torch.cuda.get_device_name(device);
             }
             else
             {
                 logger.Warning("CUDA is not available. PyTorch will run on the CPU.");
+
                 device = -1;
+                DeviceName = OperatingSystem.IsOSPlatform("Windows") ?
+                    Registry.GetValue(@"HKEY_LOCAL_MACHINE\HARDWARE\DESCRIPTION\System\CentralProcessor\0", "ProcessorNameString", null)?.ToString()?.Trim() ?? "CPU" : "CPU";
             }
+
+            this.logger = logger.ForContext(nameof(DeviceName), DeviceName);
         }
     }
+
+    public string DeviceName { get; }
 
     /// <summary>
     /// Runs <paramref name="action"/> within a Python global interpreter lock, sending an interrupt to the Python
