@@ -90,6 +90,8 @@ internal partial class ElasticsearchServer : IDisposable
             // Did not perform a graceful shutdown. Program has failed; send SIGKILL.
             process.Kill(true);
         }
+
+        process?.Dispose();
     }
 
     [LibraryImport("libc", EntryPoint = "kill", SetLastError = true)]
