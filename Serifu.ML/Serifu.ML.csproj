@@ -17,6 +17,10 @@
     <ProjectReference Include="..\Serifu.Data\Serifu.Data.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Serifu.ML.Tests"/>
+  </ItemGroup>
+
   <!-- Because python will only be run locally, we can place the venv in the solution dir to share it between projects. -->
   <Target Name="InstallPythonRequirements" AfterTargets="Build" Condition="'$(OS)' == 'Windows_NT'">
     <Exec Command="$(PkgPython)\tools\python.exe -m venv $(SolutionDir)\.python" />
