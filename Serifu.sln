@@ -10,6 +10,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{B81DCFC9-FFDC-42B8-93F4-75774F3A69F0}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
+		Directory.Build.props = Directory.Build.props
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Serifu.Data.Sqlite", "Serifu.Data.Sqlite\Serifu.Data.Sqlite.csproj", "{19AFB2F0-6BA0-4D2B-B636-2CD82AB8BDF8}"
@@ -22,7 +23,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Serifu.ML", "Serifu.ML\Seri
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Serifu.ML.Benchmark", "Serifu.ML.Benchmark\Serifu.ML.Benchmark.csproj", "{D64F7752-5AE0-44B5-BA07-18A49BE88B87}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Serifu.ML.Tests", "Serifu.ML.Tests\Serifu.ML.Tests.csproj", "{A5794578-8376-465D-A2C1-ED4EFD47F874}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Serifu.ML.Tests", "Serifu.ML.Tests\Serifu.ML.Tests.csproj", "{A5794578-8376-465D-A2C1-ED4EFD47F874}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
