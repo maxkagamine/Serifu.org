@@ -9,9 +9,9 @@ public sealed class JapaneseTokenizer : ITokenizer, IDisposable
 {
     private readonly MeCabTagger mecab = MeCabTagger.Create();
 
-    public IEnumerable<Range> Tokenize(string text)
+    public IEnumerable<Token> Tokenize(string text)
     {
-        List<Range> ranges = [];
+        List<Token> tokens = [];
 
         IEnumerable<MeCabNode> nodes = mecab.ParseToNodes(text);
         IEnumerable<VeWord> words = nodes.ParseVeWords();
@@ -28,12 +28,12 @@ public sealed class JapaneseTokenizer : ITokenizer, IDisposable
             int start = text.IndexOf(word.Word, cursor);
             int end = start + word.Word.Length;
 
-            ranges.Add(new(start, end));
+            tokens.Add(new(start, end));
 
             cursor = end;
         }
 
-        return ranges;
+        return tokens;
     }
 
     public void Dispose() => mecab.Dispose();
