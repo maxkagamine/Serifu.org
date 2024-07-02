@@ -37,12 +37,12 @@ public class TokenizerTests
 
     private static void Tokenizer(ITokenizer tokenizer, string text, string[] expected)
     {
-        Range[] ranges = tokenizer.Tokenize(text).ToArray();
-        string[] actual = ranges.Select(r => text[r]).ToArray();
+        Token[] tokens = tokenizer.Tokenize(text).ToArray();
+        string[] actual = tokens.Select(t => text[(Range)t]).ToArray();
 
         Assert.Equal(expected, actual);
 
         // Make sure they're in incrementing order, so e.g. the second "I'm" in Tama's line isn't the range for the first "I'm"
-        Assert.All(ranges, (range, i) => Assert.True(i == 0 || range.Start.GetOffset(text.Length) >= ranges[i - 1].End.GetOffset(text.Length)));
+        Assert.All(tokens, (range, i) => Assert.True(i == 0 || range.Start >= tokens[i - 1].End));
     }
 }

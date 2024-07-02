@@ -15,13 +15,19 @@
 namespace Serifu.ML.Abstractions;
 
 /// <summary>
-/// The <see cref="QuestionAnsweringPipeline"/>'s answer to a question.
+/// Represents a token by its start and end index.
 /// </summary>
 /// <remarks>
-/// Mirrors <see href="https://huggingface.co/docs/transformers/main/en/main_classes/pipelines#transformers.QuestionAnsweringPipeline.__call__"/>.
+/// This type provides an advantage over <see cref="Range"/> in that its offsets can be destructured and accessed
+/// directly instead of needing to call <see cref="Index.GetOffset(int)"/> with the original text length (as an <see
+/// cref="Index"/> can be from the end).
 /// </remarks>
-/// <param name="Score">The probability associated to the answer.</param>
-/// <param name="Start">The character start index of the answer.</param>
-/// <param name="End">The character end index of the answer.</param>
-/// <param name="Answer">The answer to the question.</param>
-public record QuestionAnsweringPrediction(double Score, int Start, int End, string Answer);
+/// <param name="Start">The inclusive start index.</param>
+/// <param name="End">The exclusive end index.</param>
+public readonly record struct Token(ushort Start, ushort End)
+{
+    public Token(int start, int end) : this(checked((ushort)start), checked((ushort)end))
+    { }
+
+    public static implicit operator Range(Token token) => new(token.Start, token.End);
+}

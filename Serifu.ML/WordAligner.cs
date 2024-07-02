@@ -60,14 +60,14 @@ public sealed class WordAligner : IWordAligner, IDisposable
         // split contractions, and the Japanese tokenizer use Ve to recombine MeCab tokens into words, as the latter
         // tends to tokenize into morphemes which aren't really natural or useful for word alignment (e.g. しました ->
         // し, まし, た). It might be best to retrain the model, but it seems to be fine as is.
-        Range[] englishTokenRanges = englishTokenizer.Tokenize(english).ToArray();
-        Range[] japaneseTokenRanges = japaneseTokenizer.Tokenize(japanese).ToArray();
+        Token[] englishTokens = englishTokenizer.Tokenize(english).ToArray();
+        Token[] japaneseTokens = japaneseTokenizer.Tokenize(japanese).ToArray();
 
-        using (logger.ForContext("WordCount", englishTokenRanges.Length + japaneseTokenRanges.Length) // For statistics
+        using (logger.ForContext("WordCount", englishTokens.Length + japaneseTokens.Length) // For statistics
                      .BeginTimedOperation("Running word alignment"))
         {
-            var forwardAlignments = await AlignForward(pipeline, english, japanese, englishTokenRanges, japaneseTokenRanges, cancellationToken);
-            var reverseAlignments = await AlignReverse(pipeline, english, japanese, englishTokenRanges, japaneseTokenRanges, cancellationToken);
+            var forwardAlignments = await AlignForward(pipeline, english, japanese, englishTokens, japaneseTokens, cancellationToken);
+            var reverseAlignments = await AlignReverse(pipeline, english, japanese, englishTokens, japaneseTokens, cancellationToken);
 
             return SimplifyAlignments(forwardAlignments.Concat(reverseAlignments), english, japanese);
         }
@@ -80,26 +80,26 @@ public sealed class WordAligner : IWordAligner, IDisposable
     /// <param name="pipeline">The transformers pipeline.</param>
     /// <param name="fromText">The "from" text.</param>
     /// <param name="toText">The "to" text.</param>
-    /// <param name="fromTokenRanges">The token ranges for the "from" text, to mark words for alignment.</param>
-    /// <param name="toTokenRanges">The token ranges for the "to" text, to align predictions to whole words.</param>
+    /// <param name="fromTokens">The tokens for the "from" text, to mark words for alignment.</param>
+    /// <param name="toTokens">The tokens for the "to" text, to align predictions to whole words.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>Unsimplified alignments.</returns>
     private static async Task<IEnumerable<Alignment>> AlignForward(
         IQuestionAnsweringPipeline pipeline,
         string fromText,
         string toText,
-        Range[] fromTokenRanges,
-        Range[] toTokenRanges,
+        Token[] fromTokens,
+        Token[] toTokens,
         CancellationToken cancellationToken)
     {
-        string[] questions = fromTokenRanges.Select(t => WrapToken(fromText, t)).ToArray();
+        string[] questions = fromTokens.Select(t => WrapToken(fromText, t)).ToArray();
         QuestionAnsweringPrediction[] predictions = await pipeline.Pipe(questions, toText, cancellationToken);
 
         List<Alignment> alignments = new(predictions.Length);
 
         for (int i = 0; i < predictions.Length; i++)
         {
-            Range fromRange = fromTokenRanges[i];
+            var (fromStart, fromEnd) = fromTokens[i];
             QuestionAnsweringPrediction prediction = predictions[i];
 
             if (prediction.Score < Threshold)
@@ -107,16 +107,9 @@ public sealed class WordAligner : IWordAligner, IDisposable
                 continue;
             }
 
-            foreach (Range toRange in GetOverlappingRanges(prediction, toTokenRanges, toText))
+            foreach (var (toStart, toEnd) in GetOverlappingTokens(prediction, toTokens))
             {
-                checked
-                {
-                    alignments.Add(new(
-                        FromStart: (ushort)fromRange.Start.GetOffset(fromText.Length),
-                        FromEnd: (ushort)fromRange.End.GetOffset(fromText.Length),
-                        ToStart: (ushort)toRange.Start.GetOffset(toText.Length),
-                        ToEnd: (ushort)toRange.End.GetOffset(toText.Length)));
-                }
+                alignments.Add(new(fromStart, fromEnd, toStart, toEnd));
             }
         }
 
@@ -124,25 +117,25 @@ public sealed class WordAligner : IWordAligner, IDisposable
     }
 
     /// <summary>
-    /// Calls <see cref="AlignForward(IQuestionAnsweringPipeline, string, string, Range[], Range[],
+    /// Calls <see cref="AlignForward(IQuestionAnsweringPipeline, string, string, Token[], Token[],
     /// CancellationToken)"/> with the from and to swapped, then swaps the results back.
     /// </summary>
     /// <param name="pipeline">The transformers pipeline.</param>
     /// <param name="fromText">The "from" text.</param>
     /// <param name="toText">The "to" text.</param>
-    /// <param name="fromTokenRanges">The token ranges for the "from" text, to align predictions to whole words.</param>
-    /// <param name="toTokenRanges">The token ranges for the "to" text, to mark words for alignment.</param>
+    /// <param name="fromTokens">The tokens for the "from" text, to align predictions to whole words.</param>
+    /// <param name="toTokens">The tokens for the "to" text, to mark words for alignment.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>Unsimplified alignments.</returns>
     private static async Task<IEnumerable<Alignment>> AlignReverse(
         IQuestionAnsweringPipeline pipeline,
         string fromText,
         string toText,
-        Range[] fromTokenRanges,
-        Range[] toTokenRanges,
+        Token[] fromTokens,
+        Token[] toTokens,
         CancellationToken cancellationToken)
     {
-        var alignments = await AlignForward(pipeline, toText, fromText, toTokenRanges, fromTokenRanges, cancellationToken);
+        var alignments = await AlignForward(pipeline, toText, fromText, toTokens, fromTokens, cancellationToken);
         return alignments.Select(a => new Alignment(a.ToStart, a.ToEnd, a.FromStart, a.FromEnd));
     }
 
@@ -155,13 +148,12 @@ public sealed class WordAligner : IWordAligner, IDisposable
         => $"{text[..tokenRange.Start]}{Marker}{text[tokenRange]}{Marker}{text[tokenRange.End..]}";
 
     /// <summary>
-    /// Finds the token ranges that intersect the prediction span.
+    /// Finds the tokens that intersect the prediction span.
     /// </summary>
     /// <param name="prediction">The prediction.</param>
-    /// <param name="tokenRanges">The "to" token ranges.</param>
-    /// <param name="text">The "to" text.</param>
-    private static IEnumerable<Range> GetOverlappingRanges(QuestionAnsweringPrediction prediction, Range[] tokenRanges, string text)
-        => tokenRanges.Where(t => prediction.End > t.Start.GetOffset(text.Length) && prediction.Start < t.End.GetOffset(text.Length));
+    /// <param name="tokens">The "to" tokens.</param>
+    private static IEnumerable<Token> GetOverlappingTokens(QuestionAnsweringPrediction prediction, Token[] tokens)
+        => tokens.Where(t => prediction.End > t.Start && prediction.Start < t.End);
 
     /// <summary>
     /// An algorithm for merging word alignments, such that for any selected span of the "from" text, the resulting
