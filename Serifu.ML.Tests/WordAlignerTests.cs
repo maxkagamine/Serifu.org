@@ -7,13 +7,112 @@ namespace Serifu.ML.Tests;
 
 public class WordAlignerTests
 {
-    private readonly Mock<ITransformersContext> transformers;
+    private readonly Mock<IQuestionAnsweringPipeline> pipeline;
     private readonly WordAligner aligner;
 
     public WordAlignerTests()
     {
-        transformers = new Mock<ITransformersContext>(MockBehavior.Strict);
-        aligner = new WordAligner(transformers.Object, new LoggerConfiguration().CreateLogger());
+        pipeline = new Mock<IQuestionAnsweringPipeline>(MockBehavior.Strict);
+
+        var transformers = Mock.Of<ITransformersContext>(x =>
+            x.QuestionAnswering(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()) == Task.FromResult(pipeline.Object));
+
+        aligner = new WordAligner(transformers, new LoggerConfiguration().CreateLogger());
+    }
+
+    [Fact]
+    public async Task AsksTheRightQuestions() // There's an I, Robot joke in here somewhere
+    {
+        string englishText = "I'm the light cruiser, Tama. I'm not a cat-nya.";
+        string japaneseText = "軽巡、多摩です。猫じゃないにゃ。";
+
+        // This test relies on the TokenizerTests passing
+        string[] expectedEnglishQuestions = [
+            " ¶ I'm ¶  the light cruiser, Tama. I'm not a cat-nya.",
+            "I'm  ¶ the ¶  light cruiser, Tama. I'm not a cat-nya.",
+            "I'm the  ¶ light ¶  cruiser, Tama. I'm not a cat-nya.",
+            "I'm the light  ¶ cruiser ¶ , Tama. I'm not a cat-nya.",
+            "I'm the light cruiser,  ¶ Tama ¶ . I'm not a cat-nya.",
+            "I'm the light cruiser, Tama.  ¶ I'm ¶  not a cat-nya.",
+            "I'm the light cruiser, Tama. I'm  ¶ not ¶  a cat-nya.",
+            "I'm the light cruiser, Tama. I'm not  ¶ a ¶  cat-nya.",
+            "I'm the light cruiser, Tama. I'm not a  ¶ cat ¶ -nya.",
+            "I'm the light cruiser, Tama. I'm not a cat- ¶ nya ¶ .",
+        ];
+
+        string[] expectedJapaneseQuestions = [
+            " ¶ 軽巡 ¶ 、多摩です。猫じゃないにゃ。",
+            "軽巡、 ¶ 多摩 ¶ です。猫じゃないにゃ。",
+            "軽巡、多摩 ¶ です ¶ 。猫じゃないにゃ。",
+            "軽巡、多摩です。 ¶ 猫 ¶ じゃないにゃ。",
+            "軽巡、多摩です。猫 ¶ じゃない ¶ にゃ。",
+            "軽巡、多摩です。猫じゃない ¶ にゃ ¶ 。",
+        ];
+
+        pipeline.Setup(x => x.Pipe(It.IsAny<string[]>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        await aligner.AlignSymmetric(englishText, japaneseText);
+
+        pipeline.Verify(x => x.Pipe(
+            It.Is<string[]>(q => q.SequenceEqual(expectedEnglishQuestions)),
+            japaneseText,
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        pipeline.Verify(x => x.Pipe(
+            It.Is<string[]>(q => q.SequenceEqual(expectedJapaneseQuestions)),
+            englishText,
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        pipeline.VerifyNoOtherCalls();
+    }
+
+    [Fact]
+    public async Task FiltersLowScoreAndCombinesReverseAlignment()
+    {
+        string englishText = "foo bar";
+        string japaneseText = "ほげ　ぴよ";
+
+        pipeline.Setup(x => x.Pipe(It.IsAny<string[]>(), japaneseText, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                new QuestionAnsweringPrediction(Score: 0, Start: 4, End: 7, Answer: "ぴよ"), // low score
+                new QuestionAnsweringPrediction(Score: 1, Start: 4, End: 7, Answer: "ぴよ"), // bar (4,7) -> ぴよ (3,5)
+            ]);
+
+        pipeline.Setup(x => x.Pipe(It.IsAny<string[]>(), englishText, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                new QuestionAnsweringPrediction(Score: 1, Start: 0, End: 3, Answer: "foo"), // ほげ (0,2) -> foo (0,3)
+                new QuestionAnsweringPrediction(Score: 0, Start: 0, End: 3, Answer: "foo"), // low score
+            ]);
+
+        IEnumerable<Alignment> result = await aligner.AlignSymmetric(englishText, japaneseText);
+
+        Assert.Equal([
+            new Alignment(0, 3, 0, 2), // ほげ (0,2) <- foo (0,3)
+            new Alignment(4, 7, 3, 5), // bar (4,7) -> ぴよ (3,5)
+        ], result);
+    }
+
+    [Fact]
+    public async Task SnapsPredictionsToTokens()
+    {
+        string englishText = "It's alright";
+        string japaneseText = "大丈夫";
+
+        pipeline.Setup(x => x.Pipe(It.IsAny<string[]>(), japaneseText, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                new QuestionAnsweringPrediction(Score: 0, Start: 0, End: 0, Answer: ""),
+                new QuestionAnsweringPrediction(Score: 0, Start: 0, End: 0, Answer: ""),
+            ]);
+
+        pipeline.Setup(x => x.Pipe(It.IsAny<string[]>(), englishText, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                new QuestionAnsweringPrediction(Score: 1, Start: 2, End: 10, Answer: "'s alrig"),
+            ]);
+
+        IEnumerable<Alignment> result = await aligner.AlignSymmetric(englishText, japaneseText);
+
+        Assert.Equal([new Alignment(0, 12, 0, 3)], result);
     }
 
     // Test cases generated by running a random selection of Zuihou quotes through align.py, with and without
@@ -21,7 +120,7 @@ public class WordAlignerTests
     // english.text and japanese.text):
     //
     // $ while IFS=$'\t' read -r en ja; do ./align.py --from-language en --to-language ja --from-text "$en" --to-text "$ja" --symmetric --symmetric-mode OR; done <test-quotes.tsv | tee test-quotes_aligned_simplified.txt
-    // $ while IFS=$'\t' read -r en ja; do ./align.py --from-language en --to-language ja --from-text "$en" --to-text "$ja" --symmetric --symmetric-mode OR --no-simplify; done <test-quotes.tsv" | tee test-quotes_aligned_raw.txt
+    // $ while IFS=$'\t' read -r en ja; do ./align.py --from-language en --to-language ja --from-text "$en" --to-text "$ja" --symmetric --symmetric-mode OR --no-simplify; done <test-quotes.tsv | tee test-quotes_aligned_raw.txt
     // $ paste test-quotes_aligned_raw.txt test-quotes_aligned_simplified.txt test-quotes.tsv | tr -d $'\r' | head -n10 | \
     //   awk -F $'\t' '{ print "    [InlineData(\n        \"" $1 "\",\n        \"" $2 "\",\n        \"" $3 "\",\n        \"" $4 "\"\n    )]" }' | tee test-quotes_inlinedata.txt
     //
@@ -91,7 +190,6 @@ public class WordAlignerTests
         "We'll decide this at long range.",
         "アウトレンジ、決めます。"
     )]
-
     public void SimplifiesAlignments(string inputStr, string expectedStr, string fromText, string toText)
     {
         Alignment[] input = StringToAlignments(inputStr);
