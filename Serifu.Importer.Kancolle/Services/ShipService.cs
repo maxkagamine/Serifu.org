@@ -14,6 +14,7 @@
 
 using AngleSharp.Dom;
 using AngleSharp.Html.Dom;
+using Fastenshtein;
 using Ganss.Xss;
 using Serifu.Data;
 using Serifu.Data.Sqlite;
@@ -191,11 +192,16 @@ internal class ShipService
 
         // Log warnings for potential mistakes in the wiki
         foreach (var group in quotes
-            .GroupBy(q => q.Japanese.AudioFile)
-            .Where(g => g.Key is not null && g.DistinctBy(q => q.Japanese.Text).Count() > 1))
+            .GroupBy(q => q.Japanese.AudioFile, q => (q.English.Context, q.Japanese.Text))
+            .Where(g => g.Key is not null && g.DistinctBy(q => q.Text).Count() > 1))
         {
-            logger.Warning("{Ship} has quotes with different Japanese but same audio file {AudioFile}: {@Quotes}.",
-                ship, group.Key, group.Select(q => new { q.English.Context, q.Japanese.Text }));
+            logger.Warning("{Ship} has quotes with different Japanese but same audio file: {@Group}.", ship, new
+            {
+                Quotes = group.Select(q => new { q.Context, q.Text }),
+                AudioFile = group.Key,
+                Similarity = group.SelectMany(q1 => group.Except([q1]).Select(q2 => (q1, q2)))
+                    .Min(x => 1 - ((float)Levenshtein.Distance(x.q1.Text, x.q2.Text) / Math.Max(x.q1.Text.Length, x.q2.Text.Length)))
+            });
         }
 
         return quotes;
