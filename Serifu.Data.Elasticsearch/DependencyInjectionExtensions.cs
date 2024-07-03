@@ -1,6 +1,7 @@
 ﻿using Elastic.Clients.Elasticsearch;
 using Elastic.Clients.Elasticsearch.Serialization;
 using Elastic.Transport;
+using Kagamine.Extensions.Collections;
 using Microsoft.Extensions.DependencyInjection;
 using System.Text.Json;
 
@@ -22,6 +23,7 @@ public static class DependencyInjectionExtensions
         static void ConfigureJsonSerializerOptions(JsonSerializerOptions options)
         {
             options.TypeInfoResolver = JsonSourceGenerationContext.Default;
+            options.Converters.Add(new JsonBase64ValueArrayConverter<Alignment>());
         }
 
         var settings = new ElasticsearchClientSettings(

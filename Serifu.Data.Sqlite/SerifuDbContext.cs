@@ -1,6 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
-using System.Runtime.InteropServices;
+﻿using Kagamine.Extensions.Collections;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace Serifu.Data.Sqlite;
 
@@ -17,7 +17,10 @@ public class SerifuDbContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) => optionsBuilder
         .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTrackingWithIdentityResolution) // Immutable records
-        .EnableSensitiveDataLogging();
+        .EnableSensitiveDataLogging()
+        .ConfigureWarnings(x => x.Ignore(
+            CoreEventId.SensitiveDataLoggingEnabledWarning,
+            CoreEventId.CollectionWithoutComparer));
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -34,6 +37,11 @@ public class SerifuDbContext : DbContext
             entity.ComplexProperty(q => q.English);
 
             entity.ComplexProperty(q => q.Japanese);
+
+            entity.Property(q => q.AlignmentData)
+                .HasConversion(
+                    model => model.AsBytes().ToArray(),
+                    column => ValueArray.FromBytes<Alignment>(column));
         });
 
         modelBuilder.Entity<AudioFile>(entity =>
@@ -58,10 +66,7 @@ public class SerifuDbContext : DbContext
 
             entity.Property(a => a.Data)
                 .HasColumnName("data")
-                .HasConversion(
-                    model => ImmutableCollectionsMarshal.AsArray(model),
-                    column => ImmutableCollectionsMarshal.AsImmutableArray(column))
-                .Metadata.SetValueComparer(ValueComparer.CreateDefault<object>(false));
+                .HasConversion(model => (byte[])model, column => column);
         });
 
         modelBuilder.Entity<AudioFileCache>(entity =>

@@ -1,4 +1,6 @@
-﻿namespace Serifu.Data;
+﻿using Kagamine.Extensions.Collections;
+
+namespace Serifu.Data;
 
 public record Quote
 {
@@ -21,6 +23,11 @@ public record Quote
     /// The quote's Japanese translation.
     /// </summary>
     public required Translation Japanese { get; init; }
+
+    /// <summary>
+    /// Word alignment data mapping from English to Japanese.
+    /// </summary>
+    public required ValueArray<Alignment> AlignmentData { get; init; }
 
     /// <summary>
     /// The date this quote was imported. May be used to determine if quotes need to be updated.

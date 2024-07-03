@@ -1,8 +1,7 @@
-﻿using Kagamine.Extensions.EntityFramework;
+﻿using Kagamine.Extensions.Collections;
+using Kagamine.Extensions.EntityFramework;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
-using System.Collections.Immutable;
-using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 
 namespace Serifu.Data.Sqlite;
@@ -88,7 +87,7 @@ public class SqliteService : ISqliteService
             var audioFile = new AudioFile()
             {
                 ObjectName = objectName,
-                Data = ReadStreamToImmutableByteArray(stream)
+                Data = ReadStreamAsValueArray(stream)
             };
 
             db.AudioFiles.Add(audioFile);
@@ -200,27 +199,25 @@ public class SqliteService : ISqliteService
         return $"{hash[..2]}/{hash[2..4]}/{hash[4..]}.{ext}";
     }
 
-    private static ImmutableArray<byte> ReadStreamToImmutableByteArray(Stream stream)
+    private static ValueArray<byte> ReadStreamAsValueArray(Stream stream)
     {
         // Read the stream into memory if it's not already a MemoryStream (probably a FileStream). Since we expect the
         // stream to be seekable, we can initialize the internal buffer with the correct length which allows the below
-        // logic to directly slide it into an ImmutableArray.
+        // logic to directly slide it into an ValueArray.
         if (stream is not MemoryStream mem)
         {
             using var mem2 = new MemoryStream(checked((int)stream.Length));
             stream.CopyTo(mem2);
-            return ReadStreamToImmutableByteArray(mem2);
+            return ReadStreamAsValueArray(mem2);
         }
 
         // Minimize allocations by using the internal buffer if possible (same as HttpClient's internal GetSizedBuffer)
-        byte[] data = mem.TryGetBuffer(out ArraySegment<byte> buffer) &&
-            buffer.Offset == 0 && buffer.Count == buffer.Array!.Length ? buffer.Array! : mem.ToArray();
-
-        // Construct an ImmutableArray backed by this array.
         //
-        // WARNING: This is dangerous because it relies on the caller not passing us a MemoryStream they intend to
-        // modify; otherwise the buffer could be modified externally which would mutate the immutable array. If this
-        // were part of a public library or larger team project, we'd need to use the ctor and create a defensive copy.
-        return ImmutableCollectionsMarshal.AsImmutableArray(data);
+        // WARNING: For performance we intentionally do not create a defensive copy. This is dangerous because it relies
+        // on the caller not passing us a MemoryStream they intend to modify; otherwise the buffer could be modified
+        // externally which would mutate the underlying array. If this were part of a library or larger team project,
+        // we'd need to copy the array first.
+        return mem.TryGetBuffer(out ArraySegment<byte> buffer) &&
+            buffer.Offset == 0 && buffer.Count == buffer.Array!.Length ? buffer.Array! : mem.ToArray();
     }
 }

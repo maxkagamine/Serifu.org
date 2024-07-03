@@ -1,4 +1,4 @@
-﻿using System.Collections.Immutable;
+﻿using Kagamine.Extensions.Collections;
 
 namespace Serifu.Data;
 
@@ -40,5 +40,5 @@ public record AudioFile
     /// <summary>
     /// The audio file data.
     /// </summary>
-    public required ImmutableArray<byte> Data { get; init; }
+    public required ValueArray<byte> Data { get; init; }
 }
