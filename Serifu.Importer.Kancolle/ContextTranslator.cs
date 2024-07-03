@@ -3,17 +3,20 @@ using Serilog;
 
 using static Serifu.Importer.Kancolle.Regexes;
 
-namespace Serifu.Importer.Kancolle.Services;
+namespace Serifu.Importer.Kancolle;
 
 /// <summary>
-/// Translates the English contexts to Japanese. This works by tokenizing the strings, such that "Equipment 2 (Kai Ni)"
-/// becomes "Equipment" and "Kai Ni", and looking up their respective translations in a hardcoded table, which are
-/// ultimately sourced from the <see href="https://wikiwiki.jp/kancolle/">JP wiki</see>. (Actually trying to scrape the
-/// JP wiki and find the matching quotes would add a whole 'nother layer of fragility, and probably isn't possible
-/// anyway due to slight variances in the Japanese text.)
+/// Normalizes the English contexts ("scenario" in the wiki) and translates them into Japanese.
 /// </summary>
-/// <seealso cref="ContextTokenizer"/>
-internal class TranslationService
+/// <remarks>
+/// This is done by tokenizing the strings, such that "Equipment 2 (Kai Ni)" becomes "Equipment" and "Kai Ni", and
+/// looking up their respective translations in a hardcoded table, which are ultimately sourced from the <a
+/// href="https://wikiwiki.jp/kancolle/">JP wiki</a>. (Actually trying to scrape the JP wiki and find the matching
+/// quotes would add a whole 'nother layer of fragility, and probably isn't possible anyway due to slight variances in
+/// the Japanese text.)
+/// </remarks>
+/// <seealso cref="ContextTokenizer">The tokenization regex.</seealso>
+internal class ContextTranslator
 {
     private static readonly Dictionary<string, string> Translations = new()
     {
@@ -59,6 +62,7 @@ internal class TranslationService
         ["Hinamatsuri"]                       = "ひな祭り",
         ["Homecoming"]                        = "帰投",
         ["I-"]                                = "伊",
+        ["Improvement"]                       = "改修",
         ["Introduction"]                      = "入手/ログイン",
         ["Joining the Fleet"]                 = "編成",
         ["Kai"]                               = "改",
@@ -111,14 +115,14 @@ internal class TranslationService
 
     private readonly ILogger logger;
 
-    public TranslationService(ILogger logger)
+    public ContextTranslator(ILogger logger)
     {
-        this.logger = logger.ForContext<TranslationService>();
+        this.logger = logger.ForContext<ContextTranslator>();
     }
 
     /// <summary>
     /// Normalizes the <paramref name="context"/> and translates it into Japanese. If any part of the string can't be
-    /// translated, logs a warning and returns the normalized context for both.
+    /// translated, logs an error and returns the normalized context for both.
     /// </summary>
     /// <param name="ship">The ship, for logging.</param>
     /// <param name="context">The context in English.</param>
@@ -137,7 +141,7 @@ internal class TranslationService
                 return translatedToken;
             }
 
-            logger.Warning("No translation for \"{Token}\" in {Ship}'s context {Context}.",
+            logger.Error("Translation table does not have a match for \"{Token}\" in {Ship}'s context \"{Context}\".",
                 match.Value, ship, context);
 
             success = false;
@@ -149,7 +153,7 @@ internal class TranslationService
             // 10th Anniversary -> 十周年 記念 -> 十周年記念
             return (context, SpacesBetweenJapaneseCharacters.Replace(translatedContext, ""));
         }
-        
+
         return (context, context);
     }
 
