@@ -4,6 +4,7 @@ using Ganss.Xss;
 using Serifu.Data;
 using Serifu.Data.Sqlite;
 using Serifu.Importer.Kancolle.Models;
+using Serifu.ML.Abstractions;
 using Serilog;
 using System.Net;
 
@@ -26,6 +27,7 @@ internal class ShipService
     private readonly WikiApiService wikiApiService;
     private readonly TranslationService translationService;
     private readonly ISqliteService sqliteService;
+    private readonly IWordAligner wordAligner;
     private readonly ILogger logger;
     private readonly HtmlSanitizer htmlSanitizer;
 
@@ -33,11 +35,13 @@ internal class ShipService
         WikiApiService wikiApiService,
         TranslationService translationService,
         ISqliteService sqliteService,
+        IWordAligner wordAligner,
         ILogger logger)
     {
         this.wikiApiService = wikiApiService;
         this.translationService = translationService;
         this.sqliteService = sqliteService;
+        this.wordAligner = wordAligner;
         this.logger = logger.ForContext<ShipService>();
 
         htmlSanitizer = new HtmlSanitizer();
@@ -99,12 +103,12 @@ internal class ShipService
             }
 
             // Download audio file
-            string? audioFile = null;
+            Task<string>? audioFileTask = null;
             if (audioFileUrl is not null)
             {
                 try
                 {
-                    audioFile = await sqliteService.DownloadAudioFile(audioFileUrl, cancellationToken);
+                    audioFileTask = sqliteService.DownloadAudioFile(audioFileUrl, cancellationToken);
                 }
                 catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.NotFound)
                 {
@@ -117,6 +121,12 @@ internal class ShipService
                         ship, scenario, audioFileUrl, ex.Message);
                 }
             }
+
+            // Run word alignment
+            Task<IEnumerable<Alignment>> alignmentDataTask = wordAligner.AlignSymmetric(textEnglish, textJapanese, cancellationToken);
+
+            // Wait for both to complete
+            await Task.WhenAll(audioFileTask ?? Task.CompletedTask, alignmentDataTask);
 
             // Create quote
             (string contextEnglish, string contextJapanese) = translationService.TranslateContext(ship, scenario);
@@ -138,8 +148,9 @@ internal class ShipService
                     SpeakerName = ship.JapaneseName,
                     Context = contextJapanese,
                     Text = textJapanese,
-                    AudioFile = audioFile,
-                }
+                    AudioFile = audioFileTask?.Result,
+                },
+                AlignmentData = alignmentDataTask.Result.ToArray()
             };
 
             // Check for duplicates (Kasuga Maru has a separate table for her Taiyou remodel with many of the same lines)
