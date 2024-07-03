@@ -39,7 +39,7 @@ internal class ShipService
     private const string NotesSelector = "td[rowspan=2]:last-child"; // SeasonalQuote only
 
     private readonly WikiApiService wikiApiService;
-    private readonly TranslationService translationService;
+    private readonly ContextTranslator translationService;
     private readonly ISqliteService sqliteService;
     private readonly IWordAligner wordAligner;
     private readonly ILogger logger;
@@ -47,7 +47,7 @@ internal class ShipService
 
     public ShipService(
         WikiApiService wikiApiService,
-        TranslationService translationService,
+        ContextTranslator translationService,
         ISqliteService sqliteService,
         IWordAligner wordAligner,
         ILogger logger)

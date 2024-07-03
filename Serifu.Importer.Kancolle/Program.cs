@@ -20,6 +20,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Serifu.Data;
 using Serifu.Data.Sqlite;
+using Serifu.Importer.Kancolle;
 using Serifu.Importer.Kancolle.Services;
 using Serifu.ML;
 using Serilog;
@@ -36,10 +37,10 @@ builder.Services.AddSerifuMachineLearning();
 builder.Services.AddSingleton<RateLimitingHttpHandler>();
 builder.Services.AddHttpClient(Options.DefaultName).AddHttpMessageHandler<RateLimitingHttpHandler>();
 
-builder.Services.AddScoped<TranslationService>();
 builder.Services.AddScoped<ShipListService>();
 builder.Services.AddScoped<ShipService>();
 builder.Services.AddScoped<WikiApiService>();
+builder.Services.AddScoped<ContextTranslator>();
 
 builder.Run(async (
     ShipListService shipListService,
