@@ -18,6 +18,18 @@ public class TokenizerTests
     [InlineData("瑞鳳です。軽空母ですが、練度が上がれば、正規空母並の活躍をお見せできます。", new[] { "瑞鳳", "です", "軽", "空母", "です", "が", "練度", "が", "上がれば", "正規", "空母", "並", "の", "活躍", "を", "お", "見せできます" })]
     [InlineData("ひび…Верный だ。信頼できると言う意味の名なんだ", new[] { "ひび", "Верный", "だ", "信頼", "できる", "と", "言う", "意味", "の", "名", "な", "ん", "だ" })]
     [InlineData("彗星は彗星で悪くないんだけれど、整備大変なのよ、整備が。", new[] { "彗星", "は", "彗星", "で", "悪くない", "ん", "だ", "けれど", "整備", "大変", "な", "の", "よ", "整備", "が" })]
+    [InlineData(
+        // For whatever reason, MeCab thinks "!?" is a noun which messes up Ve
+        "んっ、なっ……!? い……いや……き、嫌いでは……ない……", new[] { "んっ", "なっ", "い", "いや", "き", "嫌い", "で", "は", "ない" }
+    )]
+    [InlineData(
+        // The よう in this sentence causes eatNext to be true which triggers a bug in Ve
+        "あらあら、私に何かようなの？", new[] { "あらあら", "私", "に", "何", "か", "ような", "の" }
+    )]
+    [InlineData(
+        // Just another one that caused parsing weirdness
+        "補給( ・∀・)キタコレ！(ﾟдﾟ)ウマー！！", new[] { "補給", "キタコレ", "ﾟ", "д", "ﾟ", "ウマー" }
+    )]
     public void JapaneseTokenizer(string text, string[] expected) =>
         Tokenizer(new JapaneseTokenizer(), text, expected);
 
