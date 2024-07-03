@@ -7,7 +7,7 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS dotnet
 ARG RUNTIME_IDENTIFIER=linux-x64
 WORKDIR /src
 
-COPY --parents */*.csproj .
+COPY --parents Directory.Build.props */*.csproj ./
 
 RUN --mount=type=secret,id=nugetconfig \
     dotnet restore Serifu.Data.Elasticsearch.Build/Serifu.Data.Elasticsearch.Build.csproj \

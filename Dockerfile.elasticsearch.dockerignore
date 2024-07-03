@@ -1,5 +1,5 @@
 *
-!Serifu.Data*
-!Serifu.db
+!Serifu.*
+!Directory.Build.props
 **/bin
 **/obj
