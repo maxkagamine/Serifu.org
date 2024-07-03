@@ -41,7 +41,7 @@ public record Quote
     /// <summary>
     /// Word alignment data mapping from English to Japanese.
     /// </summary>
-    public ValueArray<Alignment> AlignmentData { get; init; }
+    public required ValueArray<Alignment> AlignmentData { get; init; }
 
     /// <summary>
     /// The date this quote was imported. May be used to determine if quotes need to be updated.

@@ -21,6 +21,7 @@ using Microsoft.Extensions.Options;
 using Serifu.Data;
 using Serifu.Data.Sqlite;
 using Serifu.Importer.Kancolle.Services;
+using Serifu.ML;
 using Serilog;
 
 var builder = ConsoleApplication.CreateBuilder(new HostApplicationBuilderSettings()
@@ -30,6 +31,7 @@ var builder = ConsoleApplication.CreateBuilder(new HostApplicationBuilderSetting
 
 builder.Services.AddSerifuSerilog();
 builder.Services.AddSerifuSqlite();
+builder.Services.AddSerifuMachineLearning();
 
 builder.Services.AddSingleton<RateLimitingHttpHandler>();
 builder.Services.AddHttpClient(Options.DefaultName).AddHttpMessageHandler<RateLimitingHttpHandler>();
