@@ -15,123 +15,168 @@
 using Elastic.Clients.Elasticsearch.Analysis;
 using Elastic.Clients.Elasticsearch.IndexManagement;
 using Elastic.Clients.Elasticsearch.Mapping;
+using System.Text.Json.Serialization;
 
 namespace Serifu.Data.Elasticsearch.Build;
 
 internal static class QuotesIndex
 {
-    const string EnglishDefaultAnalyzer = "english_default";
-    const string EnglishConjugationsAnalyzer = "english"; // Built-in
-    const string JapaneseDefaultAnalyzer = "japanese_default";
-    const string JapaneseConjugationsAnalyzer = "japanese_conjugations";
-    const string JapaneseKanjiAnalyzer = "japanese_kanji";
+    private const string IndexName = "quotes";
 
-    const string KeywordField = "keyword";
-    const string ConjugationsField = "conjugations";
-    const string KanjiField = "kanji";
+    private const string EnglishConjugationsAnalyzer = "english"; // Built-in
+    private const string JapaneseConjugationsAnalyzer = "serifu_japanese_conjugations";
 
-    const string NormalizeUnicodeCharFilter = "normalize_unicode";
-    const string JapaneseKuromojiTokenizer = "japanese_kuromoji_tokenizer";
-    const string KanjiTokenizer = "kanji_tokenizer";
-    const string DesDivFilter = "desdiv";
+    private const string NormalizeUnicodeCharFilter = "serifu_normalize_unicode_char_filter";
+    private const string JapaneseKuromojiTokenizer = "serifu_japanese_kuromoji_tokenizer";
+    private const string CjkFilter = "serifu_cjk_filter";
+    private const string DesDivFilter = "serifu_desdiv_filter";
 
-    public static CreateIndexRequestDescriptor<Quote> Descriptor => new CreateIndexRequestDescriptor<Quote>()
-        .Mappings(x => x
-            .Dynamic(DynamicMapping.Strict)
-            .Properties(x => x
-                .Keyword(q => q.Id)
-                .Keyword(q => q.Source)
-                .Object(q => q.English, x => x
-                    .Properties(x => x
-                        .Text(q => q.English.SpeakerName, x => x
-                            .Fields(x => x
-                                .Keyword(KeywordField)))
-                        .Text(q => q.English.Context)
-                        .Text(q => q.English.Text, x => x
-                            .Analyzer(EnglishDefaultAnalyzer)
-                            .Fields(x => x
-                                .Text(ConjugationsField, x => x
-                                    .Analyzer(EnglishConjugationsAnalyzer))))
-                        .Keyword(q => q.English.Notes, x => x
-                            .Index(false))
-                        .Keyword(q => q.English.AudioFile!, x => x
-                            .Index(false))))
-                .Object(q => q.Japanese, x => x
-                    .Properties(x => x
-                        .Text(q => q.Japanese.SpeakerName, x => x
-                            .Analyzer(JapaneseDefaultAnalyzer)
-                            .Fields(x => x
-                                .Keyword(KeywordField)))
-                        .Text(q => q.Japanese.Context, x => x
-                            .Analyzer(JapaneseDefaultAnalyzer))
-                        .Text(q => q.Japanese.Text, x => x
-                            .Analyzer(JapaneseDefaultAnalyzer)
-                            .Fields(x => x
-                                .Text(ConjugationsField, x => x
-                                    .Analyzer(JapaneseConjugationsAnalyzer))
-                                .Text(KanjiField, x => x
-                                    .Analyzer(JapaneseKanjiAnalyzer))))
-                        .Keyword(q => q.Japanese.Notes, x => x
-                            .Index(false))
-                        .Keyword(q => q.Japanese.AudioFile!, x => x
-                            .Index(false))))
-                .Date(q => q.DateImported, x => x
-                    .Index(false))
-                .Keyword(q => q.AlignmentData, x => x
-                    .Index(false))))
-        .Settings(x => x
-            .Analysis(x => x
-                .Analyzers(x => x
-                    .Custom(EnglishDefaultAnalyzer, x => x
-                        .Tokenizer("standard")
-                        .Filter([
-                            "icu_folding", // Normalizes unicode, strips accents, and lowercases
-                            DesDivFilter
-                        ]))
-                    .Custom(JapaneseDefaultAnalyzer, x => x
-                        .CharFilter([
-                            NormalizeUnicodeCharFilter
-                        ])
-                        .Tokenizer(JapaneseKuromojiTokenizer)
-                        .Filter([
-                            "cjk_width",
-                            "lowercase"
-                        ]))
-                    .Custom(JapaneseConjugationsAnalyzer, x => x
-                        .CharFilter([
-                            NormalizeUnicodeCharFilter
-                        ])
-                        .Tokenizer(JapaneseKuromojiTokenizer)
-                        .Filter([
-                            "kuromoji_number",
-                            "kuromoji_baseform",
-                            "kuromoji_part_of_speech",
-                            "cjk_width",
-                            "ja_stop",
-                            "kuromoji_stemmer",
-                            "lowercase"
-                        ]))
-                    .Custom(JapaneseKanjiAnalyzer, x => x
-                        .Tokenizer(KanjiTokenizer)))
-                .CharFilters(x => x
-                    .IcuNormalization(NormalizeUnicodeCharFilter, x => x
-                        .Name(IcuNormalizationType.Nfkc)
-                        .Mode(IcuNormalizationMode.Compose)))
-                .Tokenizers(x => x
-                    .Kuromoji(JapaneseKuromojiTokenizer, x => x
-                        .Mode(KuromojiTokenizationMode.Search)
-                        .DiscardCompoundToken())
-                    .Pattern(KanjiTokenizer, x => x
-                        .Pattern(@"(\p{IsHan})")
-                        .Group(0)))
-                .TokenFilters(x => x
-                    .PatternCapture(DesDivFilter, x => x
-                        .Patterns([
-                            // A search for "desdiv" should pull up "DesDiv3" etc.
-                            @"^((?:bat|car|cru|des|dru)div)\d+$"
-                        ]))))
-            .Index(x => x
-                .NumberOfShards(1)
-                .NumberOfReplicas(0)
-                .RefreshInterval(-1)));
+    public static CreateIndexRequest Create() => new(IndexName)
+    {
+        Mappings = CreateMappings(),
+        Settings = CreateSettings(),
+    };
+
+    private static TypeMapping CreateMappings() => new()
+    {
+        Dynamic = DynamicMapping.Strict,
+        Properties = new()
+        {
+            ["id"] = new KeywordProperty(),
+            ["source"] = new KeywordProperty(),
+            ["english"] = CreateTranslationMappings(EnglishConjugationsAnalyzer),
+            ["japanese"] = CreateTranslationMappings(JapaneseConjugationsAnalyzer),
+            ["dateImported"] = new DateProperty()
+            {
+                Index = false
+            },
+            ["alignmentData"] = new KeywordProperty()
+            {
+                Index = false
+            }
+        }
+    };
+
+    private static ObjectProperty CreateTranslationMappings(string conjugationsAnalyzer) => new()
+    {
+        Properties = new()
+        {
+            ["speakerName"] = new TextProperty()
+            {
+                Fields = new()
+                {
+                    ["keyword"] = new KeywordProperty()
+                }
+            },
+            ["context"] = new TextProperty(),
+            ["text"] = new TextProperty()
+            {
+                Fields = new()
+                {
+                    ["conjugations"] = new TextProperty()
+                    {
+                        // Unclear if search_analyzer will default to the field's analyzer or the
+                        // "default_search" analyzer when both are set; documentation is conflicting.
+                        Analyzer = conjugationsAnalyzer,
+                        SearchAnalyzer = conjugationsAnalyzer
+                    }
+                }
+            },
+            ["notes"] = new KeywordProperty()
+            {
+                Index = false
+            },
+            ["audioFile"] = new KeywordProperty()
+            {
+                Index = false
+            }
+        }
+    };
+
+    private static IndexSettings CreateSettings() => new()
+    {
+        Analysis = CreateAnalysisSettings(),
+        NumberOfShards = 1,
+        NumberOfReplicas = 0,
+        RefreshInterval = -1
+    };
+
+    private static IndexSettingsAnalysis CreateAnalysisSettings() => new()
+    {
+        Analyzers = new()
+        {
+            ["default"] = CreateDefaultAnalyzer(),
+            ["default_search"] = CreateDefaultAnalyzer(),
+            [JapaneseConjugationsAnalyzer] = new CustomAnalyzer()
+            {
+                CharFilter = [
+                    NormalizeUnicodeCharFilter
+                ],
+                Tokenizer = JapaneseKuromojiTokenizer,
+                Filter = [
+                    "kuromoji_number",
+                    "kuromoji_baseform",
+                    "kuromoji_part_of_speech",
+                    "cjk_width",
+                    "ja_stop",
+                    "kuromoji_stemmer",
+                    "lowercase"
+                ]
+            }
+        },
+        CharFilters = new()
+        {
+            [NormalizeUnicodeCharFilter] = new IcuNormalizationCharFilter()
+            {
+                Name = IcuNormalizationType.Nfkc,
+                Mode = IcuNormalizationMode.Compose
+            }
+        },
+        Tokenizers = new()
+        {
+            [JapaneseKuromojiTokenizer] = new KuromojiTokenizer()
+            {
+                Mode = KuromojiTokenizationMode.Search,
+                DiscardCompoundToken = true
+            }
+        },
+        TokenFilters = new()
+        {
+            [DesDivFilter] = new PatternCaptureTokenFilter()
+            {
+                Patterns = [
+                    // A search for "desdiv" should pull up "DesDiv3" etc.
+                    @"^((?:bat|car|cru|des|dru)div)\d+$"
+                ],
+                PreserveOriginal = false
+            },
+            [CjkFilter] = new CjkBigramTokenFilter()
+            {
+                OutputUnigrams = true
+            }
+        }
+    };
+
+    private static CustomAnalyzer CreateDefaultAnalyzer() => new()
+    {
+        Tokenizer = "standard",
+        Filter = [
+            "icu_folding", // Normalizes unicode, strips accents, and lowercases
+            DesDivFilter,
+            CjkFilter
+        ]
+    };
+
+    // Missing from the .NET library
+    private class CjkBigramTokenFilter : ITokenFilter
+    {
+        [JsonInclude, JsonPropertyName("output_unigrams")]
+        public bool? OutputUnigrams { get; set; }
+
+        [JsonInclude, JsonPropertyName("ignored_scripts")]
+        public ICollection<string>? IgnoredScripts { get; set; }
+
+        [JsonInclude, JsonPropertyName("type")]
+        public string? Type => "cjk_bigram";
+    }
 }
