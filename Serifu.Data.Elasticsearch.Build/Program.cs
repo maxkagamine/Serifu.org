@@ -38,7 +38,18 @@ builder.Run(async (
     List<Quote> quotes = await sqlite.Quotes.ToListAsync(cancellationToken);
 
     logger.Information("Indexing quotes");
-    await elasticsearch.BulkAsync(x => x.IndexMany(quotes), cancellationToken);
+    var res = await elasticsearch.BulkAsync(x => x.IndexMany(quotes), cancellationToken);
+    
+    if (res.Errors)
+    {
+        foreach (var item in res.ItemsWithErrors)
+        {
+            logger.Error("Failed to index quote {QuoteId}: {ErrorType}: {ErrorReason}",
+                item.Id, item.Error!.Type, item.Error!.Reason);
+        }
+
+        return 1;
+    }
 
     logger.Information("Flushing index to disk");
     await elasticsearch.Indices.RefreshAsync(cancellationToken);
@@ -53,5 +64,7 @@ builder.Run(async (
     {
         File.Delete(file);
     }
+
+    return 0;
 });
 
