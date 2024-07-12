@@ -32,7 +32,7 @@ builder.Run(async (
     await server.Start(cancellationToken);
 
     logger.Information("Creating index");
-    await elasticsearch.Indices.CreateAsync(QuotesIndex.Descriptor, cancellationToken);
+    await elasticsearch.Indices.CreateAsync(QuotesIndex.Create(), cancellationToken);
 
     logger.Information("Loading quotes from sqlite db");
     List<Quote> quotes = await sqlite.Quotes.ToListAsync(cancellationToken);
