@@ -3,4 +3,5 @@
 public enum Source
 {
     Kancolle,
+    Skyrim
 }
