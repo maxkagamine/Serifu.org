@@ -133,16 +133,17 @@ public sealed class SqliteServiceTests : IDisposable
         using var stream = new MemoryStream(bytes);
         string expectedObjectName = "07/13/f029d7e1193a5ca9c63b589ea01b13d148fe.mp3";
 
-        await sqliteService.ImportAudioFile(stream);
+        string actualObjectName = await sqliteService.ImportAudioFile(stream);
 
         using var db = dbFactory.CreateDbContext();
         AudioFile audioFile = await db.AudioFiles.SingleAsync();
 
-        audioFile.ObjectName.Should().Be(expectedObjectName);
         audioFile.Data.ToArray().Should().Equal(bytes);
+        audioFile.ObjectName.Should().Be(expectedObjectName);
         audioFile.DateImported.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromMinutes(1));
         audioFile.Size.Should().Be(bytes.Length);
         audioFile.Mode.Should().Be(0x81ff);
+        actualObjectName.Should().Be(expectedObjectName);
     }
 
     [Fact]
@@ -174,6 +175,49 @@ public sealed class SqliteServiceTests : IDisposable
                 new AudioFileCache() { OriginalUri = originalUri2, ObjectName = expectedObjectName },
             ]);
         }
+    }
+
+    [Fact]
+    public async Task DownloadAudioFile_DownloadsAndImportsFile()
+    {
+        byte[] bytes = [0xff, 0xfb, 0x39, 0x39, 0x39, 0x39];
+        using var stream = new MemoryStream(bytes);
+        string expectedObjectName = "07/13/f029d7e1193a5ca9c63b589ea01b13d148fe.mp3";
+        string url = "http://example.com/foo.mp3";
+
+        httpHandler.SetupRequest(HttpMethod.Get, url)
+            .ReturnsResponse(bytes, "audio/mp3");
+
+        string actualObjectName = await sqliteService.DownloadAudioFile(url);
+
+        using var db = dbFactory.CreateDbContext();
+        
+        var audioFile = await db.AudioFiles.SingleAsync();
+        var cache = await db.AudioFileCache.SingleAsync();
+
+        audioFile.Data.ToArray().Should().Equal(bytes);
+        audioFile.ObjectName.Should().Be(expectedObjectName);
+        cache.ObjectName.Should().Be(expectedObjectName);
+        cache.OriginalUri.ToString().Should().Be(url);
+        actualObjectName.Should().Be(expectedObjectName);
+    }
+
+    [Fact]
+    public async Task DownloadAudioFile_UsesCachedFile()
+    {
+        string url = "http://example.com/foo.mp3";
+
+        using (var db = dbFactory.CreateDbContext())
+        {
+            db.AudioFiles.Add(new() { ObjectName = "cached object name", Data = [] });
+            db.AudioFileCache.Add(new() { OriginalUri = new(url), ObjectName = "cached object name" });
+
+            await db.SaveChangesAsync();
+        }
+
+        // No http handler setup, so the mock will throw if this makes a request
+        string actualObjectName = await sqliteService.DownloadAudioFile(url);
+        actualObjectName.Should().Be("cached object name");
     }
 
     public void Dispose()
