@@ -83,7 +83,7 @@ public sealed class SqliteServiceTests : IDisposable
             new Quote() { Id = 102, Source = Source.Kancolle, English = newTl, Japanese = newTl, AlignmentData = [] },
         ];
 
-        await sqliteService.SaveQuotes(Source.Kancolle, newQuotes, CancellationToken.None);
+        await sqliteService.SaveQuotes(Source.Kancolle, newQuotes);
 
         using (var db = dbFactory.CreateDbContext())
         {
@@ -91,6 +91,39 @@ public sealed class SqliteServiceTests : IDisposable
 
             quotes.Should().BeEquivalentTo([.. newQuotes, skyrimQuote]);
         }
+    }
+
+    [Fact]
+    public async Task GetCachedAudioFile_ReturnsObjectNameMatchingUri()
+    {
+        using (var db = dbFactory.CreateDbContext())
+        {
+            db.AudioFiles.AddRange([
+                new() { ObjectName = "bar", Data = [] },
+                new() { ObjectName = "url fragment test 1", Data = [] },
+                new() { ObjectName = "url fragment test 2", Data = [] },
+            ]);
+
+            db.AudioFileCache.AddRange([
+                new() { OriginalUri = new("http://example.com/foo"), ObjectName = "bar" },
+                new() { OriginalUri = new("file:///Skyrim/Archive.bsa#file1"), ObjectName = "url fragment test 1" },
+                new() { OriginalUri = new("file:///Skyrim/Archive.bsa#file2"), ObjectName = "url fragment test 2" }
+            ]);
+
+            await db.SaveChangesAsync();
+        }
+
+        (await sqliteService.GetCachedAudioFile(new("http://example.com/foo")))
+            .Should().Be("bar");
+
+        (await sqliteService.GetCachedAudioFile(new("file:///Skyrim/Archive.bsa#file1")))
+            .Should().Be("url fragment test 1");
+
+        (await sqliteService.GetCachedAudioFile(new("file:///Skyrim/Archive.bsa#file2")))
+            .Should().Be("url fragment test 2");
+
+        (await sqliteService.GetCachedAudioFile(new("file:///Skyrim/Archive.bsa#file3")))
+            .Should().BeNull();
     }
 
     public void Dispose()
