@@ -126,6 +126,56 @@ public sealed class SqliteServiceTests : IDisposable
             .Should().BeNull();
     }
 
+    [Fact]
+    public async Task ImportAudioFile_SavesAudioFile()
+    {
+        byte[] bytes = [0xff, 0xfb, 0x39, 0x39, 0x39, 0x39]; // Will be recognized as an MP3
+        using var stream = new MemoryStream(bytes);
+        string expectedObjectName = "07/13/f029d7e1193a5ca9c63b589ea01b13d148fe.mp3";
+
+        await sqliteService.ImportAudioFile(stream);
+
+        using var db = dbFactory.CreateDbContext();
+        AudioFile audioFile = await db.AudioFiles.SingleAsync();
+
+        audioFile.ObjectName.Should().Be(expectedObjectName);
+        audioFile.Data.ToArray().Should().Equal(bytes);
+        audioFile.DateImported.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromMinutes(1));
+        audioFile.Size.Should().Be(bytes.Length);
+        audioFile.Mode.Should().Be(0x81ff);
+    }
+
+    [Fact]
+    public async Task ImportAudioFile_AddsOrUpdatesCacheEntry()
+    {
+        using var stream = new MemoryStream([0xff, 0xfb, 0x39, 0x39, 0x39, 0x39]);
+        string expectedObjectName = "07/13/f029d7e1193a5ca9c63b589ea01b13d148fe.mp3";
+
+        Uri originalUri1 = new("http://example.com/foo");
+        Uri originalUri2 = new("http://example.com/bar");
+
+        using (var db = dbFactory.CreateDbContext())
+        {
+            db.AudioFiles.Add(new() { ObjectName = "old version", Data = [] });
+            db.AudioFileCache.Add(new() { OriginalUri = originalUri2, ObjectName = "old version" });
+
+            await db.SaveChangesAsync();
+        }
+
+        await sqliteService.ImportAudioFile(stream, originalUri1);
+        await sqliteService.ImportAudioFile(stream, originalUri2); // File exists, but cache entry needs to be updated
+
+        using (var db = dbFactory.CreateDbContext())
+        {
+            var cache = await db.AudioFileCache.ToListAsync();
+
+            cache.Should().BeEquivalentTo([
+                new AudioFileCache() { OriginalUri = originalUri1, ObjectName = expectedObjectName },
+                new AudioFileCache() { OriginalUri = originalUri2, ObjectName = expectedObjectName },
+            ]);
+        }
+    }
+
     public void Dispose()
     {
         serviceProvider.Dispose();
