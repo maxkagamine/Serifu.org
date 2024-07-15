@@ -169,7 +169,7 @@ public class SqliteService : ISqliteService
             if (!referencedAudioFiles.Contains(audioFile))
             {
                 logger.Information("Deleting orphaned audio file {ObjectName}", audioFile);
-                audioFilesInDb.Add(audioFile);
+                audioFilesToDelete.Add(audioFile);
             }
         }
 

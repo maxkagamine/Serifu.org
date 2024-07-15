@@ -206,6 +206,63 @@ public sealed class SqliteServiceTests : IDisposable
         actualObjectName.Should().Be("cached object name");
     }
 
+    [Fact]
+    public async Task DeleteOrphanedAudioFiles()
+    {
+        using (var db = dbFactory.CreateDbContext())
+        {
+            db.AudioFiles.AddRange([
+                new() { ObjectName = "referenced audio file 1", Data = [39, 39, 39] },
+                new() { ObjectName = "referenced audio file 2", Data = [39, 39, 39, 39] },
+                new() { ObjectName = "unreferenced audio file 1", Data = [39] },
+                new() { ObjectName = "unreferenced audio file 2", Data = [39, 39] },
+            ]);
+
+            db.AudioFileCache.AddRange([
+                new() { OriginalUri = new("http://example.com/foo"), ObjectName = "referenced audio file 1" },
+                new() { OriginalUri = new("http://example.com/bar"), ObjectName = "unreferenced audio file 1" },
+            ]);
+
+            db.Quotes.AddRange([
+                new()
+                {
+                    Id = 1,
+                    Source = Source.Kancolle,
+                    English = new() { Context = "", SpeakerName = "", Text = "", AudioFile = "referenced audio file 1" },
+                    Japanese = new() { Context = "", SpeakerName = "", Text = "" },
+                    AlignmentData = []
+                },
+                new()
+                {
+                    Id = 2,
+                    Source = Source.Skyrim,
+                    English = new() { Context = "", SpeakerName = "", Text = "" },
+                    Japanese = new() { Context = "", SpeakerName = "", Text = "", AudioFile = "referenced audio file 2" },
+                    AlignmentData = []
+                },
+            ]);
+
+            await db.SaveChangesAsync();
+        }
+
+        await sqliteService.DeleteOrphanedAudioFiles();
+
+        using (var db = dbFactory.CreateDbContext())
+        {
+            var audioFiles = await db.AudioFiles.ToListAsync();
+            var cache = await db.AudioFileCache.ToListAsync();
+
+            audioFiles.Should().BeEquivalentTo([
+                new AudioFile() { ObjectName = "referenced audio file 1", Data = [39, 39, 39] },
+                new AudioFile() { ObjectName = "referenced audio file 2", Data = [39, 39, 39, 39] },
+            ], options => options.Excluding(a => a.DateImported));
+
+            cache.Should().BeEquivalentTo([
+                new AudioFileCache() { OriginalUri = new("http://example.com/foo"), ObjectName = "referenced audio file 1" }
+            ]);
+        }
+    }
+
     public void Dispose()
     {
         serviceProvider.Dispose();
