@@ -43,7 +43,10 @@ public class SqliteService : ISqliteService
         using var db = dbFactory.CreateDbContext();
         using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
 
-        var existingIds = await db.Quotes.Select(s => s.Id).ToHashSetAsync(cancellationToken);
+        var existingIds = await db.Quotes
+            .Where(q => q.Source == source)
+            .Select(s => s.Id)
+            .ToHashSetAsync(cancellationToken);
 
         foreach (var quote in quotes)
         {
