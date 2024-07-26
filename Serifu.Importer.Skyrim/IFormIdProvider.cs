@@ -1,4 +1,5 @@
 ﻿using Mutagen.Bethesda.Plugins;
+using Mutagen.Bethesda.Plugins.Aspects;
 using Mutagen.Bethesda.Plugins.Records;
 using Mutagen.Bethesda.Plugins.Records.Mapping;
 using System.Text;
@@ -20,8 +21,8 @@ public interface IFormIdProvider
     FormID GetFormId(IFormKeyGetter record) => GetFormId(record.FormKey);
 
     /// <summary>
-    /// Returns a formatted form ID string in the same style as xEdit, including the editor ID and record type. Useful
-    /// for logging and debugging.
+    /// Returns a formatted form ID string in the same style as xEdit, including the editor ID, name, and record type.
+    /// Useful for logging and debugging.
     /// </summary>
     /// <param name="record"></param>
     /// <exception cref="KeyNotFoundException">The <see cref="ModKey"/> does not exist in the load order.</exception>
@@ -35,6 +36,11 @@ public interface IFormIdProvider
         {
             sb.Append(record.EditorID);
             sb.Append(' ');
+        }
+
+        if (record is INamedGetter named && named.Name is string name)
+        {
+            sb.Append($"\"{name}\" ");
         }
 
         sb.Append($"[{record.GetRecordType()}:{GetFormId(record.FormKey).Raw.ToString("X8")}]");
