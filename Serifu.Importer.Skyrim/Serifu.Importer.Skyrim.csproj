@@ -1,23 +1,24 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AngleSharp" Version="1.0.7" />
-    <PackageReference Include="AngleSharp.Xml" Version="1.0.0" />
-    <PackageReference Include="Fastenshtein" Version="1.0.10" />
-    <PackageReference Include="Flurl" Version="4.0.0" />
-    <PackageReference Include="HtmlSanitizer" Version="8.1.748-beta" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Mutagen.Bethesda.FormKeys.SkyrimSE" Version="3.2.0" />
+    <PackageReference Include="Mutagen.Bethesda.Skyrim" Version="0.45.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Serifu.Data.Sqlite\Serifu.Data.Sqlite.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Mutagen.Bethesda.Skyrim.IDialogResponsesGetter" Alias="IDialogInfoGetter" />
   </ItemGroup>
 
 </Project>
