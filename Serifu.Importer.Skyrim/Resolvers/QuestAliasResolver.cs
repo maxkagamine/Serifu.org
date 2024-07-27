@@ -64,38 +64,62 @@ internal class QuestAliasResolver
         if (alias.CreateReferenceToObject is not null &&
             alias.CreateReferenceToObject.Object.TryResolve(env, out ISkyrimMajorRecordGetter? aliasCreatedObject))
         {
-            if (aliasCreatedObject is not INpcGetter aliasCreatedNpc)
+            const string CreatedObjectIsNotNpcOrTact = "{@Quest} alias {QuestAlias} has Create Reference to Object but it is not an NPC or TACT.";
+            const string CreatedObjectFound = "Found {@NpcOrTact} in {@Quest} alias {QuestAlias}'s Create Reference to Object.";
+
+            if (aliasCreatedObject is INpcGetter aliasCreatedNpc)
             {
-                logger.Warning("{@Quest} alias {QuestAlias} has Create Reference to Object but reference is not to an NPC.",
-                    quest, aliasId);
+                logger.Debug(CreatedObjectFound, aliasCreatedNpc, quest, aliasId);
+                return FoundNpc(quest, alias, aliasCreatedNpc);
+            }
+            else if (aliasCreatedObject is ITalkingActivatorGetter aliasCreatedTact)
+            {
+                logger.Debug(CreatedObjectFound, aliasCreatedTact, quest, aliasId);
+                return FoundTact(aliasCreatedTact);
             }
             else
             {
-                logger.Debug("Found {@Npc} in {@Quest} alias {QuestAlias}'s Create Reference to Object.",
-                    aliasCreatedNpc, quest, aliasId);
-
-                return FoundNpc(quest, alias, aliasCreatedNpc);
+                logger.Debug(CreatedObjectIsNotNpcOrTact, quest, aliasId);
             }
         }
 
         if (alias.ForcedReference.TryResolve(env, out IPlacedGetter? forcedReference))
         {
-            if (forcedReference is not IPlacedNpcGetter forcedReferenceNpc)
+            const string ReferenceIsNotNpcOrTact = "{@Quest} alias {QuestAlias} has a Forced Reference but it is not an NPC or TACT.";
+            const string ReferenceLacksBase = "{@Quest} alias {QuestAlias} has a Forced Reference to {@Reference} but it lacks a Base.";
+            const string ReferenceFound = "Found {@NpcOrTact} in {@Quest} alias {QuestAlias}'s Forced Reference.";
+
+            if (forcedReference is IPlacedNpcGetter achr)
             {
-                logger.Warning("{@Quest} alias {QuestAlias} has a Forced Reference but reference is not to an NPC.",
-                    quest, aliasId);
+                if (!achr.Base.TryResolve(env, out INpcGetter? achrBase))
+                {
+                    logger.Debug(ReferenceLacksBase, quest, aliasId, achr);
+                }
+                else
+                {
+                    logger.Debug(ReferenceFound, achrBase, quest, aliasId);
+                    return FoundNpc(quest, alias, achrBase);
+                }
             }
-            else if (!forcedReferenceNpc.Base.TryResolve(env, out INpcGetter? forcedReferenceNpcBase))
+            else if (forcedReference is IPlacedObjectGetter refr)
             {
-                logger.Warning("{@Quest} alias {QuestAlias} has a Forced Reference to {@Reference} which lacks a Base.",
-                    quest, aliasId, forcedReferenceNpc);
+                if (!refr.Base.TryResolve(env, out IPlaceableObjectGetter? refrBase))
+                {
+                    logger.Debug(ReferenceLacksBase, quest, aliasId, refr);
+                }
+                else if (refrBase is not ITalkingActivatorGetter refrBaseTact)
+                {
+                    logger.Debug(ReferenceIsNotNpcOrTact, quest, aliasId);
+                }
+                else
+                {
+                    logger.Debug(ReferenceFound, refrBaseTact, quest, aliasId);
+                    return FoundTact(refrBaseTact);
+                }
             }
             else
             {
-                logger.Debug("Found {@Npc} in {@Quest} alias {QuestAlias}'s Forced Reference.",
-                    forcedReferenceNpcBase, quest, aliasId);
-
-                return FoundNpc(quest, alias, forcedReferenceNpcBase);
+                logger.Debug(ReferenceIsNotNpcOrTact, quest, aliasId);
             }
         }
 
@@ -145,4 +169,6 @@ internal class QuestAliasResolver
 
         return speaker;
     }
+
+    private Speaker FoundTact(ITalkingActivatorGetter tact) => speakerFactory.Create(tact);
 }
