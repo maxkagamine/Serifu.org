@@ -60,8 +60,20 @@ builder.Run((
         using (logger.BeginTimedOperation("Processing topic {@Topic}", topic))
         using (LogContext.PushProperty("Topic", topic, true))
         {
+            INpcGetter? sceneActor = sceneActorResolver.Resolve(topic);
 
-            sceneActorResolver.Resolve(topic);
+            //foreach (IDialogInfoGetter info in topic.Responses)
+            //{
+            //    using (LogContext.PushProperty("Info", info, true))
+            //    {
+            //        INpcGetter[] npcs = sceneActor is null ? [] : [sceneActor];
+
+            //        if (npcs.Length == 0)
+            //        {
+
+            //        }
+            //    }
+            //}
         }
     }
 });

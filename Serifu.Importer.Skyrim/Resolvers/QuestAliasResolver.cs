@@ -38,40 +38,40 @@ internal class QuestAliasResolver
 
         if (result is null)
         {
-            logger.Debug("No NPC found for {@Quest} alias {AliasId}.", quest, aliasId);
+            logger.Debug("No NPC found for {@Quest} alias {QuestAlias}.", quest, aliasId);
         }
 
         return result;
     }
 
-    private INpcGetter? Resolve(IQuestGetter quest, int aliasId, HashSet<FormKey> processedQuests)
+    private INpcGetter? Resolve(IQuestGetter quest, int aliasId, HashSet<(FormKey, int)> processedQuestAliases)
     {
-        if (!processedQuests.Add(quest.FormKey))
+        if (!processedQuestAliases.Add((quest.FormKey, aliasId)))
         {
-            logger.Warning("Detected cyclic reference at {@Quest}.", quest);
+            logger.Warning("Detected cyclic reference at {@Quest} alias {QuestAlias}.", quest, aliasId);
             return null;
         }
 
         if (quest.Aliases.SingleOrDefault(a => a.ID == aliasId) is not IQuestAliasGetter alias)
         {
-            logger.Warning("Alias {AliasId} not found in {@Quest}.", aliasId, quest);
+            logger.Warning("Alias {QuestAlias} not found in {@Quest}.", aliasId, quest);
             return null;
         }
-        
+
         if (alias.CreateReferenceToObject is not null &&
             alias.CreateReferenceToObject.Object.TryResolve(env, out ISkyrimMajorRecordGetter? aliasCreatedObject))
         {
             if (aliasCreatedObject is not INpcGetter aliasCreatedNpc)
             {
-                logger.Warning("{@Quest} alias {AliasId} has Create Reference to Object but reference is not to an NPC.",
+                logger.Warning("{@Quest} alias {QuestAlias} has Create Reference to Object but reference is not to an NPC.",
                     quest, aliasId);
             }
             else
             {
-                logger.Debug("Found {@Npc} in {@Quest} alias {AliasId}'s Create Reference to Object.",
+                logger.Debug("Found {@Npc} in {@Quest} alias {QuestAlias}'s Create Reference to Object.",
                     aliasCreatedNpc, quest, aliasId);
 
-                return aliasCreatedNpc;
+                return FoundNpc(quest, alias, aliasCreatedNpc);
             }
         }
 
@@ -79,41 +79,61 @@ internal class QuestAliasResolver
         {
             if (forcedReference is not IPlacedNpcGetter forcedReferenceNpc)
             {
-                logger.Warning("{@Quest} alias {AliasId} has a Forced Reference but reference is not an NPC.",
+                logger.Warning("{@Quest} alias {QuestAlias} has a Forced Reference but reference is not to an NPC.",
                     quest, aliasId);
             }
             else if (!forcedReferenceNpc.Base.TryResolve(env, out INpcGetter? forcedReferenceNpcBase))
             {
-                logger.Warning("{@Quest} alias {AliasId} has a Forced Reference to {@Reference} which lacks a Base.",
+                logger.Warning("{@Quest} alias {QuestAlias} has a Forced Reference to {@Reference} which lacks a Base.",
                     quest, aliasId, forcedReferenceNpc);
             }
             else
             {
-                logger.Debug("Found {@Npc} in {@Quest} alias {AliasId}'s Forced Reference.",
+                logger.Debug("Found {@Npc} in {@Quest} alias {QuestAlias}'s Forced Reference.",
                     forcedReferenceNpcBase, quest, aliasId);
 
-                return forcedReferenceNpcBase;
+                return FoundNpc(quest, alias, forcedReferenceNpcBase);
             }
         }
 
         if (alias.UniqueActor.TryResolve(env, out INpcGetter? uniqueActor))
         {
-            logger.Debug("Found {@Npc} in {@Quest} alias {AliasId}'s Unique Actor.",
+            logger.Debug("Found {@Npc} in {@Quest} alias {QuestAlias}'s Unique Actor.",
                 uniqueActor, quest, aliasId);
 
-            return uniqueActor;
+            return FoundNpc(quest, alias, uniqueActor);
+        }
+
+        if (alias.Conditions.Count > 0)
+        {
+            // TODO: Evaluate quest alias conditions
         }
 
         if (alias.External is not null &&
             alias.External.Quest.TryResolve(env, out IQuestGetter? externalQuest) &&
             alias.External.AliasID is int externalAliasId)
         {
-            logger.Debug("Following {@Quest} alias {AliasId}'s External Alias Reference to {@ExternalQuest} alias {ExternalAliasId}.",
+            logger.Debug("Following {@Quest} alias {QuestAlias}'s External Alias Reference to {@ExternalQuest} alias {ExternalAliasId}.",
                 quest, aliasId, externalQuest, externalAliasId);
 
-            return Resolve(externalQuest, externalAliasId, processedQuests);
+            return Resolve(externalQuest, externalAliasId, processedQuestAliases);
         }
 
         return null;
+    }
+
+    private INpcGetter FoundNpc(IQuestGetter quest, IQuestAliasGetter alias, INpcGetter npc)
+    {
+        if (alias.DisplayName.TryResolve(env, out IMessageGetter? displayName) && displayName.Name is not null)
+        {
+            logger.Information("{@Quest} alias {QuestAlias} replaces {@Npc}'s name with {DisplayName}.",
+                quest, alias.ID, npc, displayName.Name.String);
+
+            Npc clone = npc.DeepCopy();
+            clone.Name = displayName.Name.DeepCopy();
+            return clone;
+        }
+
+        return npc;
     }
 }
