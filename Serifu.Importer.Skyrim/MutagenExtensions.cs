@@ -18,6 +18,7 @@ using Mutagen.Bethesda.Environments;
 using Mutagen.Bethesda.Plugins;
 using Mutagen.Bethesda.Plugins.Records;
 using Mutagen.Bethesda.Plugins.Records.Mapping;
+using Mutagen.Bethesda.Strings;
 using Serilog;
 using Serilog.Configuration;
 using Serilog.Core;
@@ -123,8 +124,21 @@ public static class MutagenExtensions
     public static string AsHex(this FormID formId) => formId.Raw.ToString("X8");
 
     /// <summary>
-    /// Configures Serilog to render records as xEdit-style form ID strings, including the editor ID and record type, as
-    /// well as the full eight-character hex form ID with mod index for easy copy-pasting into xEdit.
+    /// Deconstructs a translated string into a tuple of (English, Japanese). Nulls are replaced with empty string.
+    /// </summary>
+    /// <param name="str">A translated string, or null.</param>
+    /// <param name="english">The English string, or empty string if none.</param>
+    /// <param name="japanese">The Japanese string, or empty string if none.</param>
+    public static void Deconstruct(this ITranslatedStringGetter? str, out string english, out string japanese)
+    {
+        english = str is not null && str.TryLookup(Language.English, out string? en) ? en : "";
+        japanese = str is not null && str.TryLookup(Language.Japanese, out string? ja) ? ja : "";
+    }
+
+    /// <summary>
+    /// Configures Serilog to render records and form links as a formatted form ID string in the same style as xEdit,
+    /// including the editor ID, name, and record type. Unlike the default ToString(), this logs the full
+    /// eight-character hex including mod index for easy copy-pasting into xEdit.
     /// </summary>
     /// <remarks>
     /// For the custom destructuring policy to take effect over the default ToString(), the property needs to be
@@ -140,13 +154,13 @@ public static class MutagenExtensions
     {
         public bool TryDestructure(object value, ILogEventPropertyValueFactory propertyValueFactory, [NotNullWhen(true)] out LogEventPropertyValue? result)
         {
-            if (value is not IMajorRecordGetter record)
+            if (value is not IFormLinkIdentifier formLink)
             {
                 result = null;
                 return false;
             }
 
-            string str = formIdProvider.GetFormattedString(record);
+            string str = formIdProvider.GetFormattedString(formLink);
             result = propertyValueFactory.CreatePropertyValue(str);
             return true;
         }

@@ -13,10 +13,8 @@
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
 using Mutagen.Bethesda.Plugins;
-using Mutagen.Bethesda.Plugins.Aspects;
 using Mutagen.Bethesda.Plugins.Records;
 using Mutagen.Bethesda.Plugins.Records.Mapping;
-using System.Text;
 
 namespace Serifu.Importer.Skyrim;
 
@@ -36,30 +34,13 @@ public interface IFormIdProvider
 
     /// <summary>
     /// Returns a formatted form ID string in the same style as xEdit, including the editor ID, name, and record type.
-    /// Useful for logging and debugging.
+    /// Supports null and invalid form links. Useful for logging and debugging.
     /// </summary>
-    /// <param name="record"></param>
+    /// <param name="formLink">A record or form link.</param>
     /// <exception cref="KeyNotFoundException">The <see cref="ModKey"/> does not exist in the load order.</exception>
     /// <exception cref="ArgumentException">The record's registered getter type is missing the <see
     /// cref="AssociatedRecordTypesAttribute"/>.</exception>
-    string GetFormattedString(IMajorRecordGetter record)
-    {
-        StringBuilder sb = new();
-
-        if (record.EditorID is not null)
-        {
-            sb.Append(record.EditorID);
-            sb.Append(' ');
-        }
-
-        if (record is INamedGetter named && named.Name is string name)
-        {
-            sb.Append($"\"{name}\" ");
-        }
-
-        sb.Append($"[{record.GetRecordType()}:{GetFormId(record.FormKey).Raw.ToString("X8")}]");
-        return sb.ToString();
-    }
+    string GetFormattedString(IFormLinkIdentifier formLink);
 
     /// <summary>
     /// Gets a formatted load order with form ID prefixes for display.

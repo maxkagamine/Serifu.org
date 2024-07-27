@@ -14,6 +14,9 @@
 
 using Mutagen.Bethesda.Environments;
 using Mutagen.Bethesda.Plugins;
+using Mutagen.Bethesda.Plugins.Aspects;
+using Mutagen.Bethesda.Plugins.Records;
+using System.Text;
 
 namespace Serifu.Importer.Skyrim;
 
@@ -21,6 +24,7 @@ public class FormIdProvider : IFormIdProvider
 {
     private readonly Dictionary<ModKey, uint> modIndexes = [];
     private readonly string formattedLoadOrder;
+    private readonly IGameEnvironment env;
 
     public FormIdProvider(IGameEnvironment env)
     {
@@ -61,11 +65,44 @@ public class FormIdProvider : IFormIdProvider
         }
 
         this.formattedLoadOrder = string.Join('\n', formattedLoadOrder);
+        this.env = env;
     }
 
     public FormID GetFormId(FormKey formKey)
     {
         return new FormID(modIndexes[formKey.ModKey] + formKey.ID);
+    }
+
+    public string GetFormattedString(IFormLinkIdentifier formLink)
+    {
+        if (formLink.FormKey.IsNull)
+        {
+            return "NULL - Null Reference [00000000]";
+        }
+
+        var record = formLink as IMajorRecordGetter;
+
+        if (record is null && !env.LinkCache.TryResolve(formLink, out record))
+        {
+            return $"[{GetFormId(formLink.FormKey).AsHex()}] < Error: Could not be resolved >";
+        }
+
+        StringBuilder sb = new();
+
+        if (record.EditorID is not null)
+        {
+            sb.Append(record.EditorID);
+            sb.Append(' ');
+        }
+
+        var named = formLink as INamedGetter ?? record as INamedGetter;
+        if (named?.Name is string name)
+        {
+            sb.Append($"\"{name}\" ");
+        }
+
+        sb.Append($"[{record.GetRecordType()}:{GetFormId(record.FormKey).AsHex()}]");
+        return sb.ToString();
     }
 
     public string PrintLoadOrder() => formattedLoadOrder;

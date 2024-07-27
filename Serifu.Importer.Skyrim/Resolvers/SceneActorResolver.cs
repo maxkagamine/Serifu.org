@@ -48,7 +48,7 @@ internal class SceneActorResolver
         }
     }
 
-    public INpcGetter? Resolve(IDialogTopicGetter topic)
+    public Speaker? Resolve(IDialogTopicGetter topic)
     {
         if (!dialogTopicToSceneAction.TryGetValue(topic.FormKey, out var sceneAction))
         {
