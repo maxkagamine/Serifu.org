@@ -8,19 +8,22 @@ namespace Serifu.Importer.Skyrim.Resolvers;
 internal class QuestAliasResolver
 {
     private readonly IGameEnvironment<ISkyrimMod, ISkyrimModGetter> env;
+    private readonly ISpeakerFactory speakerFactory;
     private readonly ILogger logger;
 
     public QuestAliasResolver(
         IGameEnvironment<ISkyrimMod, ISkyrimModGetter> env,
+        ISpeakerFactory speakerFactory,
         ILogger logger)
     {
         this.env = env;
+        this.speakerFactory = speakerFactory;
         this.logger = logger.ForContext<QuestAliasResolver>();
     }
 
-    public INpcGetter? Resolve(IQuestGetter quest, int aliasId)
+    public Speaker? Resolve(IQuestGetter quest, int aliasId)
     {
-        INpcGetter? result = Resolve(quest, aliasId, []);
+        Speaker? result = Resolve(quest, aliasId, []);
 
         if (result is null)
         {
@@ -30,7 +33,7 @@ internal class QuestAliasResolver
         return result;
     }
 
-    private INpcGetter? Resolve(IQuestGetter quest, int aliasId, HashSet<(FormKey, int)> processedQuestAliases)
+    private Speaker? Resolve(IQuestGetter quest, int aliasId, HashSet<(FormKey, int)> processedQuestAliases)
     {
         if (!processedQuestAliases.Add((quest.FormKey, aliasId)))
         {
@@ -108,18 +111,24 @@ internal class QuestAliasResolver
         return null;
     }
 
-    private INpcGetter FoundNpc(IQuestGetter quest, IQuestAliasGetter alias, INpcGetter npc)
+    private Speaker FoundNpc(IQuestGetter quest, IQuestAliasGetter alias, INpcGetter npc)
     {
+        Speaker speaker = speakerFactory.Create(npc);
+
         if (alias.DisplayName.TryResolve(env, out IMessageGetter? displayName) && displayName.Name is not null)
         {
-            logger.Information("{@Quest} alias {QuestAlias} replaces {@Npc}'s name with {DisplayName}.",
-                quest, alias.ID, npc, displayName.Name.String);
+            var (english, japanese) = displayName.Name;
 
-            Npc clone = npc.DeepCopy();
-            clone.Name = displayName.Name.DeepCopy();
-            return clone;
+            logger.Debug("{@Quest} alias {QuestAlias} replaces {@Npc}'s name with {DisplayName}.",
+                quest, alias.ID, npc, english);
+
+            return speaker with
+            {
+                EnglishName = english,
+                JapaneseName = japanese
+            };
         }
 
-        return npc;
+        return speaker;
     }
 }

@@ -28,6 +28,7 @@ builder.Services.AddMutagen<ISkyrimMod, ISkyrimModGetter>(GameRelease.SkyrimSE, 
     .WithTargetDataFolder(provider.GetRequiredService<IOptions<SkyrimOptions>>().Value.DataDirectory));
 
 builder.Services.AddSingleton<IFormIdProvider, FormIdProvider>();
+builder.Services.AddSingleton<ISpeakerFactory, SpeakerFactory>();
 
 builder.Services.AddSingleton<SceneActorResolver>();
 builder.Services.AddSingleton<QuestAliasResolver>();
@@ -41,25 +42,34 @@ builder.Run((
 {
     logger.Information("Load order:\n{LoadOrder}", formIdProvider.PrintLoadOrder());
 
-    foreach (var topic in env.LoadOrder.PriorityOrder.DialogTopic().WinningOverrides())
+    using (logger.BeginTimedOperation("Processing dialogue"))
     {
-        using (logger.BeginTimedOperation("Processing topic {@Topic}", topic))
-        using (LogContext.PushProperty("Topic", topic, true))
+        foreach (var topic in env.LoadOrder.PriorityOrder.DialogTopic().WinningOverrides())
         {
-            INpcGetter? sceneActor = sceneActorResolver.Resolve(topic);
+            logger.Information("Processing topic {@Topic}", topic);
 
-            //foreach (IDialogInfoGetter info in topic.Responses)
-            //{
-            //    using (LogContext.PushProperty("Info", info, true))
-            //    {
-            //        INpcGetter[] npcs = sceneActor is null ? [] : [sceneActor];
+            using (LogContext.PushProperty("Topic", topic, true))
+            {
+                Speaker? sceneActor = sceneActorResolver.Resolve(topic);
 
-            //        if (npcs.Length == 0)
-            //        {
+                if (sceneActor is not null)
+                {
+                    logger.Information("Found scene actor {@Speaker} for {@Topic}", sceneActor, topic);
+                }
 
-            //        }
-            //    }
-            //}
+                //foreach (IDialogInfoGetter info in topic.Responses)
+                //{
+                //    using (LogContext.PushProperty("Info", info, true))
+                //    {
+                //        INpcGetter[] npcs = sceneActor is null ? [] : [sceneActor];
+
+                //        if (npcs.Length == 0)
+                //        {
+
+                //        }
+                //    }
+                //}
+            }
         }
     }
 });
