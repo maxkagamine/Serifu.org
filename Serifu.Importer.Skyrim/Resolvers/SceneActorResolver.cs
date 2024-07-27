@@ -3,6 +3,7 @@ using Mutagen.Bethesda.Environments;
 using Mutagen.Bethesda.Plugins;
 using Mutagen.Bethesda.Skyrim;
 using Serilog;
+using Serilog.Context;
 
 namespace Serifu.Importer.Skyrim.Resolvers;
 
@@ -12,7 +13,7 @@ internal class SceneActorResolver
     private readonly IGameEnvironment<ISkyrimMod, ISkyrimModGetter> env;
     private readonly ILogger logger;
 
-    private readonly Dictionary<FormKey, (ISceneGetter Scene, ISceneActionGetter Action)> dialogTopicToSceneAction;
+    private readonly Dictionary<FormKey, (ISceneGetter Scene, ISceneActionGetter Action, int Index)> dialogTopicToSceneAction;
 
     public SceneActorResolver(
         QuestAliasResolver questAliasResolver,
@@ -27,8 +28,8 @@ internal class SceneActorResolver
         {
             dialogTopicToSceneAction = env.LoadOrder.PriorityOrder.Scene().WinningOverrides()
                 .SelectMany(scene => scene.Actions
-                    .Where(action => action.Type == SceneAction.TypeEnum.Dialog && !action.Topic.IsNull)
-                    .Select(action => (Scene: scene, Action: action)))
+                    .Select((action, i) => (Scene: scene, Action: action, Index: i))
+                    .Where(x => x.Action.Type == SceneAction.TypeEnum.Dialog && !x.Action.Topic.IsNull))
                 .ToDictionary(x => x.Action.Topic.FormKey);
         }
     }
@@ -45,23 +46,31 @@ internal class SceneActorResolver
             return null;
         }
 
-        (ISceneGetter scene, ISceneActionGetter action) = sceneAction;
+        (ISceneGetter scene, ISceneActionGetter action, int index) = sceneAction;
 
         if (action.ActorID is not int actorId)
         {
-            logger.Warning("{@Scene} does not have an Actor ID for Action #{Index}.", scene, (action.Index ?? 0) - 1);
+            logger.Warning("{@Topic} is used by Action #{SceneAction} in {@Scene} but it does not have an Actor ID.",
+                topic, index, scene);
+
             return null;
         }
 
         if (!scene.Quest.TryResolve(env, out IQuestGetter? quest))
         {
-            logger.Warning("{@Scene} has a null or invalid quest reference.", scene);
+            logger.Warning("{@Topic} is used by Action #{SceneAction} in {@Scene} but it has a null or invalid quest reference.",
+                topic, index, scene);
+
             return null;
         }
 
-        logger.Debug("Found {@Scene} referencing alias {AliasId} in {@Quest}.",
-            scene, actorId, quest);
+        logger.Debug("{@Topic} is used by Action #{SceneAction} in {@Scene} which points to alias {QuestAlias} in {@Quest}.",
+            topic, index, scene, actorId, quest);
 
-        return questAliasResolver.Resolve(quest, actorId);
+        using (LogContext.PushProperty("Scene", scene, true))
+        using (LogContext.PushProperty("SceneAction", index))
+        {
+            return questAliasResolver.Resolve(quest, actorId);
+        }
     }
 }
