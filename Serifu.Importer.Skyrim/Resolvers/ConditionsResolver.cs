@@ -91,17 +91,35 @@ internal class ConditionsResolver
         IReadOnlyList<IConditionGetter>[] conditionSets,
         ImmutableHashSet<(FormKey, int)> processedQuestAliases)
     {
-        foreach (var condition in conditionSets.SelectMany(x => x))
-        {
-            if (condition is not IConditionFloatGetter { Data.RunOnType: Condition.RunOnType.Subject } conditionFloat)
-            {
-                continue;
-            }
+        HashSet<string> factions = new(initialCollection.Factions);
 
-            // TODO
-        }
+        // TODO
 
         return SpeakersResult.Empty;
+    }
+
+    /// <summary>
+    /// Groups consecutive OR conditions, such that the elements in the top enumerable are AND'd together, and the
+    /// elements in each inner list are OR'd.
+    /// </summary>
+    private static IEnumerable<IReadOnlyList<IConditionGetter>> GroupOrConditions(
+        IEnumerable<IReadOnlyList<IConditionGetter>> conditionSets)
+    {
+        List<IConditionGetter> orGroup = [];
+
+        foreach (IReadOnlyList<IConditionGetter> conditions in conditionSets)
+        {
+            for (int i = 0; i < conditions.Count; i++)
+            {
+                orGroup.Add(conditions[i]);
+
+                if (i == conditions.Count - 1 || !conditions[i].Flags.HasFlag(Condition.Flag.OR))
+                {
+                    yield return orGroup.ToArray();
+                    orGroup.Clear();
+                }
+            }
+        }
     }
 
     private static bool IsNegated(IConditionFloatGetter condition) => condition.CompareOperator switch
