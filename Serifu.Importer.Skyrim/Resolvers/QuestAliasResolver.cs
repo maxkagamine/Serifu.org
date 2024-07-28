@@ -2,20 +2,24 @@
 using Mutagen.Bethesda.Plugins;
 using Mutagen.Bethesda.Skyrim;
 using Serilog;
+using System.Collections.Immutable;
 
 namespace Serifu.Importer.Skyrim.Resolvers;
 
 internal class QuestAliasResolver
 {
+    private readonly ConditionsResolver conditionsResolver;
     private readonly IGameEnvironment<ISkyrimMod, ISkyrimModGetter> env;
     private readonly ISpeakerFactory speakerFactory;
     private readonly ILogger logger;
 
     public QuestAliasResolver(
+        ConditionsResolver conditionsResolver,
         IGameEnvironment<ISkyrimMod, ISkyrimModGetter> env,
         ISpeakerFactory speakerFactory,
         ILogger logger)
     {
+        this.conditionsResolver = conditionsResolver;
         this.env = env;
         this.speakerFactory = speakerFactory;
         this.logger = logger.ForContext<QuestAliasResolver>();
@@ -33,13 +37,24 @@ internal class QuestAliasResolver
         return result;
     }
 
-    private SpeakersResult Resolve(IQuestGetter quest, int aliasId, HashSet<(FormKey, int)> processedQuestAliases)
+    /// <summary>
+    /// Attempts to find the NPC(s) (or TACT) that could fill a quest alias by various means.
+    /// </summary>
+    /// <param name="quest">The quest.</param>
+    /// <param name="aliasId">The alias ID (ALST, not the array index).</param>
+    /// <param name="processedQuestAliases">
+    /// The quest form keys and alias IDs of any quest aliases traversed in the current call stack, to avoid recursion.
+    /// </param>
+    /// <returns>The resolved speakers, or empty if the quest alias does not point to any specific NPC.</returns>
+    public SpeakersResult Resolve(IQuestGetter quest, int aliasId, ImmutableHashSet<(FormKey, int)> processedQuestAliases)
     {
-        if (!processedQuestAliases.Add((quest.FormKey, aliasId)))
+        if (processedQuestAliases.Contains((quest.FormKey, aliasId)))
         {
             logger.Warning("Detected cyclic reference at {@Quest} alias {QuestAlias}.", quest, aliasId);
             return SpeakersResult.Empty;
         }
+
+        processedQuestAliases = processedQuestAliases.Add((quest.FormKey, aliasId));
 
         if (quest.Aliases.SingleOrDefault(a => a.ID == aliasId) is not IQuestAliasGetter alias)
         {
@@ -119,7 +134,20 @@ internal class QuestAliasResolver
 
         if (alias.Conditions.Count > 0)
         {
-            // TODO: Evaluate quest alias conditions
+            SpeakersResult conditionsResult = conditionsResolver.Resolve(alias.Conditions, processedQuestAliases);
+
+            if (conditionsResult.IsEmpty)
+            {
+                logger.Debug("{@Quest} alias {QuestAlias} has Conditions but we couldn't find any specific NPCs.",
+                    quest, aliasId);
+            }
+            else
+            {
+                logger.Debug("Found {@Npcs} in {@Quest} alias {QuestAlias}'s Conditions.",
+                    conditionsResult, quest, aliasId);
+
+                return conditionsResult;
+            }
         }
 
         if (alias.External is not null &&

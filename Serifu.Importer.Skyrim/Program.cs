@@ -30,12 +30,14 @@ builder.Services.AddMutagen<ISkyrimMod, ISkyrimModGetter>(GameRelease.SkyrimSE, 
 builder.Services.AddSingleton<IFormIdProvider, FormIdProvider>();
 builder.Services.AddSingleton<ISpeakerFactory, SpeakerFactory>();
 
+builder.Services.AddSingleton<ConditionsResolver>();
 builder.Services.AddSingleton<SceneActorResolver>();
 builder.Services.AddSingleton<QuestAliasResolver>();
 
 builder.Run((
     IGameEnvironment<ISkyrimMod, ISkyrimModGetter> env,
     SceneActorResolver sceneActorResolver,
+    ConditionsResolver conditionsResolver,
     IFormIdProvider formIdProvider,
     ILogger logger,
     CancellationToken cancellationToken) =>
@@ -48,27 +50,22 @@ builder.Run((
         {
             logger.Information("Processing topic {@Topic}", topic);
 
+            IQuestGetter? quest = topic.Quest.Resolve(env);
+            IReadOnlyList<IConditionGetter> questDialogueConditions = quest?.DialogConditions ?? [];
+
             using (LogContext.PushProperty("Topic", topic, true))
+            using (LogContext.PushProperty("TopicQuest", quest, true))
             {
-                Speaker? sceneActor = sceneActorResolver.Resolve(topic);
+                SpeakersResult sceneActorResult = sceneActorResolver.Resolve(topic);
 
-                if (sceneActor is not null)
+                foreach (IDialogInfoGetter info in topic.Responses)
                 {
-                    logger.Information("Found scene actor {@Speaker} for {@Topic}", sceneActor, topic);
+                    using (LogContext.PushProperty("Info", info, true))
+                    {
+                        SpeakersResult conditionsResult = conditionsResolver.Resolve(
+                            sceneActorResult, questDialogueConditions, info.Conditions);
+                    }
                 }
-
-                //foreach (IDialogInfoGetter info in topic.Responses)
-                //{
-                //    using (LogContext.PushProperty("Info", info, true))
-                //    {
-                //        INpcGetter[] npcs = sceneActor is null ? [] : [sceneActor];
-
-                //        if (npcs.Length == 0)
-                //        {
-
-                //        }
-                //    }
-                //}
             }
         }
     }
