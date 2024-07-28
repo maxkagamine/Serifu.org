@@ -35,11 +35,11 @@ internal class QuestAliasResolver
         this.logger = logger.ForContext<QuestAliasResolver>();
     }
 
-    public Speaker? Resolve(IQuestGetter quest, int aliasId)
+    public SpeakersResult Resolve(IQuestGetter quest, int aliasId)
     {
-        Speaker? result = Resolve(quest, aliasId, []);
+        SpeakersResult result = Resolve(quest, aliasId, []);
 
-        if (result is null)
+        if (result.IsEmpty)
         {
             logger.Debug("No NPC found for {@Quest} alias {QuestAlias}.", quest, aliasId);
         }
@@ -47,18 +47,18 @@ internal class QuestAliasResolver
         return result;
     }
 
-    private Speaker? Resolve(IQuestGetter quest, int aliasId, HashSet<(FormKey, int)> processedQuestAliases)
+    private SpeakersResult Resolve(IQuestGetter quest, int aliasId, HashSet<(FormKey, int)> processedQuestAliases)
     {
         if (!processedQuestAliases.Add((quest.FormKey, aliasId)))
         {
             logger.Warning("Detected cyclic reference at {@Quest} alias {QuestAlias}.", quest, aliasId);
-            return null;
+            return SpeakersResult.Empty;
         }
 
         if (quest.Aliases.SingleOrDefault(a => a.ID == aliasId) is not IQuestAliasGetter alias)
         {
             logger.Warning("Alias {QuestAlias} not found in {@Quest}.", aliasId, quest);
-            return null;
+            return SpeakersResult.Empty;
         }
 
         if (alias.CreateReferenceToObject is not null &&
@@ -146,7 +146,7 @@ internal class QuestAliasResolver
             return Resolve(externalQuest, externalAliasId, processedQuestAliases);
         }
 
-        return null;
+        return SpeakersResult.Empty;
     }
 
     private Speaker FoundNpc(IQuestGetter quest, IQuestAliasGetter alias, INpcGetter npc)
