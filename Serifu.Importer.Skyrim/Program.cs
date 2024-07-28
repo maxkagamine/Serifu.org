@@ -31,8 +31,9 @@ builder.Services.AddSingleton<IFormIdProvider, FormIdProvider>();
 builder.Services.AddSingleton<ISpeakerFactory, SpeakerFactory>();
 
 builder.Services.AddSingleton<ConditionsResolver>();
-builder.Services.AddSingleton<SceneActorResolver>();
+builder.Services.AddSingleton<FactionResolver>();
 builder.Services.AddSingleton<QuestAliasResolver>();
+builder.Services.AddSingleton<SceneActorResolver>();
 
 builder.Run((
     IGameEnvironment<ISkyrimMod, ISkyrimModGetter> env,
