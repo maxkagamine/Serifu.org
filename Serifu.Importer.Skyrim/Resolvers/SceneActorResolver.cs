@@ -48,6 +48,15 @@ internal class SceneActorResolver
         }
     }
 
+    /// <summary>
+    /// Checks if the dialogue topic is references by a scene and resolves the quest alias identified by the scene
+    /// dialogue action's actor ID if so.
+    /// </summary>
+    /// <param name="topic">The dialogue topic.</param>
+    /// <returns>
+    /// The scene actor, or empty if not scene dialogue or the quest alias did not point to any specific NPC. May
+    /// contain multiple speakers if the alias is filled using match conditions.
+    /// </returns>
     public SpeakersResult Resolve(IDialogTopicGetter topic)
     {
         if (!dialogTopicToSceneAction.TryGetValue(topic.FormKey, out var sceneAction))
