@@ -34,7 +34,7 @@ internal class SceneActorResolver
         }
     }
 
-    public Speaker? Resolve(IDialogTopicGetter topic)
+    public SpeakersResult Resolve(IDialogTopicGetter topic)
     {
         if (!dialogTopicToSceneAction.TryGetValue(topic.FormKey, out var sceneAction))
         {
@@ -43,7 +43,7 @@ internal class SceneActorResolver
                 logger.Warning("{@Topic} has subtype name SCEN but no scene references it.", topic);
             }
 
-            return null;
+            return SpeakersResult.Empty;
         }
 
         (ISceneGetter scene, ISceneActionGetter action, int index) = sceneAction;
@@ -53,7 +53,7 @@ internal class SceneActorResolver
             logger.Warning("{@Topic} is used by Action #{SceneAction} in {@Scene} but it does not have an Actor ID.",
                 topic, index, scene);
 
-            return null;
+            return SpeakersResult.Empty;
         }
 
         if (!scene.Quest.TryResolve(env, out IQuestGetter? quest))
@@ -61,7 +61,7 @@ internal class SceneActorResolver
             logger.Warning("{@Topic} is used by Action #{SceneAction} in {@Scene} but it has a null or invalid quest reference.",
                 topic, index, scene);
 
-            return null;
+            return SpeakersResult.Empty;
         }
 
         logger.Debug("{@Topic} is used by Action #{SceneAction} in {@Scene} which points to alias {QuestAlias} in {@Quest}.",
