@@ -34,6 +34,7 @@ builder.Services.AddSingleton<ConditionsResolver>();
 builder.Services.AddSingleton<FactionResolver>();
 builder.Services.AddSingleton<QuestAliasResolver>();
 builder.Services.AddSingleton<SceneActorResolver>();
+builder.Services.AddSingleton<UniqueVoiceTypeResolver>();
 
 builder.Run((
     IGameEnvironment<ISkyrimMod, ISkyrimModGetter> env,
