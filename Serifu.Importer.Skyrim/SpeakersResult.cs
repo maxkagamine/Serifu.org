@@ -18,21 +18,19 @@ namespace Serifu.Importer.Skyrim;
 
 public class SpeakersResult : IEnumerable<Speaker>
 {
-    public static readonly SpeakersResult Empty = new() { Speakers = [] };
+    public static readonly SpeakersResult Empty = new([]);
 
-    /// <summary>
-    /// Creates a <see cref="SpeakersResult"/> that contains either a single <see cref="Speaker"/> or none and no
-    /// associated factions.
-    /// </summary>
-    public static SpeakersResult From(Speaker? speaker) => speaker is null ? Empty : new() { Speakers = [speaker] };
+    public SpeakersResult(IEnumerable<Speaker> speakers)
+    {
+        Speakers = speakers.ToArray();
+    }
 
-    /// <inheritdoc cref="From(Speaker?)"/>
-    public static implicit operator SpeakersResult(Speaker? speaker) => From(speaker);
+    public static implicit operator SpeakersResult(Speaker? speaker) => speaker is null ? Empty : new([speaker]);
 
     /// <summary>
     /// The resolved speakers.
     /// </summary>
-    public required IReadOnlyCollection<Speaker> Speakers { get; init; }
+    public IReadOnlyCollection<Speaker> Speakers { get; }
 
     /// <summary>
     /// Whether <see cref="Speakers"/> contains any elements.
