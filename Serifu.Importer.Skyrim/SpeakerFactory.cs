@@ -52,6 +52,16 @@ internal class SpeakerFactory : ISpeakerFactory
         };
     }
 
+    public T? GetNpcProperty<T>(Speaker speaker, Func<INpcGetter, T?> selector)
+    {
+        if (env.LinkCache.TryResolve(speaker, out var record) && record is INpcGetter npc)
+        {
+            return GetNpcProperty(npc, selector);
+        }
+
+        return default;
+    }
+
     /// <summary>
     /// Recurses through an NPC and its templates until a non-null value is found for a given property.
     /// </summary>
@@ -61,8 +71,8 @@ internal class SpeakerFactory : ISpeakerFactory
     /// <typeparam name="T">The property type.</typeparam>
     /// <param name="npcOrLeveledNpc">The NPC.</param>
     /// <param name="selector">The property selector.</param>
-    /// <returns>The value, or <see langword="null"/> if not set on the NPC or its templates.</returns>
-    private T? GetNpcProperty<T>(INpcSpawnGetter? npcOrLeveledNpc, Func<INpcGetter, T?> selector) where T : class
+    /// <returns>The value, or <see langword="default"/> if not set on the NPC or its templates.</returns>
+    private T? GetNpcProperty<T>(INpcSpawnGetter? npcOrLeveledNpc, Func<INpcGetter, T?> selector)
     {
         if (npcOrLeveledNpc is ILeveledNpcGetter leveledNpc)
         {
@@ -72,7 +82,7 @@ internal class SpeakerFactory : ISpeakerFactory
                 .Data!.Reference
                 .Resolve(env);
 
-            return reference is null ? null : GetNpcProperty(reference, selector);
+            return reference is null ? default : GetNpcProperty(reference, selector);
         }
 
         if (npcOrLeveledNpc is INpcGetter npc)
@@ -90,6 +100,6 @@ internal class SpeakerFactory : ISpeakerFactory
             }
         }
 
-        return null;
+        return default;
     }
 }

@@ -27,6 +27,12 @@ public class SpeakersResult : IEnumerable<Speaker>
 
     public static implicit operator SpeakersResult(Speaker? speaker) => speaker is null ? Empty : new([speaker]);
 
+    public static SpeakersResult Combine(IEnumerable<SpeakersResult> results) =>
+        new(results.SelectMany(s => s.Speakers).Distinct())
+        {
+            Factions = results.SelectMany(s => s.Factions).ToHashSet()
+        };
+
     /// <summary>
     /// The resolved speakers.
     /// </summary>

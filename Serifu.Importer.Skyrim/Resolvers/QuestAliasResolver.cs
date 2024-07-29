@@ -148,7 +148,7 @@ internal class QuestAliasResolver
 
         if (alias.Conditions.Count > 0)
         {
-            SpeakersResult conditionsResult = conditionsResolver.Resolve(alias.Conditions, processedQuestAliases);
+            SpeakersResult conditionsResult = conditionsResolver.Resolve(quest, alias.Conditions, processedQuestAliases);
 
             if (conditionsResult.IsEmpty)
             {
@@ -177,7 +177,7 @@ internal class QuestAliasResolver
         return SpeakersResult.Empty;
     }
 
-    private Speaker FoundNpc(IQuestGetter quest, IQuestAliasGetter alias, INpcGetter npc)
+    private SpeakersResult FoundNpc(IQuestGetter quest, IQuestAliasGetter alias, INpcGetter npc)
     {
         Speaker speaker = speakerFactory.Create(npc);
 
