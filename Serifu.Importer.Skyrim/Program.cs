@@ -35,6 +35,7 @@ builder.Services.AddSingleton<FactionResolver>();
 builder.Services.AddSingleton<QuestAliasResolver>();
 builder.Services.AddSingleton<SceneActorResolver>();
 builder.Services.AddSingleton<UniqueVoiceTypeResolver>();
+builder.Services.AddTransient(typeof(Lazy<>), typeof(LazyResolver<>));
 
 builder.Run((
     IGameEnvironment<ISkyrimMod, ISkyrimModGetter> env,
@@ -65,7 +66,16 @@ builder.Run((
                     using (LogContext.PushProperty("Info", info, true))
                     {
                         SpeakersResult conditionsResult = conditionsResolver.Resolve(
-                            sceneActorResult, questDialogueConditions, info.Conditions);
+                            sceneActorResult, quest, questDialogueConditions, info.Conditions);
+
+                        if (conditionsResult.IsEmpty)
+                        {
+                            logger.Warning("No speaker found for {@Info}", info);
+                        }
+                        else
+                        {
+                            logger.Information("Speakers found for {@Info}: {@Speakers}", info, conditionsResult);
+                        }
                     }
                 }
             }
