@@ -20,6 +20,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Mutagen.Bethesda;
 using Mutagen.Bethesda.Environments;
+using Mutagen.Bethesda.Plugins;
 using Mutagen.Bethesda.Skyrim;
 using Serifu.Data.Sqlite;
 using Serifu.Importer.Skyrim;
@@ -67,7 +68,25 @@ builder.Run((
     using (var progress = new TerminalProgressBar())
     {
         // Iterate over dialogue topics
-        IDialogTopicGetter[] topics = env.LoadOrder.PriorityOrder.DialogTopic().WinningOverrides().ToArray();
+        HashSet<RecordType> excludedSubtypes = [
+            SubtypeName.Bash,
+            SubtypeName.Block,
+            SubtypeName.Death,
+            SubtypeName.EnterBowZoomBreath,
+            SubtypeName.EnterSprintBreath,
+            SubtypeName.ExitBowZoomBreath,
+            SubtypeName.Hit,
+            SubtypeName.OutOfBreath,
+            SubtypeName.PowerAttack,
+            SubtypeName.VoicePowerEndLong,
+            SubtypeName.VoicePowerEndShort,
+            SubtypeName.VoicePowerStartLong,
+            SubtypeName.VoicePowerStartShort,
+        ];
+
+        IDialogTopicGetter[] topics = env.LoadOrder.PriorityOrder.DialogTopic().WinningOverrides()
+            .Where(t => !excludedSubtypes.Contains(t.SubtypeName))
+            .ToArray();
 
         for (int i = 0; i < topics.Length; i++)
         {
@@ -103,6 +122,7 @@ builder.Run((
                             sceneActorResult, quest, questDialogueConditions, info.Conditions);
 
                         // TODO: Filter to speakers that have a voice file and select a speaker to use
+                        // TODO: Exclude dialogue whose Japanese contains neither kanji nor hiragana (dragon language)
 
                         // Fallback to the INFO's Speaker. This field is mainly used to give a name and voice type to
                         // lines spoken by a TACT or XMarker (usually a daedra), but if the TACT already has both, it
