@@ -59,10 +59,20 @@ builder.Run((
     ConditionsResolver conditionsResolver,
     ISpeakerFactory speakerFactory,
     IFormIdProvider formIdProvider,
+    IOptions<SkyrimOptions> options,
     ILogger logger,
     CancellationToken cancellationToken) =>
 {
     logger.Information("Load order:\n{LoadOrder}", formIdProvider.PrintLoadOrder());
+
+    // Load BSAs
+    VoiceFileArchive englishArchive;
+    VoiceFileArchive japaneseArchive;
+    using (logger.BeginTimedOperation("Indexing archives"))
+    {
+        englishArchive = new(options.Value.EnglishVoiceBsaPath, logger);
+        japaneseArchive = new(options.Value.JapaneseVoiceBsaPath, logger);
+    }
 
     using (logger.BeginTimedOperation("Processing dialogue"))
     using (var progress = new TerminalProgressBar())
@@ -113,26 +123,68 @@ builder.Run((
                 {
                     cancellationToken.ThrowIfCancellationRequested();
 
+                    logger.Debug("Processing info {@Info}", info);
                     using (LogContext.PushProperty("Info", info, true))
                     {
                         // Determine the dialogue's speaker based on its conditions, combined with the quest dialogue
                         // conditions. For scene dialogue, this will usually return the scene actor, but it's possible
                         // for the scene actor's quest alias to have multiple possible NPCs which this narrows down.
-                        SpeakersResult result = conditionsResolver.Resolve(
+                        SpeakersResult conditionsResult = conditionsResolver.Resolve(
                             sceneActorResult, quest, questDialogueConditions, info.Conditions);
 
-                        // TODO: Filter to speakers that have a voice file and select a speaker to use
-                        // TODO: Exclude dialogue whose Japanese contains neither kanji nor hiragana (dragon language)
+                        // Remove any that do not have a translated name or voice file (we could do this check for each
+                        // response, but presumably if an NPC has voice for one line they'll have them all & vice versa)
+                        bool Validate(Speaker speaker)
+                        {
+                            string? error = null;
 
-                        // Fallback to the INFO's Speaker. This field is mainly used to give a name and voice type to
-                        // lines spoken by a TACT or XMarker (usually a daedra), but if the TACT already has both, it
-                        // seems the Speaker is unused (example is the Night Mother in 0009724E).
-                        if (!result.Any(s => s.HasTranslatedName && s.HasVoiceType) &&
-                            info.Speaker.TryResolve(env, out INpcGetter? infoSpeaker))
+                            if (!speaker.HasTranslatedName || !speaker.HasVoiceType)
+                            {
+                                error = "no translated name and/or voice type";
+                            }
+                            else if (!info.Responses.All(r => englishArchive.HasVoiceFile(info, r, speaker.VoiceType)))
+                            {
+                                error = "missing English voice file";
+                            }
+                            else if (!info.Responses.All(r => japaneseArchive.HasVoiceFile(info, r, speaker.VoiceType)))
+                            {
+                                error = "missing Japanese voice file";
+                            }
+
+                            if (error is not null)
+                            {
+                                logger.Debug("Removing {@Speaker}: {Reason}", speaker, error);
+                                return false;
+                            }
+
+                            return true;
+                        }
+
+                        SpeakersResult result = new(conditionsResult.Where(Validate), conditionsResult.Factions);
+
+                        // Use INFO's Speaker as fallback if set. This field is mainly used to give a name and voice
+                        // type to lines spoken by a TACT or XMarker (usually a daedra), but if the TACT already has
+                        // both, it seems the Speaker is unused (example is the "Night Mother Voice NPC" in 0009724E).
+                        if (result.IsEmpty && info.Speaker.TryResolve(env, out INpcGetter? infoSpeaker))
                         {
                             logger.Debug("Falling back to INFO's Speaker: {@Speaker}", infoSpeaker);
-                            result = speakerFactory.Create(infoSpeaker);
+                            Speaker fallback = speakerFactory.Create(infoSpeaker);
+
+                            if (Validate(fallback))
+                            {
+                                result = fallback;
+                            }
                         }
+
+                        if (result.IsEmpty)
+                        {
+                            logger.Debug("No speakers found for {@Info}.", info);
+                            continue;
+                        }
+
+                        logger.Debug("Eligible speakers for {@Info}: {@Speakers}", info, result);
+
+                        // TODO: Exclude dialogue whose Japanese contains neither kanji nor hiragana (dragon language)
                     }
                 }
             }
