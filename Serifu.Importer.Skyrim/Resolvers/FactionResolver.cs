@@ -86,9 +86,6 @@ internal class FactionResolver
             npcs = npcs.Concat(additionalNpcs);
         }
 
-        return new SpeakersResult(npcs)
-        {
-            Factions = faction.EditorID is null ? [] : new HashSet<string>([faction.EditorID])
-        };
+        return new SpeakersResult(npcs, faction.EditorID is null ? [] : [faction.EditorID]);
     }
 }
