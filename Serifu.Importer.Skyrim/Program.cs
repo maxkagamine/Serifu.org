@@ -42,6 +42,7 @@ builder.Run((
     IGameEnvironment<ISkyrimMod, ISkyrimModGetter> env,
     SceneActorResolver sceneActorResolver,
     ConditionsResolver conditionsResolver,
+    ISpeakerFactory speakerFactory,
     IFormIdProvider formIdProvider,
     ILogger logger,
     CancellationToken cancellationToken) =>
@@ -51,36 +52,52 @@ builder.Run((
     using (logger.BeginTimedOperation("Processing dialogue"))
     using (var progress = new TerminalProgressBar())
     {
+        // Iterate over dialogue topics
         IDialogTopicGetter[] topics = env.LoadOrder.PriorityOrder.DialogTopic().WinningOverrides().ToArray();
 
         for (int i = 0; i < topics.Length; i++)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             IDialogTopicGetter topic = topics[i];
             logger.Information("Processing topic {@Topic}", topic);
             progress.SetProgress(i, topics.Length);
 
+            // If the topic's quest has dialogue conditions, these are AND'd together with each INFO's conditions. The
+            // quest is also used to resolve alias references in conditions.
             IQuestGetter? quest = topic.Quest.Resolve(env);
             IReadOnlyList<IConditionGetter> questDialogueConditions = quest?.DialogConditions ?? [];
 
             using (LogContext.PushProperty("Topic", topic, true))
             using (LogContext.PushProperty("TopicQuest", quest, true))
             {
+                // For scene dialogue, all of the INFOs are spoken by the same actor (usually there's only one, but
+                // sometimes a line will change depending on e.g. the player's gender)
                 SpeakersResult sceneActorResult = sceneActorResolver.Resolve(topic);
 
+                // Iterate over each INFO in the topic
                 foreach (IDialogInfoGetter info in topic.Responses)
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
+
                     using (LogContext.PushProperty("Info", info, true))
                     {
-                        SpeakersResult conditionsResult = conditionsResolver.Resolve(
+                        // Determine the dialogue's speaker based on its conditions, combined with the quest dialogue
+                        // conditions. For scene dialogue, this will usually return the scene actor, but it's possible
+                        // for the scene actor's quest alias to have multiple possible NPCs which this narrows down.
+                        SpeakersResult result = conditionsResolver.Resolve(
                             sceneActorResult, quest, questDialogueConditions, info.Conditions);
 
-                        if (conditionsResult.IsEmpty)
+                        // TODO: Filter to speakers that have a voice file and select a speaker to use
+
+                        // Fallback to the INFO's Speaker. This field is mainly used to give a name and voice type to
+                        // lines spoken by a TACT or XMarker (usually a daedra), but if the TACT already has both, it
+                        // seems the Speaker is unused (example is the Night Mother in 0009724E).
+                        if (!result.Any(s => s.HasTranslatedName && s.HasVoiceType) &&
+                            info.Speaker.TryResolve(env, out INpcGetter? infoSpeaker))
                         {
-                            logger.Debug("No speaker found for {@Info}", info);
-                        }
-                        else
-                        {
-                            logger.Debug("Speakers found for {@Info}: {@Speakers}", info, conditionsResult);
+                            logger.Debug("Falling back to INFO's Speaker: {@Speaker}", infoSpeaker);
+                            result = speakerFactory.Create(infoSpeaker);
                         }
                     }
                 }
