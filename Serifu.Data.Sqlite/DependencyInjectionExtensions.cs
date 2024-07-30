@@ -38,6 +38,7 @@ public static class DependencyInjectionExtensions
                 .Enrich.WithProperty("InvocationId", Guid.NewGuid())
                 .Enrich.FromLogContext()
                 .WriteTo.Logger(x => x
+                    .MinimumLevel.Information()
                     .Filter.ByExcluding(logEvent => logEvent.Level < LogEventLevel.Warning && (
                         Matching.FromSource("System")(logEvent) ||
                         Matching.FromSource("Microsoft")(logEvent)))

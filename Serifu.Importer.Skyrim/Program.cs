@@ -1,5 +1,6 @@
 ﻿using Kagamine.Extensions.Hosting;
 using Kagamine.Extensions.Logging;
+using Kagamine.Extensions.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
@@ -48,10 +49,15 @@ builder.Run((
     logger.Information("Load order:\n{LoadOrder}", formIdProvider.PrintLoadOrder());
 
     using (logger.BeginTimedOperation("Processing dialogue"))
+    using (var progress = new TerminalProgressBar())
     {
-        foreach (var topic in env.LoadOrder.PriorityOrder.DialogTopic().WinningOverrides())
+        IDialogTopicGetter[] topics = env.LoadOrder.PriorityOrder.DialogTopic().WinningOverrides().ToArray();
+
+        for (int i = 0; i < topics.Length; i++)
         {
+            IDialogTopicGetter topic = topics[i];
             logger.Information("Processing topic {@Topic}", topic);
+            progress.SetProgress(i, topics.Length);
 
             IQuestGetter? quest = topic.Quest.Resolve(env);
             IReadOnlyList<IConditionGetter> questDialogueConditions = quest?.DialogConditions ?? [];
@@ -70,11 +76,11 @@ builder.Run((
 
                         if (conditionsResult.IsEmpty)
                         {
-                            logger.Warning("No speaker found for {@Info}", info);
+                            logger.Debug("No speaker found for {@Info}", info);
                         }
                         else
                         {
-                            logger.Information("Speakers found for {@Info}: {@Speakers}", info, conditionsResult);
+                            logger.Debug("Speakers found for {@Info}: {@Speakers}", info, conditionsResult);
                         }
                     }
                 }
