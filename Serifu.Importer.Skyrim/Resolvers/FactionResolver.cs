@@ -70,7 +70,7 @@ internal class FactionResolver
 
                     if (!factionNpcs.Contains(speaker))
                     {
-                        logger.Information("Faction override: Adding {@Npc} to {@Faction}", npc, faction);
+                        logger.Debug("Faction override: Adding {@Npc} to {@Faction}", npc, faction);
                         factionOverrideAdditionalNpcs.GetOrAdd(faction.FormKey, []).Add(speaker);
                     }
                 }
