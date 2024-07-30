@@ -233,17 +233,14 @@ internal class ConditionsResolver
 
     private ProducerCondition? CreateGetIsIDCondition(IGetIsIDConditionDataGetter data)
     {
-        if (data.Object.Link.TryResolve(env, out IReferenceableObjectGetter? record))
+        if (data.Object.Link.Cast<INpcGetter>().TryResolve(env, out INpcGetter? npc))
         {
-            if (record is INpcGetter npc)
-            {
-                return new ProducerCondition(speakerFactory.Create(npc), $"GetIsID({formIdProvider.GetFormattedString(npc)})");
-            }
+            return new ProducerCondition(speakerFactory.Create(npc), $"GetIsID({formIdProvider.GetFormattedString(npc)})");
+        }
 
-            if (record is ITalkingActivatorGetter tact)
-            {
-                return new ProducerCondition(speakerFactory.Create(tact), $"GetIsID({formIdProvider.GetFormattedString(tact)})");
-            }
+        if (data.Object.Link.Cast<ITalkingActivatorGetter>().TryResolve(env, out ITalkingActivatorGetter? tact))
+        {
+            return new ProducerCondition(speakerFactory.Create(tact), $"GetIsID({formIdProvider.GetFormattedString(tact)})");
         }
 
         return null;
@@ -277,7 +274,7 @@ internal class ConditionsResolver
             {
                 IVoiceTypeGetter voiceType => [voiceType],
                 IFormListGetter list => list.Items
-                    .Select(x => x.Resolve(env))
+                    .Select(x => x.Cast<IVoiceTypeGetter>().Resolve(env))
                     .OfType<IVoiceTypeGetter>(),
                 _ => throw new UnreachableException("VoiceTypeOrList resolved to neither a voice type nor a list.")
             };

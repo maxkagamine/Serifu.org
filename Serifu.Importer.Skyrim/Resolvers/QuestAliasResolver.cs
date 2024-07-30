@@ -62,18 +62,17 @@ internal class QuestAliasResolver
             return SpeakersResult.Empty;
         }
 
-        if (alias.CreateReferenceToObject is not null &&
-            alias.CreateReferenceToObject.Object.TryResolve(env, out ISkyrimMajorRecordGetter? aliasCreatedObject))
+        if (alias.CreateReferenceToObject is not null)
         {
             const string CreatedObjectIsNotNpcOrTact = "{@Quest} alias {QuestAlias} has Create Reference to Object but it is not an NPC or TACT.";
             const string CreatedObjectFound = "Found {@NpcOrTact} in {@Quest} alias {QuestAlias}'s Create Reference to Object.";
 
-            if (aliasCreatedObject is INpcGetter aliasCreatedNpc)
+            if (alias.CreateReferenceToObject.Object.Cast<INpcGetter>().TryResolve(env, out var aliasCreatedNpc))
             {
                 logger.Debug(CreatedObjectFound, aliasCreatedNpc, quest, aliasId);
                 return FoundNpc(quest, alias, aliasCreatedNpc);
             }
-            else if (aliasCreatedObject is ITalkingActivatorGetter aliasCreatedTact)
+            else if (alias.CreateReferenceToObject.Object.Cast<ITalkingActivatorGetter>().TryResolve(env, out var aliasCreatedTact))
             {
                 logger.Debug(CreatedObjectFound, aliasCreatedTact, quest, aliasId);
                 return FoundTact(aliasCreatedTact);
