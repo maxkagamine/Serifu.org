@@ -174,7 +174,7 @@ internal class ConditionsResolver
             .Concat(initialCollection.Factions)
             .ToHashSet();
 
-        return new SpeakersResult(speakers) { Factions = factions };
+        return new SpeakersResult(speakers, factions);
     }
 
     /// <summary>
@@ -196,7 +196,7 @@ internal class ConditionsResolver
 
         FilterCondition? result = conditionFloat.Data switch
         {
-            IGetInFactionConditionDataGetter getInFaction => CreateGetInFactionCondition(getInFaction, includeFactionOverrides: !isNegated),
+            IGetInFactionConditionDataGetter getInFaction => CreateGetInFactionCondition(getInFaction, isNegated),
             IGetIsAliasRefConditionDataGetter getIsAliasRef => CreateGetIsAliasRefCondition(getIsAliasRef, quest, processedQuestAliases),
             IGetIsIDConditionDataGetter getIsID => CreateGetIsIDCondition(getIsID),
             IGetIsRaceConditionDataGetter getIsRace => CreateGetIsRaceCondition(getIsRace),
@@ -217,11 +217,22 @@ internal class ConditionsResolver
         return result;
     }
 
-    private ProducerCondition? CreateGetInFactionCondition(IGetInFactionConditionDataGetter data, bool includeFactionOverrides)
+    private ProducerCondition? CreateGetInFactionCondition(IGetInFactionConditionDataGetter data, bool isNegated)
     {
         if (data.Faction.Link.TryResolve(env, out IFactionGetter? faction) &&
-            factionResolver.Resolve(faction, includeFactionOverrides) is { IsEmpty: false } result)
+            factionResolver.Resolve(faction, includeFactionOverrides: !isNegated) is { IsEmpty: false } result)
         {
+            // If an NPC's faction rank is -1, they're not in the faction initially but can be at some point in the
+            // game; these NPCs should always match for both the non-negated and negated check. The reverse is a bit
+            // more difficult: for example, Jarl Ballin's GovRuling rank is 0 (true), but if the player makes poor
+            // choices he might be exiled and removed from the faction. We can tell when an NPC might be added to a
+            // faction, but there's no way to definitively know that an NPC could be removed from a faction.
+            if (isNegated)
+            {
+                result = new SpeakersResult(result.Where(s => speakerFactory.GetNpcProperty(s, npc =>
+                    npc.Factions.First(f => f.Faction.FormKey == faction.FormKey).Rank != -1)), result.Factions);
+            }
+
             return new ProducerCondition(result, $"GetInFaction({formIdProvider.GetFormattedString(faction)})");
         }
 
