@@ -185,13 +185,16 @@ internal partial class SkyrimImporter
             return null;
         }
 
+        IEnumerable<Speaker> result = speakers;
+
         // Filter to prioritized NPCs if any factions used in the conditions have overrides
         //
         // Due to the Civil War questline replacing guards in cities with soldiers, and the large number of generic
         // solider NPCs, a lot of guard dialogue may end up attributed to "Imperial Soldier" or "Stormcloak Soldier"
         // rather than the appropriate "Whiterun Guard" etc. otherwise. See appsettings.json for the faction overrides.
-        IEnumerable<Speaker> result = speakers.Factions
+        Speaker[] factionOverride = speakers.Factions
             .SelectMany(f => options.FactionOverrides.GetValueOrDefault(f, []))
+            .Distinct()
             .SelectMany(nameOrFormKey =>
             {
                 if (nameOrFormKey.Contains(':'))
@@ -204,19 +207,33 @@ internal partial class SkyrimImporter
                     return speakers.Where(s => s.EnglishName == nameOrFormKey);
                 }
             })
-            .ToArray() is { Length: > 0 } prioritizedNpcs ? prioritizedNpcs : speakers;
+            .ToArray();
 
-        // If the majority of the speakers are generic NPCs, rather than have quotes attributed to Bandit Marauder,
-        // Bandit Outlaw, and so on, find the name that appears most often ("Bandit") and filter to NPCs with that name.
-        int uniqueCount = result.Count(s => speakerFactory.GetNpcProperty(s, npc =>
-            npc.Configuration.Flags.HasFlag(NpcConfiguration.Flag.Unique)));
-
-        if (uniqueCount < (float)result.Count() / 2)
+        if (factionOverride.Length > 0)
         {
-            result = result
-                .GroupBy(s => s.EnglishName)
-                .MaxBy(g => g.Count())!
-                .AsEnumerable();
+            logger.Debug("Eligible speakers filtered by faction override: {@Speakers}", factionOverride);
+            result = factionOverride;
+        }
+        else
+        {
+            // If the majority of the speakers are generic NPCs, rather than have quotes attributed to Bandit Marauder,
+            // Bandit Outlaw, and so on, find the name that appears most often ("Bandit") and filter to NPCs with that
+            // name. Note that we skip this when a faction override is in effect so that generic guard dialogue doesn't
+            // all get attributed to Whiterun Guard.
+            int uniqueCount = result.Count(s => speakerFactory.GetNpcProperty(s, npc =>
+                npc.Configuration.Flags.HasFlag(NpcConfiguration.Flag.Unique)));
+            float percentGeneric = 1 - ((float)uniqueCount / result.Count());
+
+            if (percentGeneric > 0.5)
+            {
+                result = result
+                    .GroupBy(s => s.EnglishName)
+                    .MaxBy(g => g.Count())!
+                    .AsEnumerable();
+
+                logger.Debug("Eligible speakers are {Percent}% generic NPCs; filtering to most common name: {Name}",
+                    Math.Round(percentGeneric * 100), result.First().EnglishName);
+            }
         }
 
         // Select a random NPC from the resulting group
