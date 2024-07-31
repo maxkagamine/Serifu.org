@@ -38,11 +38,12 @@ builder.Services.AddSingleton<SceneActorResolver>();
 builder.Services.AddSingleton<UniqueVoiceTypeResolver>();
 builder.Services.AddTransient(typeof(Lazy<>), typeof(LazyResolver<>));
 
-builder.Services.AddSingleton<SkyrimImporter>();
+builder.Services.AddScoped<SkyrimImporter>();
 
 builder.Run(async (
     SkyrimImporter importer,
     IFormIdProvider formIdProvider,
+    ISqliteService sqliteService,
     ILogger logger,
     CancellationToken cancellationToken) =>
 {
@@ -52,4 +53,6 @@ builder.Run(async (
     {
         await importer.Run(cancellationToken);
     }
+
+    await sqliteService.DeleteOrphanedAudioFiles(cancellationToken);
 });
