@@ -39,7 +39,7 @@ builder.Services.AddTransient(typeof(Lazy<>), typeof(LazyResolver<>));
 
 builder.Services.AddSingleton<SkyrimImporter>();
 
-builder.Run((
+builder.Run(async (
     SkyrimImporter importer,
     IFormIdProvider formIdProvider,
     ILogger logger,
@@ -49,6 +49,6 @@ builder.Run((
 
     using (logger.BeginTimedOperation("Import"))
     {
-        importer.Run(cancellationToken);
+        await importer.Run(cancellationToken);
     }
 });

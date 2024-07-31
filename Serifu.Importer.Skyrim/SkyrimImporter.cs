@@ -55,23 +55,24 @@ internal partial class SkyrimImporter
         }
     }
 
-    public void Run(CancellationToken cancellationToken)
+    public async Task Run(CancellationToken cancellationToken)
     {
         using var progress = new TerminalProgressBar();
+        int current = 0;
 
         IDialogTopicGetter[] topics = env.LoadOrder.PriorityOrder.DialogTopic().WinningOverrides()
             .Where(t => !ExcludedSubtypes.Contains(t.SubtypeName))
             .ToArray();
 
-        for (int i = 0; i < topics.Length; i++)
+        await Parallel.ForEachAsync(topics, cancellationToken, (topic, cancellationToken) =>
         {
-            cancellationToken.ThrowIfCancellationRequested();
-
-            IDialogTopicGetter topic = topics[i];
-            progress.SetProgress(i, topics.Length);
-
             ProcessTopic(topic, cancellationToken);
-        }
+
+            Interlocked.Increment(ref current);
+            progress.SetProgress(current, topics.Length);
+
+            return ValueTask.CompletedTask;
+        });
     }
 
     private void ProcessTopic(IDialogTopicGetter topic, CancellationToken cancellationToken)
