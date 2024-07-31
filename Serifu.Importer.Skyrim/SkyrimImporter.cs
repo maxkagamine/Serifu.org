@@ -269,7 +269,7 @@ internal partial class SkyrimImporter
             {
                 SpeakerName = speaker?.EnglishName ?? "",
                 Context = englishContext,
-                Text = englishText,
+                Text = TrimQuoteText(englishText),
                 Notes = HttpUtility.HtmlEncode(response.ScriptNotes.Trim()),
                 AudioFile = englishVoiceFileTask.Result,
             },
@@ -277,7 +277,7 @@ internal partial class SkyrimImporter
             {
                 SpeakerName = speaker?.JapaneseName ?? "",
                 Context = japaneseContext,
-                Text = japaneseText,
+                Text = TrimQuoteText(japaneseText),
                 AudioFile = japaneseVoiceFileTask.Result,
             },
             AlignmentData = alignmentDataTask.Result.ToArray()
@@ -531,5 +531,20 @@ internal partial class SkyrimImporter
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// Trims whitespace and wrapping quotes.
+    /// </summary>
+    private static string TrimQuoteText(ReadOnlySpan<char> text)
+    {
+        text = text.Trim();
+
+        if (text[0] is '"' or '“' or '「' or '『' && text[^1] is '"' or '”' or '」' or '』')
+        {
+            text = text[1..^1].Trim();
+        }
+
+        return text.ToString();
     }
 }
