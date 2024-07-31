@@ -50,8 +50,12 @@ internal partial class SkyrimImporter
 
         using (logger.BeginTimedOperation("Indexing archives"))
         {
-            englishArchive = new(this.options.EnglishVoiceBsaPath, logger);
-            japaneseArchive = new(this.options.JapaneseVoiceBsaPath, logger);
+            // VoiceFileArchive takes multiple paths so that we can use the Unofficial High Definition Audio Project mod
+            // for English voices (https://www.nexusmods.com/skyrimspecialedition/mods/18115), as the vanilla voice
+            // files on PC are extremely poor quality. There's no UHDAP download for Japanese, but the quality of the
+            // vanilla files is noticeably better than the English ones.
+            englishArchive = new(this.options.EnglishVoiceBsaPaths, logger);
+            japaneseArchive = new(this.options.JapaneseVoiceBsaPaths, logger);
         }
     }
 

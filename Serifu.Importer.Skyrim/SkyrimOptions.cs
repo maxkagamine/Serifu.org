@@ -1,21 +1,26 @@
-﻿namespace Serifu.Importer.Skyrim;
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace Serifu.Importer.Skyrim;
 
 public class SkyrimOptions
 {
     /// <summary>
     /// Absolute path to the game's Data directory.
     /// </summary>
-    public required string DataDirectory { get; set; }
+    [Required]
+    public string DataDirectory { get; set; } = "";
 
     /// <summary>
-    /// Absolute path to the archive containing English voice files.
+    /// Absolute paths to the archive(s) containing English voice files.
     /// </summary>
-    public required string EnglishVoiceBsaPath { get; set; }
+    [Required, MinLength(1)]
+    public List<string> EnglishVoiceBsaPaths { get; set; } = [];
 
     /// <summary>
-    /// Absolute path to the archive containing Japanese voice files.
+    /// Absolute paths to the archive(s) containing Japanese voice files.
     /// </summary>
-    public required string JapaneseVoiceBsaPath { get; set; }
+    [Required, MinLength(1)]
+    public List<string> JapaneseVoiceBsaPaths { get; set; } = [];
 
     /// <summary>
     /// A map of faction editor IDs to list of either NPC names (matches all NPCs in the faction with the exact English
