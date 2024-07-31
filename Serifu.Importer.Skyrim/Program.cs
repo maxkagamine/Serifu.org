@@ -29,6 +29,7 @@ builder.Services.AddMutagen<ISkyrimMod, ISkyrimModGetter>(GameRelease.SkyrimSE, 
 
 builder.Services.AddSingleton<IFormIdProvider, FormIdProvider>();
 builder.Services.AddSingleton<ISpeakerFactory, SpeakerFactory>();
+builder.Services.AddSingleton<IFuzConverter, FuzConverter>();
 
 builder.Services.AddSingleton<ConditionsResolver>();
 builder.Services.AddSingleton<FactionResolver>();
