@@ -19,6 +19,7 @@ using Mutagen.Bethesda.Archives;
 using Mutagen.Bethesda.Environments;
 using Mutagen.Bethesda.Plugins;
 using Mutagen.Bethesda.Skyrim;
+using Mutagen.Bethesda.Strings;
 using Serifu.Data;
 using Serifu.Data.Sqlite;
 using Serifu.Importer.Skyrim.Resolvers;
@@ -29,6 +30,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
+using System.Web;
 using Alignment = Serifu.Data.Alignment;
 
 namespace Serifu.Importer.Skyrim;
@@ -145,6 +147,7 @@ internal partial class SkyrimImporter
         // is also used to resolve alias references in conditions.
         IQuestGetter? quest = topic.Quest.Resolve(env);
         IReadOnlyList<IConditionGetter> questDialogueConditions = quest?.DialogConditions ?? [];
+        ITranslatedStringGetter? questJournalEntry = GetJournalEntry(quest);
 
         using (LogContext.PushProperty("Topic", topic, true))
         using (LogContext.PushProperty("TopicQuest", quest, true))
@@ -232,7 +235,7 @@ internal partial class SkyrimImporter
                         }
 
                         // Import the voice files & create the quote
-                        yield return await CreateQuote(info, response, speaker, voiceType, cancellationToken);
+                        yield return await CreateQuote(info, response, speaker, voiceType, questJournalEntry, cancellationToken);
                     }
                 }
             }
@@ -247,15 +250,18 @@ internal partial class SkyrimImporter
     /// <param name="speaker">The speaker to whom to attribute the quote, or <see langword="null"/> if unknown.</param>
     /// <param name="voiceType">The voice type of <paramref name="speaker"/>, or one selected randomly from the
     /// dialogue's available voice types if there is no speaker.</param>
+    /// <param name="questJournalEntry">The dialogue topic's associated quest name or journal entry.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     private async Task<Quote> CreateQuote(
         IDialogInfoGetter info,
         IDialogResponseGetter response,
         Speaker? speaker,
         string voiceType,
+        ITranslatedStringGetter? questJournalEntry,
         CancellationToken cancellationToken)
     {
         var (englishText, japaneseText) = response.Text;
+        var (englishContext, japaneseContext) = questJournalEntry;
         FormID formId = formIdProvider.GetFormId(info);
 
         // Import voice files
@@ -276,17 +282,16 @@ internal partial class SkyrimImporter
             English = new()
             {
                 SpeakerName = speaker?.EnglishName ?? "",
-                Context = "", // TODO: Quest name as context
+                Context = englishContext,
                 Text = englishText,
-                Notes = "", // TODO: Sanitize script notes
+                Notes = HttpUtility.HtmlEncode(response.ScriptNotes.Trim()),
                 AudioFile = englishVoiceFileTask.Result,
             },
             Japanese = new()
             {
                 SpeakerName = speaker?.JapaneseName ?? "",
-                Context = "", // TODO: Quest name as context
+                Context = japaneseContext,
                 Text = japaneseText,
-                Notes = "", // TODO: Sanitize script notes
                 AudioFile = japaneseVoiceFileTask.Result,
             },
             AlignmentData = alignmentDataTask.Result.ToArray()
@@ -412,6 +417,56 @@ internal partial class SkyrimImporter
         // Select a random NPC from the resulting group
         var deduped = result.DistinctBy(s => (s.EnglishName, s.VoiceType)).ToArray();
         return deduped[rnd.Next(deduped.Length)];
+    }
+
+    /// <summary>
+    /// Gets the name of the quest or journal entry to be used as the quote's <see cref="Translation.Context"/>.
+    /// </summary>
+    /// <param name="quest">The dialogue topic's quest.</param>
+    /// <returns>The string containing the quest name or journal entry, or <see langword="null"/> if the quest would not
+    /// be visible (or the name contains radiant quest aliases).</returns>
+    private static ITranslatedStringGetter? GetJournalEntry(IQuestGetter? quest)
+    {
+        //const int MaxEnglishNameLength = 40;
+        //const int MaxJapaneseNameLength = 20;
+
+        if (quest is null)
+        {
+            return null;
+        }
+
+        // Quests with no objective won't appear in the journal
+        var objectives = quest.Objectives
+            .Where(objective =>
+            {
+                var (english, japanese) = objective.DisplayText;
+                return !string.IsNullOrWhiteSpace(english) && !string.IsNullOrWhiteSpace(japanese);
+            })
+            .ToArray();
+
+        if (objectives.Length == 0)
+        {
+            return null;
+        }
+
+        // For miscellaneous quests, only the objective names appear in the journal
+        var journalEntry = quest.Type == Quest.TypeEnum.Misc ? objectives.First().DisplayText : quest.Name;
+        var (english, japanese) = journalEntry;
+
+        // Check that the quest/objective has a translation and that it doesn't contain aliases (radiant quests)
+        if (string.IsNullOrWhiteSpace(english) || string.IsNullOrWhiteSpace(japanese) ||
+            english.Contains('<') || japanese.Contains('<'))
+        {
+            return null;
+        }
+
+        // Filter out long quest objectives
+        //if (english.Length > MaxEnglishNameLength || japanese.Length > MaxJapaneseNameLength)
+        //{
+        //    return null;
+        //}
+
+        return journalEntry;
     }
 
     /// <summary>
