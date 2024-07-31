@@ -24,7 +24,8 @@ namespace Serifu.Importer.Skyrim;
 
 internal partial class VoiceFileArchive
 {
-    private readonly string archivePath;
+    private readonly IEnumerable<string> archivePaths;
+    private readonly ILogger logger;
     private readonly Dictionary<VoiceFileIdentifier, IArchiveFile> voiceFiles = [];
 
     private readonly record struct VoiceFileIdentifier(FormKey DialogInfo, string VoiceType, int ResponseNumber)
@@ -37,11 +38,19 @@ internal partial class VoiceFileArchive
     [GeneratedRegex(@"^sound[\\/]voice[\\/](?<Mod>[^\\/]+)[\\/](?<VoiceType>[^\\/]+)[\\/].*_(?<FormId>[0-9a-f]{8})_(?<ResponseNumber>\d+)\.fuz$", RegexOptions.IgnoreCase)]
     private static partial Regex VoiceFileRegex();
 
-    public VoiceFileArchive(string archivePath, ILogger logger)
+    public VoiceFileArchive(IEnumerable<string> archivePaths, ILogger logger)
     {
-        this.archivePath = archivePath;
+        this.archivePaths = archivePaths;
+        this.logger = logger.ForContext<VoiceFileArchive>().ForContext("ArchivePaths", archivePaths);
 
-        logger = logger.ForContext<VoiceFileArchive>().ForContext("ArchivePath", archivePath);
+        foreach (string archivePath in archivePaths)
+        {
+            ReadArchive(archivePath);
+        }
+    }
+
+    private void ReadArchive(string archivePath)
+    {
         logger.Information("Reading archive: {ArchivePath}", archivePath);
 
         IArchiveReader archive = Archive.CreateReader(GameRelease.SkyrimSE, archivePath);
@@ -94,7 +103,9 @@ internal partial class VoiceFileArchive
         VoiceFileIdentifier identifier = new(info, response, voiceType);
         if (!voiceFiles.TryGetValue(identifier, out IArchiveFile? file))
         {
-            throw new FileNotFoundException($"No voice file exists in \"{archivePath}\" matching {identifier}.");
+            throw new FileNotFoundException(
+                $"No voice file exists matching {identifier}. Searched archives:\n- " +
+                string.Join("\n- ", archivePaths));
         }
 
         return file.AsStream();

@@ -36,7 +36,7 @@ builder.Services.AddSerifuSerilog((provider, config) => config.Destructure.Forma
 builder.Services.AddSerifuSqlite();
 builder.Services.AddSerifuMachineLearning();
 
-builder.Services.Configure<SkyrimOptions>(builder.Configuration.GetSection("Skyrim"));
+builder.Services.AddOptions<SkyrimOptions>().BindConfiguration("Skyrim").ValidateDataAnnotations();
 
 builder.Services.AddMutagen<ISkyrimMod, ISkyrimModGetter>(GameRelease.SkyrimSE, (provider, options) => options
     .WithTargetDataFolder(provider.GetRequiredService<IOptions<SkyrimOptions>>().Value.DataDirectory));
