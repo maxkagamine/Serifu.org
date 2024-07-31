@@ -24,10 +24,10 @@ namespace Serifu.Data;
 /// <remarks>
 /// ID format:
 /// <code>
-///   [ Ship #      ] [ Index       ] [ Source ]  // Kancolle
-///   [ Form ID                     ] [ Source ]  // Skyrim, Oblivion
+///              [ Ship #            ] [ Index             ] [ Source ]  // Kancolle
+///   [ Form ID                                 ] [ Resp # ] [ Source ]  // Skyrim, Oblivion
 /// </code>
-/// Example: 21474836225 → Skyrim form id 04FFFFFF
+/// Example: 11778654465 → Skyrim, form id 0002BE10, response #1
 /// </remarks>
 public static class QuoteId
 {
@@ -44,5 +44,14 @@ public static class QuoteId
         ArgumentOutOfRangeException.ThrowIfGreaterThan(index, 0xFFFF);
 
         return ((long)shipNumber << 24) | ((long)index << 8) | (byte)Source.Kancolle;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static long CreateSkyrimId(uint formId, int responseNumber)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(responseNumber);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(responseNumber, 0xFF);
+
+        return ((long)formId << 16) | ((long)responseNumber << 8) | (byte)Source.Skyrim;
     }
 }

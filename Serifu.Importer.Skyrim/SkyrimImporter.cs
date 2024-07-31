@@ -15,13 +15,21 @@
 using Kagamine.Extensions.Logging;
 using Kagamine.Extensions.Utilities;
 using Microsoft.Extensions.Options;
+using Mutagen.Bethesda.Archives;
 using Mutagen.Bethesda.Environments;
 using Mutagen.Bethesda.Plugins;
 using Mutagen.Bethesda.Skyrim;
+using Serifu.Data;
+using Serifu.Data.Sqlite;
 using Serifu.Importer.Skyrim.Resolvers;
+using Serifu.ML.Abstractions;
 using Serilog;
 using Serilog.Context;
+using System.Collections.Concurrent;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
+using Alignment = Serifu.Data.Alignment;
 
 namespace Serifu.Importer.Skyrim;
 
@@ -40,7 +48,11 @@ internal partial class SkyrimImporter
     private readonly IGameEnvironment<ISkyrimMod, ISkyrimModGetter> env;
     private readonly SceneActorResolver sceneActorResolver;
     private readonly ConditionsResolver conditionsResolver;
+    private readonly IFormIdProvider formIdProvider;
     private readonly ISpeakerFactory speakerFactory;
+    private readonly IFuzConverter fuzConverter;
+    private readonly ISqliteService sqliteService;
+    private readonly IWordAligner wordAligner;
     private readonly SkyrimOptions options;
     private readonly ILogger logger;
 
@@ -51,14 +63,22 @@ internal partial class SkyrimImporter
         IGameEnvironment<ISkyrimMod, ISkyrimModGetter> env,
         SceneActorResolver sceneActorResolver,
         ConditionsResolver conditionsResolver,
+        IFormIdProvider formIdProvider,
         ISpeakerFactory speakerFactory,
+        IFuzConverter fuzConverter,
+        ISqliteService sqliteService,
+        IWordAligner wordAligner,
         IOptions<SkyrimOptions> options,
         ILogger logger)
     {
         this.env = env;
         this.sceneActorResolver = sceneActorResolver;
         this.conditionsResolver = conditionsResolver;
+        this.formIdProvider = formIdProvider;
         this.speakerFactory = speakerFactory;
+        this.fuzConverter = fuzConverter;
+        this.sqliteService = sqliteService;
+        this.wordAligner = wordAligner;
         this.options = options.Value;
         this.logger = logger = logger.ForContext<SkyrimImporter>();
 
@@ -82,18 +102,29 @@ internal partial class SkyrimImporter
             .Where(t => !ExcludedSubtypes.Contains(t.SubtypeName))
             .ToArray();
 
-        await Parallel.ForEachAsync(topics, cancellationToken, (topic, cancellationToken) =>
+        ConcurrentBag<Quote> quotes = [];
+
+        await Parallel.ForEachAsync(topics, cancellationToken, async (topic, cancellationToken) =>
         {
-            ProcessTopic(topic, cancellationToken);
+            await foreach (var quote in ProcessTopic(topic, cancellationToken).WithCancellation(cancellationToken))
+            {
+                quotes.Add(quote);
+            }
 
             Interlocked.Increment(ref current);
             progress.SetProgress(current, topics.Length);
-
-            return ValueTask.CompletedTask;
         });
+
+        await sqliteService.SaveQuotes(Source.Skyrim, quotes, cancellationToken);
     }
 
-    private void ProcessTopic(IDialogTopicGetter topic, CancellationToken cancellationToken)
+    /// <summary>
+    /// Iterates over the topic's INFOs, determines the speaker, removes unusable dialogue, imports the voice files, and
+    /// returns <see cref="Quote"/> objects for each dialogue response asynchronously.
+    /// </summary>
+    /// <param name="topic">The dialogue topic.</param>
+    /// <param name="cancellationToken">The async enumerator cancellation token.</param>
+    private async IAsyncEnumerable<Quote> ProcessTopic(IDialogTopicGetter topic, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         logger.Information("Processing topic {@Topic}", topic);
 
@@ -107,7 +138,7 @@ internal partial class SkyrimImporter
 
         if (topicDialogue.Length == 0)
         {
-            return;
+            yield break;
         }
 
         // If the topic's quest has dialogue conditions, these are AND'd together with each INFO's conditions. The quest
@@ -158,6 +189,9 @@ internal partial class SkyrimImporter
 
                     // Choose a speaker from the result set
                     Speaker? speaker = null;
+                    string? voiceType = null;
+                    Random rnd = new((int)info.FormKey.ID);
+
                     if (result.IsEmpty)
                     {
                         logger.Debug("No speakers found for {@Info}.", info);
@@ -167,12 +201,132 @@ internal partial class SkyrimImporter
                         logger.Debug("Eligible speakers for {@Info}: {@Speakers} (factions: {Factions})",
                             info, result, result.Factions);
 
-                        speaker = ChooseSpeaker(info, result);
-                        logger.Debug("Selected {@Speaker} (voice type: {VoiceType})", speaker, speaker!.VoiceType);
+                        speaker = ChooseSpeaker(result, rnd);
+                        voiceType = speaker.VoiceType;
+
+                        logger.Debug("Selected {@Speaker} (voice type: {VoiceType})", speaker, speaker.VoiceType);
+                    }
+
+                    // Iterate over each line of dialogue in the INFO
+                    foreach (IDialogResponseGetter response in responses)
+                    {
+                        // Select a random voice type if null or not available for the response (and was chosen
+                        // randomly -- i.e. don't pick a new voice type that won't match the name shown on the quote)
+                        string[] availableVoiceTypes = englishArchive.GetVoiceTypes(info, response)
+                            .Intersect(japaneseArchive.GetVoiceTypes(info, response)).ToArray();
+
+                        if (availableVoiceTypes.Length == 0)
+                        {
+                            throw new UnreachableException("Responses with no voice files should have been filtered out.");
+                        }
+
+                        if (speaker is not null && !availableVoiceTypes.Contains(speaker.VoiceType, StringComparer.OrdinalIgnoreCase))
+                        {
+                            throw new UnreachableException("Eligible speakers should have been filtered to those with available voice types.");
+                        }
+
+                        if (voiceType is null || !availableVoiceTypes.Contains(voiceType, StringComparer.OrdinalIgnoreCase))
+                        {
+                            // Storing it outside the loop will keep the voice consistent for a given dialogue info
+                            voiceType = availableVoiceTypes[rnd.Next(availableVoiceTypes.Length)];
+                        }
+
+                        // Import the voice files & create the quote
+                        yield return await CreateQuote(info, response, speaker, voiceType, cancellationToken);
                     }
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// Imports the voice files, runs word alignment, and returns a <see cref="Quote"/>.
+    /// </summary>
+    /// <param name="info">The dialogue info.</param>
+    /// <param name="response">The dialogue response.</param>
+    /// <param name="speaker">The speaker to whom to attribute the quote, or <see langword="null"/> if unknown.</param>
+    /// <param name="voiceType">The voice type of <paramref name="speaker"/>, or one selected randomly from the
+    /// dialogue's available voice types if there is no speaker.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    private async Task<Quote> CreateQuote(
+        IDialogInfoGetter info,
+        IDialogResponseGetter response,
+        Speaker? speaker,
+        string voiceType,
+        CancellationToken cancellationToken)
+    {
+        var (englishText, japaneseText) = response.Text;
+        FormID formId = formIdProvider.GetFormId(info);
+
+        // Import voice files
+        Task<string> englishVoiceFileTask = ImportVoiceFile(englishArchive, info, response, voiceType, "Skyrim - Voices_en0.bsa", cancellationToken);
+        Task<string> japaneseVoiceFileTask = ImportVoiceFile(japaneseArchive, info, response, voiceType, "Skyrim - Voices_ja0.bsa", cancellationToken);
+
+        // Run word alignment
+        Task<IEnumerable<Alignment>> alignmentDataTask = wordAligner.AlignSymmetric(englishText, japaneseText, cancellationToken);
+
+        // Wait for tasks to complete
+        await Task.WhenAll(englishVoiceFileTask, japaneseVoiceFileTask, alignmentDataTask);
+
+        // Create quote
+        return new Quote()
+        {
+            Id = QuoteId.CreateSkyrimId(formId.Raw, response.ResponseNumber),
+            Source = Source.Skyrim,
+            English = new()
+            {
+                SpeakerName = speaker?.EnglishName ?? "",
+                Context = "", // TODO: Quest name as context
+                Text = englishText,
+                Notes = "", // TODO: Sanitize script notes
+                AudioFile = englishVoiceFileTask.Result,
+            },
+            Japanese = new()
+            {
+                SpeakerName = speaker?.JapaneseName ?? "",
+                Context = "", // TODO: Quest name as context
+                Text = japaneseText,
+                Notes = "", // TODO: Sanitize script notes
+                AudioFile = japaneseVoiceFileTask.Result,
+            },
+            AlignmentData = alignmentDataTask.Result.ToArray()
+        };
+    }
+
+    /// <summary>
+    /// If the voice file corresponding to the given <paramref name="info"/>, <paramref name="response"/>, and <paramref
+    /// name="voiceType"/> has not already been imported, extracts it from the archive, converts it to Opus, and saves
+    /// it to the database.
+    /// </summary>
+    /// <param name="archive">The archive from which to extract the voice file.</param>
+    /// <param name="info">The dialogue info.</param>
+    /// <param name="response">The dialogue response within <paramref name="info"/>.</param>
+    /// <param name="voiceType">The voice type editor ID.</param>
+    /// <param name="bsaNameForCacheKey">The official language-specific BSA name, for use in the cache key.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The imported audio file's object name.</returns>
+    private async Task<string> ImportVoiceFile(
+        VoiceFileArchive archive,
+        IDialogInfoGetter info,
+        IDialogResponseGetter response,
+        string voiceType,
+        string bsaNameForCacheKey,
+        CancellationToken cancellationToken)
+    {
+        IArchiveFile voiceFile = archive.GetVoiceFile(info, response, voiceType);
+        Uri cacheKey = new($"file:///{nameof(Source.Skyrim)}/Data/{bsaNameForCacheKey}#{voiceFile.Path}");
+
+        if (await sqliteService.GetCachedAudioFile(cacheKey, cancellationToken) is string objectName)
+        {
+            return objectName;
+        }
+
+        logger.Information("Importing {AudioFileCacheKey}", cacheKey);
+
+        using Stream fuzStream = voiceFile.AsStream();
+        using Stream opusStream = await fuzConverter.ConvertToOpus(fuzStream, cancellationToken);
+
+        return await sqliteService.ImportAudioFile(opusStream, cacheKey, cancellationToken);
     }
 
     /// <summary>
@@ -193,14 +347,15 @@ internal partial class SkyrimImporter
     /// <summary>
     /// Selects a speaker from <paramref name="speakers"/> to whom to attribute the dialogue in <paramref name="info"/>.
     /// </summary>
-    /// <param name="info">The dialogue info.</param>
     /// <param name="speakers">The eligible speakers for the dialogue.</param>
+    /// <param name="rnd">A <see cref="Random"/> seeded with the info form ID.</param>
     /// <returns>A <see cref="Speaker"/> from the result set, or <see langword="null"/> if it is empty.</returns>
-    private Speaker? ChooseSpeaker(IDialogInfoGetter info, SpeakersResult speakers)
+    /// <exception cref="ArgumentException"/>
+    private Speaker ChooseSpeaker(SpeakersResult speakers, Random rnd)
     {
         if (speakers.IsEmpty)
         {
-            return null;
+            throw new ArgumentException($"Cannot call {nameof(ChooseSpeaker)} with an empty collection.", nameof(speakers));
         }
 
         IEnumerable<Speaker> result = speakers;
@@ -255,7 +410,6 @@ internal partial class SkyrimImporter
         }
 
         // Select a random NPC from the resulting group
-        var rnd = new Random((int)info.FormKey.ID);
         var deduped = result.DistinctBy(s => (s.EnglishName, s.VoiceType)).ToArray();
         return deduped[rnd.Next(deduped.Length)];
     }
@@ -295,7 +449,8 @@ internal partial class SkyrimImporter
 
     /// <summary>
     /// Checks that the dialogue contains both English and Japanese translations, neither is wrapped in parenthesis
-    /// (sound effects), and that the Japanese is not only katakana (to filter out dragon and riekling language).
+    /// (sound effects), the Japanese is not only katakana (to filter out dragon and riekling language), and that there
+    /// are voice files available (should remove unused dialogue).
     /// </summary>
     /// <param name="info">The containing info, for logging.</param>
     /// <param name="response">The dialogue response to validate.</param>
@@ -319,10 +474,18 @@ internal partial class SkyrimImporter
         {
             error = "Japanese text contains neither kanji nor hiragana";
         }
+        else if (!englishArchive.GetVoiceTypes(info, response).Any())
+        {
+            error = "there are no matching voice files in the English archive";
+        }
+        else if (!japaneseArchive.GetVoiceTypes(info, response).Any())
+        {
+            error = "there are no matching voice files in the Japanese archive";
+        }
 
         if (error is not null)
         {
-            logger.Debug("Skipping response #{Index} in {@Info}: {Reason}", index, info, error);
+            logger.Debug("Skipping response #{Index} in {@Info}: {Reason}.", index, info, error);
             return false;
         }
 

@@ -12,6 +12,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
+using DotNext.Collections.Generic;
 using Mutagen.Bethesda;
 using Mutagen.Bethesda.Archives;
 using Mutagen.Bethesda.Plugins;
@@ -26,14 +27,7 @@ internal partial class VoiceFileArchive
 {
     private readonly IEnumerable<string> archivePaths;
     private readonly ILogger logger;
-    private readonly Dictionary<VoiceFileIdentifier, IArchiveFile> voiceFiles = [];
-
-    private readonly record struct VoiceFileIdentifier(FormKey DialogInfo, string VoiceType, int ResponseNumber)
-    {
-        public VoiceFileIdentifier(IDialogInfoGetter info, IDialogResponseGetter response, string voiceType)
-            : this(info.FormKey, voiceType.ToLowerInvariant(), response.ResponseNumber)
-        { }
-    }
+    private readonly Dictionary<(FormKey, int), Dictionary<string, IArchiveFile>> voiceFiles = []; // (DialogInfo, ResponseNumber) -> VoiceType -> Files
 
     [GeneratedRegex(@"^sound[\\/]voice[\\/](?<Mod>[^\\/]+)[\\/](?<VoiceType>[^\\/]+)[\\/].*_(?<FormId>[0-9a-f]{8})_(?<ResponseNumber>\d+)\.fuz$", RegexOptions.IgnoreCase)]
     private static partial Regex VoiceFileRegex();
@@ -67,7 +61,7 @@ internal partial class VoiceFileArchive
             }
 
             string mod = match.Groups["Mod"].Value;
-            string voiceType = match.Groups["VoiceType"].Value.ToLowerInvariant(); // Make sure to lower when checking dict
+            string voiceType = match.Groups["VoiceType"].Value;
             uint formId = uint.Parse(match.Groups["FormId"].Value, NumberStyles.HexNumber);
             int responseNumber = int.Parse(match.Groups["ResponseNumber"].Value); // Starts at 1
 
@@ -76,9 +70,19 @@ internal partial class VoiceFileArchive
 
             // The BSA contains duplicates. It's not clear whether the game only looks at the form id or if the quest &
             // topic names have to match, too... See the "InfoFileName" function in xEdit's "Export dialogues" script.
-            voiceFiles.TryAdd(new(formKey, voiceType, responseNumber), file);
+            voiceFiles.GetOrAdd((formKey, responseNumber), new Dictionary<string, IArchiveFile>(StringComparer.OrdinalIgnoreCase))
+                .TryAdd(voiceType, file);
         }
     }
+
+    /// <summary>
+    /// Gets the available voice types for the specified dialogue.
+    /// </summary>
+    /// <param name="info">The dialogue info.</param>
+    /// <param name="response">The dialogue response within <paramref name="info"/>.</param>
+    /// <returns>Voice type editor IDs. Note that the casing may not match the records.</returns>
+    public IEnumerable<string> GetVoiceTypes(IDialogInfoGetter info, IDialogResponseGetter response) =>
+        voiceFiles.GetValueOrDefault((info.FormKey, response.ResponseNumber))?.Keys.AsEnumerable() ?? [];
 
     /// <summary>
     /// Determines whether the archive contains a voice file for the specified dialogue and voice type.
@@ -89,25 +93,26 @@ internal partial class VoiceFileArchive
     /// <returns><see langword="true"/> if the archive contains a matching voice file; otherwise, <see
     /// langword="false"/>.</returns>
     public bool HasVoiceFile(IDialogInfoGetter info, IDialogResponseGetter response, string voiceType) =>
-        voiceFiles.ContainsKey(new(info, response, voiceType));
+        voiceFiles.TryGetValue((info.FormKey, response.ResponseNumber), out var voiceTypes) &&
+        voiceTypes.ContainsKey(voiceType);
 
     /// <summary>
-    /// Gets the voice file stream from the archive.
+    /// Gets the voice file from the archive.
     /// </summary>
     /// <param name="info">The dialogue info.</param>
     /// <param name="response">The dialogue response within <paramref name="info"/>.</param>
     /// <param name="voiceType">The voice type editor ID.</param>
     /// <exception cref="FileNotFoundException">No voice file exists for the given dialogue and voice type.</exception>
-    public Stream GetStream(IDialogInfoGetter info, IDialogResponseGetter response, string voiceType)
+    public IArchiveFile GetVoiceFile(IDialogInfoGetter info, IDialogResponseGetter response, string voiceType)
     {
-        VoiceFileIdentifier identifier = new(info, response, voiceType);
-        if (!voiceFiles.TryGetValue(identifier, out IArchiveFile? file))
+        if (!voiceFiles.TryGetValue((info.FormKey, response.ResponseNumber), out var voiceTypes) ||
+            !voiceTypes.TryGetValue(voiceType, out IArchiveFile? file))
         {
             throw new FileNotFoundException(
-                $"No voice file exists matching {identifier}. Searched archives:\n- " +
+                $"No voice file exists for {info.FormKey} response number {response.ResponseNumber} and voice type {voiceType}. Searched archives:\n- " +
                 string.Join("\n- ", archivePaths));
         }
 
-        return file.AsStream();
+        return file;
     }
 }
