@@ -1,5 +1,4 @@
-﻿using DynamicData;
-using Mutagen.Bethesda;
+﻿using Mutagen.Bethesda;
 using Mutagen.Bethesda.Archives;
 using Mutagen.Bethesda.Plugins;
 using Mutagen.Bethesda.Skyrim;
@@ -14,7 +13,12 @@ internal partial class VoiceFileArchive
     private readonly string archivePath;
     private readonly Dictionary<VoiceFileIdentifier, IArchiveFile> voiceFiles = [];
 
-    private readonly record struct VoiceFileIdentifier(FormKey DialogInfo, string VoiceType, int ResponseNumber);
+    private readonly record struct VoiceFileIdentifier(FormKey DialogInfo, string VoiceType, int ResponseNumber)
+    {
+        public VoiceFileIdentifier(IDialogInfoGetter info, IDialogResponseGetter response, string voiceType)
+            : this(info.FormKey, voiceType.ToLowerInvariant(), response.ResponseNumber)
+        { }
+    }
 
     [GeneratedRegex(@"^sound[\\/]voice[\\/](?<Mod>[^\\/]+)[\\/](?<VoiceType>[^\\/]+)[\\/].*_(?<FormId>[0-9a-f]{8})_(?<ResponseNumber>\d+)\.fuz$", RegexOptions.IgnoreCase)]
     private static partial Regex VoiceFileRegex();
@@ -61,9 +65,8 @@ internal partial class VoiceFileArchive
     /// <param name="voiceType">The voice type editor ID.</param>
     /// <returns><see langword="true"/> if the archive contains a matching voice file; otherwise, <see
     /// langword="false"/>.</returns>
-    /// <exception cref="ArgumentException">Response does not exist in info.</exception>
     public bool HasVoiceFile(IDialogInfoGetter info, IDialogResponseGetter response, string voiceType) =>
-        voiceFiles.ContainsKey(CreateIdentifier(info, response, voiceType));
+        voiceFiles.ContainsKey(new(info, response, voiceType));
 
     /// <summary>
     /// Gets the voice file stream from the archive.
@@ -72,26 +75,14 @@ internal partial class VoiceFileArchive
     /// <param name="response">The dialogue response within <paramref name="info"/>.</param>
     /// <param name="voiceType">The voice type editor ID.</param>
     /// <exception cref="FileNotFoundException">No voice file exists for the given dialogue and voice type.</exception>
-    /// <exception cref="ArgumentException">Response does not exist in info.</exception>
     public Stream GetStream(IDialogInfoGetter info, IDialogResponseGetter response, string voiceType)
     {
-        var identifier = CreateIdentifier(info, response, voiceType);
+        VoiceFileIdentifier identifier = new(info, response, voiceType);
         if (!voiceFiles.TryGetValue(identifier, out IArchiveFile? file))
         {
             throw new FileNotFoundException($"No voice file exists in \"{archivePath}\" matching {identifier}.");
         }
 
         return file.AsStream();
-    }
-
-    private static VoiceFileIdentifier CreateIdentifier(IDialogInfoGetter info, IDialogResponseGetter response, string voiceType)
-    {
-        int responseNumber = info.Responses.IndexOf(response) + 1;
-        if (responseNumber == 0)
-        {
-            throw new ArgumentException("Response does not exist in info.", nameof(response));
-        }
-
-        return new VoiceFileIdentifier(info.FormKey, voiceType.ToLowerInvariant(), responseNumber);
     }
 }
