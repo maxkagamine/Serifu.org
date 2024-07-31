@@ -35,7 +35,7 @@ using Alignment = Serifu.Data.Alignment;
 
 namespace Serifu.Importer.Skyrim;
 
-internal partial class SkyrimImporter
+internal sealed partial class SkyrimImporter : IDisposable
 {
     private static readonly HashSet<RecordType> ExcludedSubtypes = [
         SubtypeName.Bash, SubtypeName.Block, SubtypeName.Death, SubtypeName.EnterBowZoomBreath,
@@ -60,6 +60,9 @@ internal partial class SkyrimImporter
 
     private readonly VoiceFileArchive englishArchive;
     private readonly VoiceFileArchive japaneseArchive;
+
+    // Ensure only one thread is accessing the db at a time
+    private readonly SemaphoreSlim sqliteServiceLock = new(1, 1);
 
     public SkyrimImporter(
         IGameEnvironment<ISkyrimMod, ISkyrimModGetter> env,
@@ -325,9 +328,17 @@ internal partial class SkyrimImporter
         IArchiveFile voiceFile = archive.GetVoiceFile(responseDataInfo, response, voiceType);
         Uri cacheKey = new($"file:///{nameof(Source.Skyrim)}/Data/{bsaNameForCacheKey}#{voiceFile.Path.Replace('\\', '/')}");
 
-        if (await sqliteService.GetCachedAudioFile(cacheKey, cancellationToken) is string objectName)
+        await sqliteServiceLock.WaitAsync(cancellationToken);
+        try
         {
-            return objectName;
+            if (await sqliteService.GetCachedAudioFile(cacheKey, cancellationToken) is string objectName)
+            {
+                return objectName;
+            }
+        }
+        finally
+        {
+            sqliteServiceLock.Release();
         }
 
         logger.Information("Importing {AudioFileCacheKey}", cacheKey);
@@ -335,7 +346,16 @@ internal partial class SkyrimImporter
         using Stream fuzStream = voiceFile.AsStream();
         using Stream opusStream = await fuzConverter.ConvertToOpus(fuzStream, cancellationToken);
 
-        return await sqliteService.ImportAudioFile(opusStream, cacheKey, cancellationToken);
+        await sqliteServiceLock.WaitAsync(cancellationToken);
+        try
+        {
+            // This will check again to see if it exists, in case another thread imported the same file between locks
+            return await sqliteService.ImportAudioFile(opusStream, cacheKey, cancellationToken);
+        }
+        finally
+        {
+            sqliteServiceLock.Release();
+        }
     }
 
     /// <summary>
@@ -577,5 +597,10 @@ internal partial class SkyrimImporter
         }
 
         return text.ToString();
+    }
+
+    public void Dispose()
+    {
+        sqliteServiceLock.Dispose();
     }
 }
