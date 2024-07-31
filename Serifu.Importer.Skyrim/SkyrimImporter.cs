@@ -120,7 +120,7 @@ internal partial class SkyrimImporter
         // resolves the Response Data (DNAM); we'll need to filter out duplicate quotes at the end anyway, and this may
         // get us a speaker when the base info has none.
         var topicDialogue = topic.Responses
-            .Select(info => (Info: info, Responses: GetResponses(info, [info.FormKey])))
+            .Select(GetResponses)
             .Where(x => x.Responses.Length > 0)
             .ToArray();
 
@@ -142,8 +142,11 @@ internal partial class SkyrimImporter
             // sometimes a line will change depending on e.g. the player's gender)
             SpeakersResult sceneActorResult = sceneActorResolver.Resolve(topic);
 
-            // Iterate over each INFO in the topic and their (already-filtered) responses
-            foreach ((IDialogInfoGetter info, IDialogResponseGetter[] responses) in topicDialogue)
+            // Iterate over each INFO in the topic and their (already-filtered) responses. Note: There's an important
+            // distinction between the "info" (belonging to the dialogue topic we're in) and the "responseDataInfo" (the
+            // INFO that contains the "responses," which may be different if "info" links to another INFO via the
+            // Response Data property. The former should be used for conditions, and the latter for voice files.
+            foreach ((IDialogInfoGetter info, IDialogInfoGetter responseDataInfo, IDialogResponseGetter[] responses) in topicDialogue)
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
@@ -159,7 +162,7 @@ internal partial class SkyrimImporter
                     // Remove any that do not have a translated name or voice file (we could do this check for each
                     // response, but presumably if an NPC has voice for one line they'll have them all & vice versa)
                     SpeakersResult result = new(
-                        conditionsResult.Where(s => ValidateSpeaker(s, info)),
+                        conditionsResult.Where(s => ValidateSpeaker(s, responseDataInfo)),
                         conditionsResult.Factions);
 
                     // Use INFO's Speaker as fallback if set. This field is mainly used to give a name and voice type to
@@ -170,7 +173,7 @@ internal partial class SkyrimImporter
                         logger.Debug("Falling back to INFO's Speaker: {@Speaker}", infoSpeaker);
                         Speaker fallback = speakerFactory.Create(infoSpeaker);
 
-                        if (ValidateSpeaker(fallback, info))
+                        if (ValidateSpeaker(fallback, responseDataInfo))
                         {
                             result = fallback;
                         }
@@ -201,8 +204,7 @@ internal partial class SkyrimImporter
                     {
                         // Select a random voice type if null or not available for the response (and was chosen
                         // randomly -- i.e. don't pick a new voice type that won't match the name shown on the quote)
-                        string[] availableVoiceTypes = englishArchive.GetVoiceTypes(info, response)
-                            .Intersect(japaneseArchive.GetVoiceTypes(info, response)).ToArray();
+                        string[] availableVoiceTypes = GetAvailableVoiceTypes(responseDataInfo, response).ToArray();
 
                         if (availableVoiceTypes.Length == 0)
                         {
@@ -221,7 +223,7 @@ internal partial class SkyrimImporter
                         }
 
                         // Import the voice files & create the quote
-                        yield return await CreateQuote(info, response, speaker, voiceType, questJournalEntry, cancellationToken);
+                        yield return await CreateQuote(info, responseDataInfo, response, speaker, voiceType, questJournalEntry, cancellationToken);
                     }
                 }
             }
@@ -232,7 +234,8 @@ internal partial class SkyrimImporter
     /// Imports the voice files, runs word alignment, and returns a <see cref="Quote"/>.
     /// </summary>
     /// <param name="info">The dialogue info.</param>
-    /// <param name="response">The dialogue response.</param>
+    /// <param name="responseDataInfo">The dialogue response's parent info.</param>
+    /// <param name="response">The dialogue response within <paramref name="responseDataInfo"/>.</param>
     /// <param name="speaker">The speaker to whom to attribute the quote, or <see langword="null"/> if unknown.</param>
     /// <param name="voiceType">The voice type of <paramref name="speaker"/>, or one selected randomly from the
     /// dialogue's available voice types if there is no speaker.</param>
@@ -240,6 +243,7 @@ internal partial class SkyrimImporter
     /// <param name="cancellationToken">A cancellation token.</param>
     private async Task<Quote> CreateQuote(
         IDialogInfoGetter info,
+        IDialogInfoGetter responseDataInfo,
         IDialogResponseGetter response,
         Speaker? speaker,
         string voiceType,
@@ -251,8 +255,8 @@ internal partial class SkyrimImporter
         FormID formId = formIdProvider.GetFormId(info);
 
         // Import voice files
-        Task<string> englishVoiceFileTask = ImportVoiceFile(englishArchive, info, response, voiceType, "Skyrim - Voices_en0.bsa", cancellationToken);
-        Task<string> japaneseVoiceFileTask = ImportVoiceFile(japaneseArchive, info, response, voiceType, "Skyrim - Voices_ja0.bsa", cancellationToken);
+        Task<string> englishVoiceFileTask = ImportVoiceFile(englishArchive, responseDataInfo, response, voiceType, "Skyrim - Voices_en0.bsa", cancellationToken);
+        Task<string> japaneseVoiceFileTask = ImportVoiceFile(japaneseArchive, responseDataInfo, response, voiceType, "Skyrim - Voices_ja0.bsa", cancellationToken);
 
         // Run word alignment
         Task<IEnumerable<Alignment>> alignmentDataTask = wordAligner.AlignSymmetric(englishText, japaneseText, cancellationToken);
@@ -285,27 +289,27 @@ internal partial class SkyrimImporter
     }
 
     /// <summary>
-    /// If the voice file corresponding to the given <paramref name="info"/>, <paramref name="response"/>, and <paramref
+    /// If the voice file corresponding to the given <paramref name="responseDataInfo"/>, <paramref name="response"/>, and <paramref
     /// name="voiceType"/> has not already been imported, extracts it from the archive, converts it to Opus, and saves
     /// it to the database.
     /// </summary>
     /// <param name="archive">The archive from which to extract the voice file.</param>
-    /// <param name="info">The dialogue info.</param>
-    /// <param name="response">The dialogue response within <paramref name="info"/>.</param>
+    /// <param name="responseDataInfo">The dialogue response's parent info.</param>
+    /// <param name="response">The dialogue response within <paramref name="responseDataInfo"/>.</param>
     /// <param name="voiceType">The voice type editor ID.</param>
     /// <param name="bsaNameForCacheKey">The official language-specific BSA name, for use in the cache key.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The imported audio file's object name.</returns>
     private async Task<string> ImportVoiceFile(
         VoiceFileArchive archive,
-        IDialogInfoGetter info,
+        IDialogInfoGetter responseDataInfo,
         IDialogResponseGetter response,
         string voiceType,
         string bsaNameForCacheKey,
         CancellationToken cancellationToken)
     {
-        IArchiveFile voiceFile = archive.GetVoiceFile(info, response, voiceType);
-        Uri cacheKey = new($"file:///{nameof(Source.Skyrim)}/Data/{bsaNameForCacheKey}#{voiceFile.Path}");
+        IArchiveFile voiceFile = archive.GetVoiceFile(responseDataInfo, response, voiceType);
+        Uri cacheKey = new($"file:///{nameof(Source.Skyrim)}/Data/{bsaNameForCacheKey}#{voiceFile.Path.Replace('\\', '/')}");
 
         if (await sqliteService.GetCachedAudioFile(cacheKey, cancellationToken) is string objectName)
         {
@@ -324,15 +328,23 @@ internal partial class SkyrimImporter
     /// Follows the INFO's Response Data if set and returns the dialogue responses with unusable dialogue filtered out.
     /// </summary>
     /// <param name="info">The dialogue info.</param>
-    /// <param name="recursedFormKeys">The form keys of INFOs that have already been seen, to avoid recursion.</param>
-    private IDialogResponseGetter[] GetResponses(IDialogInfoGetter info, HashSet<FormKey> recursedFormKeys)
+    /// <returns>A tuple containing the given <paramref name="info"/>, the info to which the responses belong (which may
+    /// be different if linked via Response Data), and the filtered responses (which may be empty).</returns>
+    private (IDialogInfoGetter Info, IDialogInfoGetter ResponseDataInfo, IDialogResponseGetter[] Responses) GetResponses(IDialogInfoGetter info)
     {
-        if (info.ResponseData.TryResolve(env, out IDialogInfoGetter? dnam) && recursedFormKeys.Add(dnam.FormKey))
-        {
-            return GetResponses(dnam, recursedFormKeys);
-        }
+        HashSet<FormKey> recursedFormKeys = [info.FormKey];
+        var (ResponseDataInfo, Responses) = GetResponsesInternal(info);
+        return (info, ResponseDataInfo, Responses);
 
-        return info.Responses.Where((r, i) => ValidateDialogue(info, r, i)).ToArray();
+        (IDialogInfoGetter ResponseDataInfo, IDialogResponseGetter[] Responses) GetResponsesInternal(IDialogInfoGetter info)
+        {
+            if (info.ResponseData.TryResolve(env, out IDialogInfoGetter? dnam) && recursedFormKeys.Add(dnam.FormKey))
+            {
+                return GetResponsesInternal(dnam);
+            }
+
+            return (info, info.Responses.Where((r, i) => ValidateDialogue(info, r, i)).ToArray());
+        }
     }
 
     /// <summary>
@@ -459,10 +471,10 @@ internal partial class SkyrimImporter
     /// Checks that the speaker has a translated name and voice files for the given dialogue.
     /// </summary>
     /// <param name="speaker">The speaker to validate.</param>
-    /// <param name="info">The dialogue info.</param>
+    /// <param name="responseDataInfo">The info containing the responses.</param>
     /// <returns><see langword="true"/> if the speaker can be used; otherwise, logs the removal reason and returns <see
     /// langword="false"/>.</returns>
-    private bool ValidateSpeaker(Speaker speaker, IDialogInfoGetter info)
+    private bool ValidateSpeaker(Speaker speaker, IDialogInfoGetter responseDataInfo)
     {
         string? error = null;
 
@@ -470,11 +482,11 @@ internal partial class SkyrimImporter
         {
             error = "no translated name and/or voice type";
         }
-        else if (!info.Responses.All(r => englishArchive.HasVoiceFile(info, r, speaker.VoiceType)))
+        else if (!responseDataInfo.Responses.All(r => englishArchive.HasVoiceFile(responseDataInfo, r, speaker.VoiceType)))
         {
             error = "missing English voice file";
         }
-        else if (!info.Responses.All(r => japaneseArchive.HasVoiceFile(info, r, speaker.VoiceType)))
+        else if (!responseDataInfo.Responses.All(r => japaneseArchive.HasVoiceFile(responseDataInfo, r, speaker.VoiceType)))
         {
             error = "missing Japanese voice file";
         }
@@ -493,12 +505,12 @@ internal partial class SkyrimImporter
     /// (sound effects), the Japanese is not only katakana (to filter out dragon and riekling language), and that there
     /// are voice files available (should remove unused dialogue).
     /// </summary>
-    /// <param name="info">The containing info, for logging.</param>
-    /// <param name="response">The dialogue response to validate.</param>
+    /// <param name="responseDataInfo">The dialogue response's parent info.</param>
+    /// <param name="response">The dialogue response within <paramref name="responseDataInfo"/>.</param>
     /// <param name="index">The dialogue response index, for logging.</param>
     /// <returns><see langword="true"/> if the dialogue can be used; otherwise, logs the reason and returns <see
     /// langword="false"/>.</returns>
-    private bool ValidateDialogue(IDialogInfoGetter info, IDialogResponseGetter response, int index)
+    private bool ValidateDialogue(IDialogInfoGetter responseDataInfo, IDialogResponseGetter response, int index)
     {
         var (english, japanese) = response.Text;
         string? error = null;
@@ -515,23 +527,28 @@ internal partial class SkyrimImporter
         {
             error = "Japanese text contains neither kanji nor hiragana";
         }
-        else if (!englishArchive.GetVoiceTypes(info, response).Any())
+        else if (!GetAvailableVoiceTypes(responseDataInfo, response).Any())
         {
-            error = "there are no matching voice files in the English archive";
-        }
-        else if (!japaneseArchive.GetVoiceTypes(info, response).Any())
-        {
-            error = "there are no matching voice files in the Japanese archive";
+            error = "voice files are missing";
         }
 
         if (error is not null)
         {
-            logger.Debug("Skipping response #{Index} in {@Info}: {Reason}.", index, info, error);
+            logger.Debug("Skipping response #{Index} in {@Info}: {Reason}.", index, responseDataInfo, error);
             return false;
         }
 
         return true;
     }
+
+    /// <summary>
+    /// Gets the voice types that have files in both the English archive and Japanese archive for a given dialogue.
+    /// </summary>
+    /// <param name="responseDataInfo">The dialogue response's parent info.</param>
+    /// <param name="response">The dialogue response within <paramref name="responseDataInfo"/>.</param>
+    /// <returns>Voice type editor IDs. Note that the casing may not match the records.</returns>
+    private IEnumerable<string> GetAvailableVoiceTypes(IDialogInfoGetter responseDataInfo, IDialogResponseGetter response) =>
+        englishArchive.GetVoiceTypes(responseDataInfo, response).Intersect(japaneseArchive.GetVoiceTypes(responseDataInfo, response));
 
     /// <summary>
     /// Trims whitespace and wrapping quotes.
