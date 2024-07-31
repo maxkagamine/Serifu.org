@@ -162,6 +162,11 @@ internal class ConditionsResolver
                 $"({string.Join(" OR ", g.Select(c => c!.ToString()))})"))
             .ToArray();
 
+        if (combinedOrGroups.Length == 0)
+        {
+            return initialCollection;
+        }
+
         logger.Debug("Evaluating conditions: {ConditionString}",
             string.Join(" AND ", combinedOrGroups.Select(c => c.ToString())));
 

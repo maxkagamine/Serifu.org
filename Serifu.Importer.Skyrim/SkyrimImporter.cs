@@ -152,16 +152,20 @@ internal partial class SkyrimImporter
                         }
                     }
 
+                    // Choose a speaker from the result set
+                    Speaker? speaker = null;
                     if (result.IsEmpty)
                     {
                         logger.Debug("No speakers found for {@Info}.", info);
                     }
                     else
                     {
-                        logger.Debug("Eligible speakers for {@Info}: {@Speakers}", info, result);
-                    }
+                        logger.Debug("Eligible speakers for {@Info}: {@Speakers} (factions: {Factions})",
+                            info, result, result.Factions);
 
-                    // TODO: Choose speaker
+                        speaker = ChooseSpeaker(info, result);
+                        logger.Debug("Selected {@Speaker} (voice type: {VoiceType})", speaker, speaker!.VoiceType);
+                    }
                 }
             }
         }
@@ -180,6 +184,59 @@ internal partial class SkyrimImporter
         }
 
         return info.Responses.Where((r, i) => ValidateDialogue(info, r, i)).ToArray();
+    }
+
+    /// <summary>
+    /// Selects a speaker from <paramref name="speakers"/> to whom to attribute the dialogue in <paramref name="info"/>.
+    /// </summary>
+    /// <param name="info">The dialogue info.</param>
+    /// <param name="speakers">The eligible speakers for the dialogue.</param>
+    /// <returns>A <see cref="Speaker"/> from the result set, or <see langword="null"/> if it is empty.</returns>
+    private Speaker? ChooseSpeaker(IDialogInfoGetter info, SpeakersResult speakers)
+    {
+        if (speakers.IsEmpty)
+        {
+            return null;
+        }
+
+        // Filter to prioritized NPCs if any factions used in the conditions have overrides
+        //
+        // Due to the Civil War questline replacing guards in cities with soldiers, and the large number of generic
+        // solider NPCs, a lot of guard dialogue may end up attributed to "Imperial Soldier" or "Stormcloak Soldier"
+        // rather than the appropriate "Whiterun Guard" etc. otherwise. See appsettings.json for the faction overrides.
+        IEnumerable<Speaker> result = speakers.Factions
+            .SelectMany(f => options.FactionOverrides.GetValueOrDefault(f, []))
+            .SelectMany(nameOrFormKey =>
+            {
+                if (nameOrFormKey.Contains(':'))
+                {
+                    var formKey = FormKey.Factory(nameOrFormKey);
+                    return speakers.Where(s => s.FormKey == formKey);
+                }
+                else
+                {
+                    return speakers.Where(s => s.EnglishName == nameOrFormKey);
+                }
+            })
+            .ToArray() is { Length: > 0 } prioritizedNpcs ? prioritizedNpcs : speakers;
+
+        // If the majority of the speakers are generic NPCs, rather than have quotes attributed to Bandit Marauder,
+        // Bandit Outlaw, and so on, find the name that appears most often ("Bandit") and filter to NPCs with that name.
+        int uniqueCount = result.Count(s => speakerFactory.GetNpcProperty(s, npc =>
+            npc.Configuration.Flags.HasFlag(NpcConfiguration.Flag.Unique)));
+
+        if (uniqueCount < (float)result.Count() / 2)
+        {
+            result = result
+                .GroupBy(s => s.EnglishName)
+                .MaxBy(g => g.Count())!
+                .AsEnumerable();
+        }
+
+        // Select a random NPC from the resulting group
+        var rnd = new Random((int)info.FormKey.ID);
+        var deduped = result.DistinctBy(s => (s.EnglishName, s.VoiceType)).ToArray();
+        return deduped[rnd.Next(deduped.Length)];
     }
 
     /// <summary>
