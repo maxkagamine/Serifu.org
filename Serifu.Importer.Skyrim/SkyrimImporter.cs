@@ -121,7 +121,14 @@ internal sealed partial class SkyrimImporter : IDisposable
             progress.SetProgress(current, topics.Length);
         });
 
-        await sqliteService.SaveQuotes(Source.Skyrim, quotes, cancellationToken);
+        // Remove duplicates, preferring quotes with speakers over those without
+        Quote[] deduped = quotes.GroupBy(q => (q.English.Text, q.Japanese.Text))
+            .Select(g => g.FirstOrDefault(q => q.English.SpeakerName != "") ?? g.First())
+            .ToArray();
+
+        logger.Information("Removed {RemovedCount} duplicate quotes.", quotes.Count - deduped.Length);
+
+        await sqliteService.SaveQuotes(Source.Skyrim, deduped, cancellationToken);
     }
 
     /// <summary>
