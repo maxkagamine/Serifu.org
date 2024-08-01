@@ -104,7 +104,7 @@ internal sealed partial class SkyrimImporter : IDisposable
         using var progress = new TerminalProgressBar();
         int current = 0;
 
-        IDialogTopicGetter[] topics = env.LoadOrder.PriorityOrder.DialogTopic().WinningOverrides()
+        IDialogTopicGetter[] topics = env.LoadOrder.PriorityOrder.FlattenedDialogTopics() // See FlattenedDialogTopic.cs
             .Where(t => !ExcludedSubtypes.Contains(t.SubtypeName))
             .ToArray();
 
