@@ -12,6 +12,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
+using DotNext.Threading;
 using Kagamine.Extensions.Logging;
 using Kagamine.Extensions.Utilities;
 using Microsoft.Extensions.Options;
@@ -62,7 +63,7 @@ internal sealed partial class SkyrimImporter : IDisposable
     private readonly VoiceFileArchive japaneseArchive;
 
     // Ensure only one thread is accessing the db at a time
-    private readonly SemaphoreSlim sqliteServiceLock = new(1, 1);
+    private readonly AsyncLock sqliteServiceLock = AsyncLock.Exclusive();
 
     public SkyrimImporter(
         IGameEnvironment<ISkyrimMod, ISkyrimModGetter> env,
@@ -328,17 +329,12 @@ internal sealed partial class SkyrimImporter : IDisposable
         IArchiveFile voiceFile = archive.GetVoiceFile(responseDataInfo, response, voiceType);
         Uri cacheKey = new($"file:///{nameof(Source.Skyrim)}/Data/{bsaNameForCacheKey}#{voiceFile.Path.Replace('\\', '/')}");
 
-        await sqliteServiceLock.WaitAsync(cancellationToken);
-        try
+        using (await sqliteServiceLock.AcquireAsync(cancellationToken))
         {
             if (await sqliteService.GetCachedAudioFile(cacheKey, cancellationToken) is string objectName)
             {
                 return objectName;
             }
-        }
-        finally
-        {
-            sqliteServiceLock.Release();
         }
 
         logger.Information("Importing {AudioFileCacheKey}", cacheKey);
@@ -346,15 +342,10 @@ internal sealed partial class SkyrimImporter : IDisposable
         using Stream fuzStream = voiceFile.AsStream();
         using Stream opusStream = await fuzConverter.ConvertToOpus(fuzStream, cancellationToken);
 
-        await sqliteServiceLock.WaitAsync(cancellationToken);
-        try
+        using (await sqliteServiceLock.AcquireAsync(cancellationToken))
         {
             // This will check again to see if it exists, in case another thread imported the same file between locks
             return await sqliteService.ImportAudioFile(opusStream, cacheKey, cancellationToken);
-        }
-        finally
-        {
-            sqliteServiceLock.Release();
         }
     }
 
