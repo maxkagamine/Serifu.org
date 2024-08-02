@@ -580,8 +580,8 @@ internal sealed partial class SkyrimImporter : IDisposable
 
     /// <summary>
     /// Checks that the dialogue contains both English and Japanese translations, neither is wrapped in parenthesis
-    /// (sound effects), the Japanese is not only katakana (to filter out dragon and riekling language), and that there
-    /// are voice files available (should remove unused dialogue).
+    /// (sound effects), the Japanese is not only katakana (to filter out dragon and riekling language), the English is
+    /// more than one word, and that there are voice files available (should remove unused dialogue).
     /// </summary>
     /// <param name="responseDataInfo">The dialogue response's parent info.</param>
     /// <param name="response">The dialogue response within <paramref name="responseDataInfo"/>.</param>
@@ -604,6 +604,10 @@ internal sealed partial class SkyrimImporter : IDisposable
         else if (!KanjiOrHiraganaRegex().IsMatch(japanese))
         {
             error = "Japanese text contains neither kanji nor hiragana";
+        }
+        else if (wordAligner.EnglishTokenizer.GetWordCount(english) == 1)
+        {
+            error = "one-word response or yell";
         }
         else if (!GetAvailableVoiceTypes(responseDataInfo, response).Any())
         {
