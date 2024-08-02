@@ -32,6 +32,11 @@ public record Translation
     public required string Text { get; init; }
 
     /// <summary>
+    /// The number of words in <see cref="Text"/>.
+    /// </summary>
+    public required int WordCount { get; init; }
+
+    /// <summary>
     /// Translation notes, if any. Contains sanitized HTML.
     /// </summary>
     public string Notes { get; init; } = "";
