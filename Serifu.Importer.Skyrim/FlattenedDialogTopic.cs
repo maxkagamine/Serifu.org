@@ -5,47 +5,12 @@ using Mutagen.Bethesda.Plugins.Aspects;
 using Mutagen.Bethesda.Plugins.Assets;
 using Mutagen.Bethesda.Plugins.Binary.Streams;
 using Mutagen.Bethesda.Plugins.Binary.Translations;
-using Mutagen.Bethesda.Plugins.Order;
 using Mutagen.Bethesda.Plugins.Records;
 using Mutagen.Bethesda.Skyrim;
 using Mutagen.Bethesda.Strings;
 using Noggog.StructuredStrings;
 
 namespace Serifu.Importer.Skyrim;
-
-internal static class FlattenedDialogTopicExtension
-{
-    public static IEnumerable<IDialogTopicGetter> FlattenedDialogTopics(
-        this IEnumerable<IModListingGetter<ISkyrimModGetter>> loadOrder)
-    {
-        // Using form key equality, when the mod listings are in priority order, the winning override for the topic will
-        // be added first, and every overridden instance that follows (including the original definition) will get its
-        // hash set to which to add their own infos.
-        Dictionary<IDialogTopicGetter, HashSet<IDialogInfoGetter>> topicInfos = new(MajorRecord.FormKeyEqualityComparer);
-
-        foreach (IModListingGetter<ISkyrimModGetter> modListing in loadOrder)
-        {
-            if (modListing.Mod is null)
-            {
-                continue;
-            }
-
-            foreach (IDialogTopicGetter topic in modListing.Mod.EnumerateMajorRecords<IDialogTopicGetter>())
-            {
-                HashSet<IDialogInfoGetter> infos = topicInfos.GetOrAdd(topic, _ => new(MajorRecord.FormKeyEqualityComparer));
-
-                foreach (IDialogInfoGetter info in topic.Responses)
-                {
-                    // Similarly here too, using form key equality for the hash set, only the winning override of each
-                    // info will be added. The result is the same as flattening the dialog topic/info record tree.
-                    infos.Add(info);
-                }
-            }
-        }
-
-        return topicInfos.Select(x => new FlattenedDialogTopic(x.Key, x.Value));
-    }
-}
 
 internal class FlattenedDialogTopic : IDialogTopicGetter
 {

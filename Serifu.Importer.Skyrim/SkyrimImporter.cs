@@ -1,10 +1,13 @@
-﻿using DotNext.Threading;
+﻿using DotNext.Collections.Generic;
+using DotNext.Threading;
 using Kagamine.Extensions.Logging;
 using Kagamine.Extensions.Utilities;
 using Microsoft.Extensions.Options;
 using Mutagen.Bethesda.Archives;
 using Mutagen.Bethesda.Environments;
 using Mutagen.Bethesda.Plugins;
+using Mutagen.Bethesda.Plugins.Order;
+using Mutagen.Bethesda.Plugins.Records;
 using Mutagen.Bethesda.Skyrim;
 using Mutagen.Bethesda.Strings;
 using Serifu.Data;
@@ -90,7 +93,7 @@ internal sealed partial class SkyrimImporter : IDisposable
         using var progress = new TerminalProgressBar();
         int current = 0;
 
-        IDialogTopicGetter[] topics = env.LoadOrder.PriorityOrder.FlattenedDialogTopics() // See FlattenedDialogTopic.cs
+        IDialogTopicGetter[] topics = GetFlattenedDialogTopics()
             .Where(t => !ExcludedSubtypes.Contains(t.SubtypeName))
             .ToArray();
 
@@ -115,6 +118,50 @@ internal sealed partial class SkyrimImporter : IDisposable
         logger.Information("Removed {RemovedCount} duplicate quotes.", quotes.Count - deduped.Length);
 
         await sqliteService.SaveQuotes(Source.Skyrim, deduped, cancellationToken);
+    }
+
+    /// <summary>
+    /// Returns the winning override for every dialogue topic, with the winning overrides of each of their responses
+    /// from every mod in the load order, essentially flattening the dialog topic/info record tree as the game does.
+    /// </summary>
+    private IEnumerable<IDialogTopicGetter> GetFlattenedDialogTopics()
+    {
+        // Using form key equality, with the mod listings in priority order, the winning override for the topic will be
+        // added first, and every overridden instance that follows (including the original definition) will get its hash
+        // set to which to add their own infos.
+        Dictionary<IDialogTopicGetter, HashSet<IDialogInfoGetter>> topicInfos = new(MajorRecord.FormKeyEqualityComparer);
+
+        foreach (IModListingGetter<ISkyrimModGetter> modListing in env.LoadOrder.PriorityOrder)
+        {
+            if (modListing.Mod is null)
+            {
+                continue;
+            }
+
+            foreach (IDialogTopicGetter topic in modListing.Mod.EnumerateMajorRecords<IDialogTopicGetter>())
+            {
+                HashSet<IDialogInfoGetter> infos = topicInfos.GetOrAdd(topic, _ => new(MajorRecord.FormKeyEqualityComparer));
+
+                foreach (IDialogInfoGetter info in topic.Responses)
+                {
+                    if (env.LoadOrder.IndexOf(info.FormKey.ModKey) < env.LoadOrder.IndexOf(topic.FormKey.ModKey))
+                    {
+                        // This is a weird situation where an INFO exists in two DIALs. They look like overrides to both
+                        // xEdit and Mutagen, but the game doesn't seem to treat them as such. See notes for details.
+                        logger.Debug("Skipping {@Info} in {@Topic}; it's using the form ID from another mod but is not an override.",
+                            info, topic);
+
+                        continue;
+                    }
+
+                    // Similarly here too, using form key equality for the hash set, only the winning override of each
+                    // info will be added. The result is the same as flattening the dialog topic/info record tree.
+                    infos.Add(info);
+                }
+            }
+        }
+
+        return topicInfos.Select(x => new FlattenedDialogTopic(x.Key, x.Value));
     }
 
     /// <summary>
