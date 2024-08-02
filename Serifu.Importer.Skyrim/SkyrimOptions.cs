@@ -41,5 +41,19 @@ public class SkyrimOptions
     /// name) or FormKeys (for when the NPC may not exist in the faction by default) to prioritize over the rest of the
     /// faction when it is used as part of a non-negated GetInFaction condition.
     /// </summary>
+    /// <remarks>
+    /// When both <see cref="FactionOverrides"/> and <see cref="FactionVoiceTypeOverrides"/> produce matches, NPCs
+    /// that match both overrides are used, unless none do, in which case the former takes priority.
+    /// </remarks>
     public Dictionary<string, List<string>> FactionOverrides { get; set; } = [];
+
+    /// <summary>
+    /// A map of faction editor IDs to a list of voice types (case-insensitive) to prioritize over the rest of the
+    /// faction when it is used as part of a non-negated GetInFaction condition.
+    /// </summary>
+    /// <remarks>
+    /// When both <see cref="FactionOverrides"/> and <see cref="FactionVoiceTypeOverrides"/> produce matches, NPCs
+    /// that match both overrides are used, unless none do, in which case the former takes priority.
+    /// </remarks>
+    public Dictionary<string, List<string>> FactionVoiceTypeOverrides { get; set; } = [];
 }

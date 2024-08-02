@@ -464,10 +464,21 @@ internal sealed partial class SkyrimImporter : IDisposable
             })
             .ToArray();
 
-        if (factionOverride.Length > 0)
+        Speaker[] factionVoiceTypeOverride = speakers.Factions
+            .SelectMany(f => options.FactionVoiceTypeOverrides.GetValueOrDefault(f, []))
+            .Distinct()
+            .SelectMany(voiceType => speakers.Where(s => s.VoiceType.Equals(voiceType, StringComparison.OrdinalIgnoreCase)))
+            .ToArray();
+
+        Speaker[] combinedOverride =
+            factionVoiceTypeOverride.Length == 0 ? factionOverride :
+            factionOverride.Length == 0 ? factionVoiceTypeOverride :
+            factionOverride.Intersect(factionVoiceTypeOverride).ToArray();
+
+        if (combinedOverride.Length > 0)
         {
-            logger.Debug("Eligible speakers filtered by faction override: {@Speakers}", factionOverride);
-            result = factionOverride;
+            logger.Debug("Eligible speakers filtered by faction overrides: {@Speakers}", combinedOverride);
+            result = combinedOverride;
         }
         else
         {
