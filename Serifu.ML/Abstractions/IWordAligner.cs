@@ -13,4 +13,14 @@ public interface IWordAligner
     /// <param name="cancellationToken">An optional cancellation token.</param>
     /// <returns>The resulting alignments mapping from English to Japanese.</returns>
     Task<IEnumerable<Alignment>> AlignSymmetric(string english, string japanese, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// The tokenizer used for English.
+    /// </summary>
+    ITokenizer EnglishTokenizer { get; }
+
+    /// <summary>
+    /// The tokenizer used for Japanese.
+    /// </summary>
+    ITokenizer JapaneseTokenizer { get; }
 }

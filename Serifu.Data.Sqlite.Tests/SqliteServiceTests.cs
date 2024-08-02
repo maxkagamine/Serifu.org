@@ -48,8 +48,8 @@ public sealed class SqliteServiceTests : IDisposable
     [Fact]
     public async Task SaveQuotes_ReplacesQuotesForSource()
     {
-        var oldTl = new Translation() { Context = "old value", SpeakerName = "old value", Text = "old value" };
-        var newTl = new Translation() { Context = "new value", SpeakerName = "new value", Text = "new value" };
+        var oldTl = new Translation() { Context = "old value", SpeakerName = "old value", Text = "old value", WordCount = 0 };
+        var newTl = new Translation() { Context = "new value", SpeakerName = "new value", Text = "new value", WordCount = 0 };
 
         var skyrimQuote = new Quote() { Id = 200, Source = Source.Skyrim, English = oldTl, Japanese = oldTl, AlignmentData = [] };
 
@@ -228,16 +228,16 @@ public sealed class SqliteServiceTests : IDisposable
                 {
                     Id = 1,
                     Source = Source.Kancolle,
-                    English = new() { Context = "", SpeakerName = "", Text = "", AudioFile = "referenced audio file 1" },
-                    Japanese = new() { Context = "", SpeakerName = "", Text = "" },
+                    English = new() { Context = "", SpeakerName = "", Text = "", WordCount = 0, AudioFile = "referenced audio file 1" },
+                    Japanese = new() { Context = "", SpeakerName = "", Text = "", WordCount = 0 },
                     AlignmentData = []
                 },
                 new()
                 {
                     Id = 2,
                     Source = Source.Skyrim,
-                    English = new() { Context = "", SpeakerName = "", Text = "" },
-                    Japanese = new() { Context = "", SpeakerName = "", Text = "", AudioFile = "referenced audio file 2" },
+                    English = new() { Context = "", SpeakerName = "", Text = "", WordCount = 0 },
+                    Japanese = new() { Context = "", SpeakerName = "", Text = "", WordCount = 0, AudioFile = "referenced audio file 2" },
                     AlignmentData = []
                 },
             ]);

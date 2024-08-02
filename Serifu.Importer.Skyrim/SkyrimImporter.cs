@@ -308,7 +308,7 @@ internal sealed partial class SkyrimImporter : IDisposable
         ITranslatedStringGetter? questJournalEntry,
         CancellationToken cancellationToken)
     {
-        var (englishText, japaneseText) = response.Text;
+        var (englishText, japaneseText) = TrimQuoteText(response.Text);
         var (englishContext, japaneseContext) = questJournalEntry;
         FormID formId = formIdProvider.GetFormId(info);
 
@@ -331,7 +331,8 @@ internal sealed partial class SkyrimImporter : IDisposable
             {
                 SpeakerName = speaker?.EnglishName ?? "",
                 Context = englishContext,
-                Text = TrimQuoteText(englishText),
+                Text = englishText,
+                WordCount = wordAligner.EnglishTokenizer.GetWordCount(englishText),
                 Notes = HttpUtility.HtmlEncode(response.ScriptNotes.Trim()),
                 AudioFile = englishVoiceFileTask.Result,
             },
@@ -339,7 +340,8 @@ internal sealed partial class SkyrimImporter : IDisposable
             {
                 SpeakerName = speaker?.JapaneseName ?? "",
                 Context = japaneseContext,
-                Text = TrimQuoteText(japaneseText),
+                Text = japaneseText,
+                WordCount = wordAligner.JapaneseTokenizer.GetWordCount(japaneseText),
                 AudioFile = japaneseVoiceFileTask.Result,
             },
             AlignmentData = alignmentDataTask.Result.ToArray()
@@ -639,6 +641,15 @@ internal sealed partial class SkyrimImporter : IDisposable
         }
 
         return text.ToString();
+    }
+
+    /// <summary>
+    /// Destructures <paramref name="text"/> and trims whitespace and wrapping quotes.
+    /// </summary>
+    private static (string English, string Japanese) TrimQuoteText(ITranslatedStringGetter text)
+    {
+        var (english, japanese) = text;
+        return (TrimQuoteText(english), TrimQuoteText(japanese));
     }
 
     public void Dispose()
