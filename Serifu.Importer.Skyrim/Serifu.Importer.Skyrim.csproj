@@ -1,0 +1,37 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="appsettings.json" />
+    <None Remove="README.md" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FFMpegCore" Version="5.1.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="8.0.0" />
+    <PackageReference Include="Mutagen.Bethesda.FormKeys.SkyrimSE" Version="3.2.0" />
+    <PackageReference Include="Mutagen.Bethesda.Skyrim" Version="0.45.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Serifu.Data.Sqlite\Serifu.Data.Sqlite.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Mutagen.Bethesda.Skyrim.IDialogResponsesGetter" Alias="IDialogInfoGetter" />
+  </ItemGroup>
+
+</Project>

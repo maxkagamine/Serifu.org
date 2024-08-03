@@ -12,20 +12,20 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
-namespace Serifu.ML.Abstractions;
+using FFMpegCore.Exceptions;
+using Serifu.Data.Sqlite;
 
-public interface ITokenizer
+namespace Serifu.Importer.Skyrim;
+
+public interface IFuzConverter
 {
     /// <summary>
-    /// Splits text into words for alignment.
+    /// Extracts the XWM data from <paramref name="fuzStream"/> and converts it to Opus using ffmpeg.
     /// </summary>
-    /// <param name="text">The text to tokenize.</param>
-    /// <returns>The start and end of each word as a collection of <see cref="Token"/>.</returns>
-    IEnumerable<Token> Tokenize(string text);
-
-    /// <summary>
-    /// Gets the number of words in <paramref name="text"/>.
-    /// </summary>
-    /// <param name="text">The text to tokenize.</param>
-    int GetWordCount(string text) => Tokenize(text).Count();
+    /// <param name="fuzStream">The fuz stream.</param>
+    /// <param name="cancellationToken">An optional cancellation token.</param>
+    /// <returns>The opus stream.</returns>
+    /// <exception cref="UnsupportedAudioFormatException"/>
+    /// <exception cref="FFMpegException"/>
+    Task<Stream> ConvertToOpus(Stream fuzStream, CancellationToken cancellationToken = default);
 }

@@ -82,6 +82,7 @@ internal static class QuotesIndex
                     }
                 }
             },
+            ["wordCount"] = new IntegerNumberProperty(),
             ["notes"] = new KeywordProperty()
             {
                 Index = false

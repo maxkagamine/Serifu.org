@@ -98,6 +98,9 @@ internal class ShipService
                 .Where(el => !string.IsNullOrWhiteSpace(el.TextContent))
                 .Select(el => el.InnerHtml.Trim()));
 
+            int wordCountEnglish = wordAligner.EnglishTokenizer.GetWordCount(textEnglish);
+            int wordCountJapanese = wordAligner.JapaneseTokenizer.GetWordCount(textJapanese);
+
             // Validate
             if (EmptyOrQuestionMarks.IsMatch(textEnglish))
             {
@@ -156,6 +159,7 @@ internal class ShipService
                     SpeakerName = ship.EnglishName,
                     Context = contextEnglish,
                     Text = textEnglish,
+                    WordCount = wordCountEnglish,
                     Notes = sanitizedNotes,
                 },
                 Japanese = new()
@@ -163,6 +167,7 @@ internal class ShipService
                     SpeakerName = ship.JapaneseName,
                     Context = contextJapanese,
                     Text = textJapanese,
+                    WordCount = wordCountJapanese,
                     AudioFile = audioFileTask?.Result,
                 },
                 AlignmentData = alignmentDataTask.Result.ToArray()
