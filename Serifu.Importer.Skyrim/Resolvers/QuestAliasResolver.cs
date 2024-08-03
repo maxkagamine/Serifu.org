@@ -78,7 +78,7 @@ internal class QuestAliasResolver
 
         if (alias.CreateReferenceToObject is not null)
         {
-            const string CreatedObjectIsNotNpcOrTact = "{@Quest} alias {QuestAlias} has Create Reference to Object but it is not an NPC or TACT.";
+            const string CreatedObjectIsWrongType = "{@Quest} alias {QuestAlias} has a Create Reference to Object, but it's a {RecordType}.";
             const string CreatedObjectFound = "Found {@NpcOrTact} in {@Quest} alias {QuestAlias}'s Create Reference to Object.";
 
             if (alias.CreateReferenceToObject.Object.Cast<INpcGetter>().TryResolve(env, out var aliasCreatedNpc))
@@ -89,17 +89,17 @@ internal class QuestAliasResolver
             else if (alias.CreateReferenceToObject.Object.Cast<ITalkingActivatorGetter>().TryResolve(env, out var aliasCreatedTact))
             {
                 logger.Debug(CreatedObjectFound, aliasCreatedTact, quest, aliasId);
-                return FoundTact(aliasCreatedTact);
+                return FoundTact(quest, alias, aliasCreatedTact);
             }
             else
             {
-                logger.Debug(CreatedObjectIsNotNpcOrTact, quest, aliasId);
+                logger.Debug(CreatedObjectIsWrongType, quest, aliasId, alias.CreateReferenceToObject.Object.Resolve(env)?.GetRecordType());
             }
         }
 
         if (alias.ForcedReference.TryResolve(env, out IPlacedGetter? forcedReference))
         {
-            const string ReferenceIsNotNpcOrTact = "{@Quest} alias {QuestAlias} has a Forced Reference but it is not an NPC or TACT.";
+            const string ReferenceIsWrongType = "{@Quest} alias {QuestAlias} has a Forced Reference, but it's a {RecordType}.";
             const string ReferenceLacksBase = "{@Quest} alias {QuestAlias} has a Forced Reference to {@Reference} but it lacks a Base.";
             const string ReferenceFound = "Found {@NpcOrTact} in {@Quest} alias {QuestAlias}'s Forced Reference.";
 
@@ -123,17 +123,22 @@ internal class QuestAliasResolver
                 }
                 else if (refrBase is not ITalkingActivatorGetter refrBaseTact)
                 {
-                    logger.Debug(ReferenceIsNotNpcOrTact, quest, aliasId);
+                    // Might be an XMarker (STAT), or in two cases an Activator (ACTI), but those won't have a voice
+                    // type and they all seem to have a Speaker in their INFO anyway. The name might be different,
+                    // though; in MS14 "Laid to Rest" [QUST:00025F3E] alias 5 has the display name "Child's Coffin," but
+                    // since we fall back to the Speaker in [INFO:0003664F] we attribute the quote to "Helgi's Ghost,"
+                    // which is technically correct just not what appears in game.
+                    logger.Debug(ReferenceIsWrongType, quest, aliasId, refrBase.GetRecordType());
                 }
                 else
                 {
                     logger.Debug(ReferenceFound, refrBaseTact, quest, aliasId);
-                    return FoundTact(refrBaseTact);
+                    return FoundTact(quest, alias, refrBaseTact);
                 }
             }
             else
             {
-                logger.Debug(ReferenceIsNotNpcOrTact, quest, aliasId);
+                logger.Debug(ReferenceIsWrongType, quest, aliasId, forcedReference.GetRecordType());
             }
         }
 
@@ -177,15 +182,19 @@ internal class QuestAliasResolver
     }
 
     private SpeakersResult FoundNpc(IQuestGetter quest, IQuestAliasGetter alias, INpcGetter npc)
-    {
-        Speaker speaker = speakerFactory.Create(npc);
+        => WithDisplayName(quest, alias, speakerFactory.Create(npc));
 
+    private Speaker FoundTact(IQuestGetter quest, IQuestAliasGetter alias, ITalkingActivatorGetter tact)
+        => WithDisplayName(quest, alias, speakerFactory.Create(tact));
+
+    private Speaker WithDisplayName(IQuestGetter quest, IQuestAliasGetter alias, Speaker speaker)
+    {
         if (alias.DisplayName.TryResolve(env, out IMessageGetter? displayName) && displayName.Name is not null)
         {
             var (english, japanese) = displayName.Name;
 
-            logger.Debug("{@Quest} alias {QuestAlias} replaces {@Npc}'s name with {DisplayName}.",
-                quest, alias.ID, npc, english);
+            logger.Debug("{@Quest} alias {QuestAlias} replaces {@Speaker}'s name with {DisplayName}.",
+                quest, alias.ID, speaker, english);
 
             return speaker with
             {
@@ -196,6 +205,4 @@ internal class QuestAliasResolver
 
         return speaker;
     }
-
-    private Speaker FoundTact(ITalkingActivatorGetter tact) => speakerFactory.Create(tact);
 }
