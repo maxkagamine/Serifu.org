@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <None Remove="appsettings.json" />
+    <None Remove="README.md" />
   </ItemGroup>
 
   <ItemGroup>
