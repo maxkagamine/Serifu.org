@@ -16,6 +16,8 @@ public static class DependencyInjectionExtensions
         services.AddDbContextFactory<SerifuDbContext>(options => options
             .UseSqlite(connectionString));
 
+        services.AddHttpClient();
+
         services.AddScoped<ISqliteService, SqliteService>();
 
         return services;
@@ -24,8 +26,7 @@ public static class DependencyInjectionExtensions
     // Not strictly "data" but it's convenient here since all importers will reference this project
     public static IServiceCollection AddSerifuSerilog(
         this IServiceCollection services,
-        Action<LoggerConfiguration>? configureLogger = null,
-        Action<LoggerConfiguration>? configureConsoleLogger = null)
+        Action<IServiceProvider, LoggerConfiguration>? configureLogger = null)
         => services.AddSerilog((IServiceProvider provider, LoggerConfiguration config) =>
         {
             string appName = provider.GetRequiredService<IHostEnvironment>().ApplicationName;
@@ -35,22 +36,19 @@ public static class DependencyInjectionExtensions
                 .MinimumLevel.Debug()
                 .Enrich.WithProperty("Application", appName)
                 .Enrich.WithProperty("InvocationId", Guid.NewGuid())
-                .WriteTo.Logger(consoleLogger =>
-                {
-                    consoleLogger
-                        .Filter.ByExcluding(logEvent => logEvent.Level < LogEventLevel.Warning && (
-                            Matching.FromSource("System")(logEvent) ||
-                            Matching.FromSource("Microsoft")(logEvent)))
-                        .WriteTo.Console();
-
-                    configureConsoleLogger?.Invoke(config);
-                });
+                .Enrich.FromLogContext()
+                .WriteTo.Logger(x => x
+                    .MinimumLevel.Information()
+                    .Filter.ByExcluding(logEvent => logEvent.Level < LogEventLevel.Warning && (
+                        Matching.FromSource("System")(logEvent) ||
+                        Matching.FromSource("Microsoft")(logEvent)))
+                    .WriteTo.Console());
 
             if (!EF.IsDesignTime)
             {
                 config.WriteTo.Seq(seqUrl ?? throw new Exception("SeqUrl not set in configuration (user secrets)"));
             }
 
-            configureLogger?.Invoke(config);
+            configureLogger?.Invoke(provider, config);
         });
 }

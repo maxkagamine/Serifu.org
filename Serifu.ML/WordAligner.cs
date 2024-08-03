@@ -37,6 +37,9 @@ public sealed class WordAligner : IWordAligner, IDisposable
         });
     }
 
+    public ITokenizer EnglishTokenizer => englishTokenizer;
+    public ITokenizer JapaneseTokenizer => japaneseTokenizer;
+
     public async Task<IEnumerable<Alignment>> AlignSymmetric(string english, string japanese, CancellationToken cancellationToken = default)
     {
         // Load the model before starting the timed operation, as it may have to download
