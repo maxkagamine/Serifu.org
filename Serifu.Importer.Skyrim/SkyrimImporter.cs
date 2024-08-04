@@ -97,8 +97,8 @@ internal sealed partial class SkyrimImporter : IDisposable
             // for English voices (https://www.nexusmods.com/skyrimspecialedition/mods/18115), as the vanilla voice
             // files on PC are extremely poor quality. There's no UHDAP download for Japanese, but the quality of the
             // vanilla files is noticeably better than the English ones.
-            englishArchive = new(this.options.EnglishVoiceBsaPaths, logger);
-            japaneseArchive = new(this.options.JapaneseVoiceBsaPaths, logger);
+            englishArchive = new(this.options.EnglishVoiceBsaPaths, this.options.ExcludedEnglishVoiceFiles, logger);
+            japaneseArchive = new(this.options.JapaneseVoiceBsaPaths, this.options.ExcludedJapaneseVoiceFiles, logger);
         }
     }
 

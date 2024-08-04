@@ -18,6 +18,7 @@ using Mutagen.Bethesda.Archives;
 using Mutagen.Bethesda.Plugins;
 using Mutagen.Bethesda.Skyrim;
 using Serilog;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text.RegularExpressions;
 
@@ -26,20 +27,27 @@ namespace Serifu.Importer.Skyrim;
 internal partial class VoiceFileArchive
 {
     private readonly IEnumerable<string> archivePaths;
+    private readonly HashSet<string> excludedVoiceFiles;
     private readonly ILogger logger;
     private readonly Dictionary<(FormKey, int), Dictionary<string, IArchiveFile>> voiceFiles = []; // (DialogInfo, ResponseNumber) -> VoiceType -> Files
 
     [GeneratedRegex(@"^sound[\\/]voice[\\/](?<Mod>[^\\/]+)[\\/](?<VoiceType>[^\\/]+)[\\/].*_(?<FormId>[0-9a-f]{8})_(?<ResponseNumber>\d+)\.fuz$", RegexOptions.IgnoreCase)]
     private static partial Regex VoiceFileRegex();
 
-    public VoiceFileArchive(IEnumerable<string> archivePaths, ILogger logger)
+    public VoiceFileArchive(IEnumerable<string> archivePaths, IEnumerable<string> excludedVoiceFiles, ILogger logger)
     {
         this.archivePaths = archivePaths;
+        this.excludedVoiceFiles = excludedVoiceFiles.ToHashSet(VoiceFilePathComparer.Instance);
         this.logger = logger.ForContext<VoiceFileArchive>().ForContext("ArchivePaths", archivePaths);
 
         foreach (string archivePath in archivePaths)
         {
             ReadArchive(archivePath);
+        }
+
+        if (this.excludedVoiceFiles.Count > 0)
+        {
+            throw new ArgumentException($"Excluded voice file{(this.excludedVoiceFiles.Count == 1 ? "" : "s")} \"{string.Join("\", \"", this.excludedVoiceFiles)}\" did not match any paths in \"{string.Join("\", \"", archivePaths)}\".", nameof(excludedVoiceFiles));
         }
     }
 
@@ -51,6 +59,11 @@ internal partial class VoiceFileArchive
 
         foreach (IArchiveFile file in archive.Files)
         {
+            if (excludedVoiceFiles.Remove(file.Path))
+            {
+                continue;
+            }
+
             Match match = VoiceFileRegex().Match(file.Path);
 
             if (!match.Success)
@@ -114,5 +127,19 @@ internal partial class VoiceFileArchive
         }
 
         return file;
+    }
+
+    private class VoiceFilePathComparer : IEqualityComparer<string>
+    {
+        public static readonly VoiceFilePathComparer Instance = new();
+
+        public bool Equals(string? x, string? y) =>
+            StringComparer.OrdinalIgnoreCase.Equals(NormalizePath(x), NormalizePath(y));
+
+        public int GetHashCode([DisallowNull] string obj) =>
+            StringComparer.OrdinalIgnoreCase.GetHashCode(NormalizePath(obj));
+
+        [return: NotNullIfNotNull(nameof(path))]
+        private static string? NormalizePath(string? path) => path?.Replace('\\', '/');
     }
 }
