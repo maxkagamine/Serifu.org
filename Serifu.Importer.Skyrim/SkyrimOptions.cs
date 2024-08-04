@@ -42,4 +42,16 @@ public class SkyrimOptions
     /// that match both overrides are used, unless none do, in which case the former takes priority.
     /// </remarks>
     public Dictionary<string, List<string>> FactionVoiceTypeOverrides { get; set; } = [];
+
+    /// <summary>
+    /// Paths to voice files in the English archive(s) that will be treated as if they don't exist, to prevent
+    /// silent/broken audio from being used. Case-insensitive; slashes will be normalized.
+    /// </summary>
+    public List<string> ExcludedEnglishVoiceFiles { get; set; } = [];
+
+    /// <summary>
+    /// Paths to voice files in the Japanese archive(s) that will be treated as if they don't exist, to prevent
+    /// silent/broken audio from being used. Case-insensitive; slashes will be normalized.
+    /// </summary>
+    public List<string> ExcludedJapaneseVoiceFiles { get; set; } = [];
 }
