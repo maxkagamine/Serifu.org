@@ -14,7 +14,7 @@
 
 namespace Serifu.Data;
 
-public enum Source
+public enum Source : short
 {
     Kancolle,
     Skyrim
