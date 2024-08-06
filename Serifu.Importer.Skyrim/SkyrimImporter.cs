@@ -101,7 +101,7 @@ internal sealed partial class SkyrimImporter : IDisposable
 
         await Parallel.ForEachAsync(topics, cancellationToken, async (topic, cancellationToken) =>
         {
-            await foreach (var quote in ProcessTopic(topic, cancellationToken).WithCancellation(cancellationToken))
+            await foreach (var quote in ProcessTopic(topic, cancellationToken))
             {
                 quotes.Add(quote);
             }
