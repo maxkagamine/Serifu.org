@@ -141,8 +141,16 @@ internal partial class GenericImporter
         }
 
         // Import file
-        // Assuming the audio files have already been converted. Import will throw if not a supported format.
+        // Note: this assumes the audio files have already been converted. Import will throw if not a supported format.
         string absolutePath = Path.GetFullPath(relativePath, options.BaseDirectory);
+
+        if (!File.Exists(absolutePath))
+        {
+            logger.Error("Audio file {Path} for {Key} ({Language}) does not exist.",
+                relativePath, tl.Key, tl.Language);
+
+            return null;
+        }
 
         logger.Information("Importing {Path}", absolutePath);
 
