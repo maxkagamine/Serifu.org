@@ -54,6 +54,7 @@ builder.Services.AddScoped<GenericImporter>();
 
 builder.Run(async (
     GenericImporter importer,
+    ISqliteService sqliteService,
     ILogger logger,
     CancellationToken cancellationToken) =>
 {
@@ -62,5 +63,5 @@ builder.Run(async (
         await importer.Run(cancellationToken);
     }
 
-    // TODO: Delete orphaned audio files
+    await sqliteService.DeleteOrphanedAudioFiles(cancellationToken);
 });
