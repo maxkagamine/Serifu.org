@@ -40,9 +40,9 @@ internal record ParsedQuoteTranslation
         get => language;
         init
         {
-            if (value == Language.Multilingual || !Enum.IsDefined(value))
+            if (value is Language.Multilingual || !Enum.IsDefined(value))
             {
-                throw new ArgumentException("Invalid language.", nameof(value));
+                throw new ArgumentException($"Invalid language: {value}", nameof(value));
             }
 
             language = value;
