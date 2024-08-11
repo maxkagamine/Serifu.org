@@ -28,7 +28,7 @@ internal class TsvParser : IParser<TsvParserOptions>
         this.logger = logger.ForContext<TsvParser>();
     }
 
-    public IEnumerable<ParsedQuoteTranslation> Parse(Stream stream, Language language)
+    public IEnumerable<ParsedQuoteTranslation> Parse(string path, Language language)
     {
         throw new NotImplementedException();
     }
