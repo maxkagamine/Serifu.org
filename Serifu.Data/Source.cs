@@ -1,7 +1,11 @@
-﻿namespace Serifu.Data;
+﻿using System.ComponentModel;
+
+namespace Serifu.Data;
 
 public enum Source : short
 {
     Kancolle,
-    Skyrim
+    Skyrim,
+    [Description("Witcher 3")]
+    Witcher3
 }

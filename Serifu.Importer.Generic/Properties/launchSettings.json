@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Witcher 3 Importer": {
+      "commandName": "Project",
+      "commandLineArgs": "Witcher3"
+    }
+  }
+}
