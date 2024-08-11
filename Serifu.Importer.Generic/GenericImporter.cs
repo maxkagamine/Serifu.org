@@ -12,14 +12,29 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
-using System.ComponentModel;
+using Microsoft.Extensions.Options;
+using Serilog;
 
-namespace Serifu.Data;
+namespace Serifu.Importer.Generic;
 
-public enum Source : short
+internal class GenericImporter
 {
-    Kancolle,
-    Skyrim,
-    [Description("Witcher 3")]
-    Witcher3
+    private readonly IParser parser;
+    private readonly ParserOptions options;
+    private readonly ILogger logger;
+
+    public GenericImporter(
+        IParser parser,
+        IOptions<ParserOptions> options,
+        ILogger logger)
+    {
+        this.parser = parser;
+        this.options = options.Value;
+        this.logger = logger.ForContext<GenericImporter>();
+    }
+
+    public Task Run(CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
 }

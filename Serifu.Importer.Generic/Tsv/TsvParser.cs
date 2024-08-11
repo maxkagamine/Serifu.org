@@ -12,14 +12,24 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
-using System.ComponentModel;
+using Microsoft.Extensions.Options;
+using Serilog;
 
-namespace Serifu.Data;
+namespace Serifu.Importer.Generic.Tsv;
 
-public enum Source : short
+internal class TsvParser : IParser<TsvParserOptions>
 {
-    Kancolle,
-    Skyrim,
-    [Description("Witcher 3")]
-    Witcher3
+    private readonly TsvParserOptions options;
+    private readonly ILogger logger;
+
+    public TsvParser(IOptions<TsvParserOptions> options, ILogger logger)
+    {
+        this.options = options.Value;
+        this.logger = logger.ForContext<TsvParser>();
+    }
+
+    public IEnumerable<ParsedQuoteTranslation> Parse(Stream stream, Language language)
+    {
+        throw new NotImplementedException();
+    }
 }

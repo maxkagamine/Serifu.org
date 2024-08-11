@@ -27,7 +27,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Serifu.ML.Tests", "Serifu.M
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Serifu.Data.Sqlite.Tests", "Serifu.Data.Sqlite.Tests\Serifu.Data.Sqlite.Tests.csproj", "{854C5869-1627-447E-BB33-EF7F2B5C35BB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Serifu.Importer.Skyrim", "Serifu.Importer.Skyrim\Serifu.Importer.Skyrim.csproj", "{E07F7DE0-8065-4D45-90EC-B0890C021ACF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Serifu.Importer.Skyrim", "Serifu.Importer.Skyrim\Serifu.Importer.Skyrim.csproj", "{E07F7DE0-8065-4D45-90EC-B0890C021ACF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Serifu.Importer.Generic", "Serifu.Importer.Generic\Serifu.Importer.Generic.csproj", "{C95EFDD7-6254-453A-89D0-C263846113F1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -75,6 +77,10 @@ Global
 		{E07F7DE0-8065-4D45-90EC-B0890C021ACF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E07F7DE0-8065-4D45-90EC-B0890C021ACF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E07F7DE0-8065-4D45-90EC-B0890C021ACF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C95EFDD7-6254-453A-89D0-C263846113F1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C95EFDD7-6254-453A-89D0-C263846113F1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C95EFDD7-6254-453A-89D0-C263846113F1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C95EFDD7-6254-453A-89D0-C263846113F1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

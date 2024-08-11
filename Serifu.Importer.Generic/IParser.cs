@@ -12,14 +12,16 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
-using System.ComponentModel;
+namespace Serifu.Importer.Generic;
 
-namespace Serifu.Data;
-
-public enum Source : short
+internal interface IParser
 {
-    Kancolle,
-    Skyrim,
-    [Description("Witcher 3")]
-    Witcher3
+    /// <summary>
+    /// Parses a file and returns the dialogue lines as a collection of <see cref="ParsedQuoteTranslation"/>.
+    /// </summary>
+    /// <param name="stream">The file stream.</param>
+    /// <param name="language">Language hint.</param>
+    IEnumerable<ParsedQuoteTranslation> Parse(Stream stream, Language language);
 }
+
+internal interface IParser<TOptions> : IParser where TOptions : ParserOptions;

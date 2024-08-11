@@ -12,14 +12,11 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
-using System.ComponentModel;
+namespace Serifu.Importer.Generic;
 
-namespace Serifu.Data;
-
-public enum Source : short
+internal enum Language
 {
-    Kancolle,
-    Skyrim,
-    [Description("Witcher 3")]
-    Witcher3
+    Multilingual,
+    English,
+    Japanese
 }
