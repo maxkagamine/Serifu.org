@@ -12,9 +12,9 @@ internal record ParsedQuoteTranslation
     private Language language;
 
     /// <summary>
-    /// A key that will be used to pair translations of a quote, as they may be coming from separate files. Uses the
-    /// default comparer. The key type must be consistent for a given source. If assignable to <see cref="int"/>, it
-    /// will be used in the <see cref="Quote.Id"/> as-is. This should be preferred over strings where possible.
+    /// A key that will be used to pair translations of a quote, as they may be coming from separate files. If all
+    /// instances' keys are of type <see cref="int"/>, it will be used in the <see cref="Quote.Id"/> as-is. This should
+    /// be preferred over strings where possible.
     /// </summary>
     public required object Key { get; init; }
 
