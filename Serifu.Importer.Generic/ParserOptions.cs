@@ -27,9 +27,7 @@ internal abstract class ParserOptions
     public Dictionary<Language, List<string>> DialogueFiles { get; set; } = [];
 
     /// <summary>
-    /// Paths to directories containing the audio files, per-language, relative to <see cref="BaseDirectory"/>. The <see
-    /// cref="ParsedQuoteTranslation.AudioFilePath"/> is resolved relative to each directory for the corresponding
-    /// language, then/or <see cref="Language.Multilingual"/> if set, until the file is found.
+    /// The path to either language's audio file directory, relative to <see cref="BaseDirectory"/>.
     /// </summary>
-    public Dictionary<Language, List<string>> AudioDirectories { get; set; } = [];
+    public Dictionary<Language, string> AudioDirectories { get; set; } = [];
 }
