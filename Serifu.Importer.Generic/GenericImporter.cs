@@ -70,6 +70,7 @@ internal partial class GenericImporter
                 cancellationToken.ThrowIfCancellationRequested();
                 return parser.Parse(x.Path, x.Language);
             })
+            .Distinct()
             .GroupBy(x => x.Key);
 
         // Filter out unusable quotes and duplicates, preferring quotes with speakers over those without
