@@ -69,65 +69,61 @@ internal partial class KsParser : IParser<KsParserOptions>
             throw new ArgumentException($"{nameof(KsParser)} does not handle multilingual dialogue files.", nameof(language));
         }
 
-        bool hasAudioForLanguage = options.AudioDirectories.ContainsKey(language);
-
         using StreamReader reader = File.OpenText(path);
         string filename = Path.GetFileName(path);
-
-        foreach (var (key, text) in ReadDialogueLines(reader, filename))
-        {
-            var (speakerName, audioFile) = ExtractSpeakerNameAndAudioFile(text);
-
-            yield return new ParsedQuoteTranslation()
-            {
-                Key = key,
-                Language = language,
-                Text = StripFormatting(text),
-                AudioFilePath = hasAudioForLanguage ? audioFile : null,
-                SpeakerName = speakerName,
-            };
-        }
-    }
-
-    private IEnumerable<(string Key, string Text)> ReadDialogueLines(StreamReader reader, string filename)
-    {
-        string lastLabel = "";
-        StringBuilder text = new();
-
-        bool inCodeBlock = false;
+        bool hasAudioForLanguage = options.AudioDirectories.ContainsKey(language);
+        List<ParsedQuoteTranslation> result = [];
 
         // Labels are *supposed* to be unique, but there's a duplicated label in one of G-senjou's scenarios, so we'll
-        // have to remember the last index for the label instead of using the enumerable's index in SplitLines() below.
+        // have to remember and increment the last index for the label instead of using an the split text's indexes.
         Dictionary<string, int> indexesPerLabel = [];
 
         // We read the text in between labels first, then split that text using the configured separator tags (depends
         // on the game), since sometimes a label has multiple lines of dialogue under it. Ultimately it's the tags that
         // decide when a line ends, not the labels, but it's helpful to use them as separators anyway.
-        IEnumerable<(string Key, string Text)> SplitLines()
+        foreach (var (label, labelText) in ReadLabels(reader))
         {
-            if (text.Length == 0)
-            {
-                return [];
-            }
+            ref int i = ref CollectionsMarshal.GetValueRefOrAddDefault(indexesPerLabel, label, out _);
 
-            List<(string, string)> result = [];
-            string unifiedLabel = UnifyLabel(lastLabel);
-            ref int i = ref CollectionsMarshal.GetValueRefOrAddDefault(indexesPerLabel, lastLabel, out _);
-
-            foreach (string split in lineSeparatorTagsRegex.Split(text.ToString()))
+            foreach (string dialogueLine in lineSeparatorTagsRegex.Split(labelText))
             {
-                if (string.IsNullOrWhiteSpace(split))
+                if (string.IsNullOrWhiteSpace(dialogueLine))
                 {
                     continue;
                 }
 
-                string key = $"{filename}{unifiedLabel}[{i++}]";
-                string text = quoteStopRegex is null ? split : quoteStopRegex.Replace(split, "");
-                result.Add((key, text.Trim()));
-            }
+                var (speakerName, audioFile) = ExtractSpeakerNameAndAudioFile(dialogueLine);
 
-            return result;
+                if (options.VoicedLinesOnly && audioFile is null)
+                {
+                    continue;
+                }
+
+                string key = $"{filename}{label}[{i++}]";
+                string text = quoteStopRegex is null ? dialogueLine : quoteStopRegex.Replace(dialogueLine, "");
+
+                ParsedQuoteTranslation tl = new()
+                {
+                    Key = key,
+                    Language = language,
+                    Text = StripFormatting(text).Trim(),
+                    AudioFilePath = hasAudioForLanguage ? audioFile : null,
+                    SpeakerName = speakerName ?? "",
+                };
+
+                result.Add(tl);
+            }
         }
+
+        return result;
+    }
+
+    private IEnumerable<(string Label, string Text)> ReadLabels(StreamReader reader)
+    {
+        string label = "";
+        StringBuilder text = new();
+
+        bool inCodeBlock = false;
 
         string? line;
         while ((line = reader.ReadLine()) is not null)
@@ -162,27 +158,20 @@ internal partial class KsParser : IParser<KsParserOptions>
             // The asterisk seems to be considered as part of the label name
             if (line[0] is '*')
             {
-                // Return the previous label's line(s)
-                foreach (var dialogueLine in SplitLines())
-                {
-                    yield return dialogueLine;
-                }
+                // Return the previous label's text
+                yield return (label, text.ToString());
 
-                lastLabel = line.Split('|')[0];
+                label = UnifyLabel(line.Split('|')[0]);
                 text.Clear();
                 continue;
             }
 
             // Any other lines should be text
-            // We'll handle stripping out formatting in a separate step
             text.AppendLine(line);
         }
 
-        // Return the last label's line(s)
-        foreach (var dialogueLine in SplitLines())
-        {
-            yield return dialogueLine;
-        }
+        // Return the last label's text
+        yield return (label, text.ToString());
     }
 
     /// <summary>
@@ -194,7 +183,7 @@ internal partial class KsParser : IParser<KsParserOptions>
         _ => label
     };
 
-    private (string SpeakerName, string? AudioFile) ExtractSpeakerNameAndAudioFile(string text)
+    private (string? SpeakerName, string? AudioFile) ExtractSpeakerNameAndAudioFile(string text)
     {
         switch (options.Source)
         {
@@ -203,9 +192,9 @@ internal partial class KsParser : IParser<KsParserOptions>
                 switch (matches.Count)
                 {
                     case 0:
-                        return ("", "");
+                        return (null, null);
                     case 1:
-                        string speakerName = matches[0].Groups["t"].Value;
+                        string? speakerName = EmptyStringToNull(matches[0].Groups["t"].Value);
                         string? audioFile = EmptyStringToNull(matches[0].Groups["s"].Value);
                         return (speakerName, audioFile);
                     default:

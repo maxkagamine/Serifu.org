@@ -30,4 +30,24 @@ internal class KsParserOptions : ParserOptions
     /// we'd be displaying the quotes.
     /// </summary>
     public string[] QuoteStopTags { get; set; } = [];
+
+    /// <summary>
+    /// <para>
+    ///     Whether to skip lines without a voice file. This helps to eliminate mismatched translations, as the TL team
+    ///     is pretty much forced to keep voiced parts 1:1 with the Japanese, whereas it's not uncommon for the unvoiced
+    ///     parts to be split into fewer/additional lines.
+    /// </para>
+    /// <para>
+    ///     Key indexes will only consider the included voiced lines if true, so that if a label includes a different
+    ///     number of unvoiced parts followed by a voiced line, the latter will be at index 0 even though the number of
+    ///     lines preceeding it was different between the two languages.
+    /// </para>
+    /// <para>
+    ///     This is sortof a lazy, nuclear solution to the problem, as it throws away a ton of perfectly good quotes
+    ///     along with the bad ones. The ideal solution would be to go through every line that doesn't have an English
+    ///     or Japanese translation and build a list of which lines on one side should be combined to match a line on
+    ///     the other... but doing so would take many hours if not days.
+    /// </para>
+    /// </summary>
+    public bool VoicedLinesOnly { get; set; }
 }
