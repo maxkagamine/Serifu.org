@@ -3,6 +3,10 @@
     "Witcher 3 Importer": {
       "commandName": "Project",
       "commandLineArgs": "Witcher3"
+    },
+    "G-senjou no Maou Importer": {
+      "commandName": "Project",
+      "commandLineArgs": "GSenjouNoMaou"
     }
   }
 }

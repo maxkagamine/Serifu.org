@@ -20,6 +20,7 @@ using Microsoft.Extensions.Options;
 using Serifu.Data;
 using Serifu.Data.Sqlite;
 using Serifu.Importer.Generic;
+using Serifu.Importer.Generic.Kirikiri;
 using Serifu.Importer.Generic.Tsv;
 using Serifu.ML;
 using Serilog;
@@ -54,6 +55,9 @@ void AddParser<TParser, TOptions>()
 
 switch (parserName)
 {
+    case nameof(KsParser):
+        AddParser<KsParser, KsParserOptions>();
+        break;
     case nameof(TsvParser):
         AddParser<TsvParser, TsvParserOptions>();
         break;

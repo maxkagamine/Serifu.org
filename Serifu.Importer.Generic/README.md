@@ -32,26 +32,51 @@ _Kirikiri engine. Use KrkrExtract & KirikiriTools._
 
 ### Parsing .ks files
 
-Labels in the form of `*name|` (or `*name|Display name`) at the start of a line serve as save points & jump targets. This means each dialogue line _should_ have a label, so any text following a label up until the next label is a single quote. The asterisk seems to always accompany the name wherever it's used (this convention seems to have been carried over into the .ks.scn format used in newer games, but those are used to label scenes rather than individual lines).
+Kirikiri/KAG docs: https://kirikirikag.sourceforge.net/contents/ (re. the two names: "kirikiri base system interprets TJS scripting language, and KAG, which is written in TJS, interprets scenario file"; people tend to just call it Kirikiri though)
 
-Dialogue text are lines that do not start with `*`, `@`, or `;`. (Leading tab characters are ignored, so that means `^\t*(?![\t*@;])(.+)`.)
+The .ks format is very freeform and unstructured, and on top of that, games can define their own tags, so things like determining the speaker or even separating dialogue lines will likely vary game-to-game (see custom macros below).
+
+Labels in the form of `*name|` (or `*name|Display name`) at the start of a line serve as save points & jump targets. Labels are not 1:1 with dialogue lines, but they can help with lining up translations.
+
+Lines that start with `@` are commands. This is simply an alternate syntax for tags, so `@foo` and `[foo]` are equivalent. There are no closing tags (they're less like HTML and more like function calls), although TJS scripts can be included inline using `iscript` & `endscript`, so anything in between those will need to be ignored.
+
+Lines that do not start with `*`, `@`, or `;` (comment) are the dialogue text. Leading tab characters are ignored, so that means `^\t*(?![\t*@;])(.+)`.
 
 Left brackets are escaped by doubling (`[[`).
 
-Need to check if any dialogue lines can have multiple lines of text.
+Tags might have whitespace between the bracket and tag name, e.g. `[ font italic="true" ]`.
 
-Kirikiri/KAG docs: https://kirikirikag.sourceforge.net/contents/ (re. the two names: "kirikiri base system interprets TJS scripting language, and KAG, which is written in TJS, interprets scenario file"; people tend to just call it Kirikiri though)
+If a tag isn't in the [docs](https://kirikirikag.sourceforge.net/contents/Tags.html), search *.ks files for the tag name in double quotes; it's probably a custom macro.
 
 #### G-senjou custom macros
 
-Verbal lines start with e.g. `[nm t="水羽" s=miz_20316]` where `t` is the speaker name (always Japanese, see below) and `s` is an optional voice file name. It would appear that quotes are optional, like HTML; however closing tags don't appear to be a thing (rather than "tags", they're more like function calls; `@foo` and `[foo]` are equivalent, so we should check if there are any `nm`'s in the @-command form).
+Verbal lines start with e.g. `[nm t="水羽" s=miz_20316]` where `t` is the speaker name (always Japanese, see below) and `s` is an optional voice file name. It would appear that quotes are optional, like HTML.
 
-`[np]` is an extended version of `[p]` (new page). We can use this as a dialogue line separator in case the labels aren't sufficient.
+The following tags are used to separate dialogue lines:
 
+- `[l]` (end of line, wait for click; kirikiri built-in)
+  - Used mainly for full-screen dialogue to pause but then continue on the next line instead of starting a new page.
+- ~~`[p]` (end of page, wait for click; kirikiri built-in)~~
+- `[np]` ("new page"; modified version of `[p]` that incorporates the auto-skip feature and waits for the voice to end)
+- `[wvl]` ("wait voice + `l`"; like `[np]` but for `[l]` instead)
+
+It seems that the effect of `nm` ends with any of those line separators, i.e. if the next line doesn't immediately change the speaker with another `nm`, then it'll return to being the narrator (search `\[nm.*\[\s*(l|np|wvl)\s*\]\s*(?!\[nm)\S`).
+
+Note: There are a number of lines that include ", said Tsubaki" etc. after the spoken part, like a book. In all of these cases (far as I can tell), the spoken part is immediately preceded by `nm` and followed by `[wveh]`:
+
+```
+[nm t="ハル" s=har_8348]"Excuse me...? Usami?" [wveh]The girl had a vacant look on her face.[l] [nm t="ハル" s=har_8349]"My name is Fujiwara," [wveh]she said, tilting her head slightly.[wvl]
+
+[nm t="ハル" s=har_8348]「え、宇佐美？」[wveh]少女はきょとんとして[l][nm t="ハル" s=har_8349]「自分、藤原ですけど？」[wveh]と首を小さくかしげた。[wvl]
+```
+
+It might be worth splitting on `[wveh]` and discarding everything after it, as it's not really part of the quote and the remainder isn't useful on its own, either.
 
 ### Matching the lines & excluding H scenes
 
 The English version's files in data/scenario are censored: mostly, this means removing the lines that call the h scenes, but there are a couple places in the JP & patched English versions where the h scene spills over into the main scenario files, so it's not enough to just exclude the h files. However we can easily exclude all H scenes by using the censored English version (i.e. don't include patch2) and skipping lines whose labels don't exist in both. (There are a couple spots where the patch changed existing lines in the regular file, but not in any meaningful way, e.g. a space after an ellipsis, so we don't need to worry about the JP versions not matching the EN versions for the lines that have matching labels.)
+
+_Note: The JP has a patch file, gstring_p, which contains an "alter_scenario" directory with what looks like fixed scenario files. After doing a diff and comparing the audio, only a few lines actually changed, and it's actually the original versions in data that are correct. Not sure what happened here, but safe to ignore this patch._
 
 Need to confirm if there are any other lines that don't match though (e.g. a JP line was split into two EN lines, or the EN line translates two JP lines). In those cases, we'll need to configure explicit line mappings like:
 

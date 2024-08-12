@@ -70,8 +70,10 @@ internal partial class GenericImporter
                 cancellationToken.ThrowIfCancellationRequested();
                 return parser.Parse(x.Path, x.Language);
             })
+            .Select(ReplaceSpeakerName)
             .Distinct()
-            .GroupBy(x => x.Key);
+            .GroupBy(x => x.Key)
+            .ToArray();
 
         // Filter out unusable quotes and duplicates, preferring quotes with speakers over those without
         PairedWithKeyOrIndex[] paired = ValidateAndFilter(groupedByKey)
@@ -80,7 +82,7 @@ internal partial class GenericImporter
             .ToArray();
 
         logger.Information("Found {Count} quotes ({RemovedCount} filtered out).",
-            paired.Length, groupedByKey.Count() - paired.Length);
+            paired.Length, groupedByKey.Length - paired.Length);
 
         // Import audio files and run word alignment
         List<Quote> quotes = new(paired.Length);
@@ -278,5 +280,16 @@ internal partial class GenericImporter
         }
 
         return text.ToString();
+    }
+
+    private ParsedQuoteTranslation ReplaceSpeakerName(ParsedQuoteTranslation tl)
+    {
+        if (options.SpeakerNameMap.TryGetValue(tl.Language, out var map) &&
+            map.TryGetValue(tl.SpeakerName, out var name))
+        {
+            return tl with { SpeakerName = name };
+        }
+
+        return tl;
     }
 }
