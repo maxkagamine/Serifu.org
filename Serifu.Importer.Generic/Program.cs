@@ -46,7 +46,8 @@ void AddParser<TParser, TOptions>()
     builder.Services.AddSingleton<IParser, TParser>();
     builder.Services.AddOptions<TOptions>()
         .BindConfiguration(source.ToString())
-        .Configure(opts => opts.Source = source);
+        .Configure(opts => opts.Source = source)
+        .ValidateDataAnnotations();
     builder.Services.AddTransient<IOptions<ParserOptions>>(provider =>
         provider.GetRequiredService<IOptions<TOptions>>());
 }
