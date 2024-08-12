@@ -16,6 +16,7 @@
 using Microsoft.Extensions.Options;
 using Serifu.Data;
 using Serilog;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -95,6 +96,10 @@ internal partial class KsParser : IParser<KsParserOptions>
 
         bool inCodeBlock = false;
 
+        // Labels are *supposed* to be unique, but there's a duplicated label in one of G-senjou's scenarios, so we'll
+        // have to remember the last index for the label instead of using the enumerable's index in SplitLines() below.
+        Dictionary<string, int> indexesPerLabel = [];
+
         // We read the text in between labels first, then split that text using the configured separator tags (depends
         // on the game), since sometimes a label has multiple lines of dialogue under it. Ultimately it's the tags that
         // decide when a line ends, not the labels, but it's helpful to use them as separators anyway.
@@ -105,10 +110,23 @@ internal partial class KsParser : IParser<KsParserOptions>
                 return [];
             }
 
-            return lineSeparatorTagsRegex.Split(text.ToString())
-                .Where(x => !string.IsNullOrWhiteSpace(x))
-                .Select(x => quoteStopRegex is null ? x : quoteStopRegex.Replace(x, ""))
-                .Select((x, i) => ($"{filename}{UnifyLabel(lastLabel)}#{i}", x.Trim()));
+            List<(string, string)> result = [];
+            string unifiedLabel = UnifyLabel(lastLabel);
+            ref int i = ref CollectionsMarshal.GetValueRefOrAddDefault(indexesPerLabel, lastLabel, out _);
+
+            foreach (string split in lineSeparatorTagsRegex.Split(text.ToString()))
+            {
+                if (string.IsNullOrWhiteSpace(split))
+                {
+                    continue;
+                }
+
+                string key = $"{filename}{unifiedLabel}[{i++}]";
+                string text = quoteStopRegex is null ? split : quoteStopRegex.Replace(split, "");
+                result.Add((key, text.Trim()));
+            }
+
+            return result;
         }
 
         string? line;
