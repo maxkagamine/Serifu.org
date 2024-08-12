@@ -134,8 +134,8 @@ internal partial class GenericImporter
         }
 
         // Check cache
-        string relativePath = Path.Combine(options.AudioDirectories[tl.Language], tl.AudioFilePath);
-        Uri cacheKey = new($"file:///{options.Source}/{relativePath.Replace('\\', '/')}");
+        string relativePath = Path.Combine(options.AudioDirectories[tl.Language], tl.AudioFilePath).Replace('\\', '/');
+        Uri cacheKey = new($"file:///{options.Source}/{relativePath}");
 
         if (await sqliteService.GetCachedAudioFile(cacheKey, cancellationToken) is string objectName)
         {
