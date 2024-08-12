@@ -11,12 +11,6 @@ internal class TsvParser : IParser<TsvParserOptions>
     public TsvParser(IOptions<TsvParserOptions> options)
     {
         this.options = options.Value;
-
-        if (!this.options.Columns.Contains(TsvColumn.Key) ||
-            !this.options.Columns.Contains(TsvColumn.Text))
-        {
-            throw new ValidationException($"{nameof(TsvParserOptions.Columns)} must contain both {nameof(TsvColumn.Key)} and {nameof(TsvColumn.Text)}.");
-        }
     }
 
     public IEnumerable<ParsedQuoteTranslation> Parse(string path, Language language)
