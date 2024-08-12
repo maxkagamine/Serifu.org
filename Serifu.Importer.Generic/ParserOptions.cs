@@ -32,6 +32,11 @@ internal abstract class ParserOptions : IValidatableObject
     /// </summary>
     public Dictionary<Language, string> AudioDirectories { get; set; } = [];
 
+    /// <summary>
+    /// Replacement speaker names, per-language.
+    /// </summary>
+    public Dictionary<Language, Dictionary<string, string>> SpeakerNameMap { get; set; } = [];
+
     public virtual IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
         if (Source == default)
