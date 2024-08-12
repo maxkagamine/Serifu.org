@@ -13,7 +13,10 @@ namespace Serifu.Importer.Generic;
 
 internal partial class GenericImporter
 {
+    // Note: The max word count here is quite long, and only to prevent the ML pipeline from exploding. We may want to
+    // put a lower clamp on the quote length, possibly in the Elasticsearch build so that it applies to all sources.
     private const int MinimumEnglishWordCount = 2;
+    private const int MaximumEnglishWordCount = 100;
 
     private readonly IParser parser;
     private readonly ISqliteService sqliteService;
@@ -223,6 +226,8 @@ internal partial class GenericImporter
             var japanese = group.SingleOrDefault(x => x.Language == Language.Japanese);
             string error;
 
+            Lazy<int> englishWordCount = new(() => wordAligner.EnglishTokenizer.GetWordCount(english!.Text));
+
             // This part is similar to the Skyrim importer's ValidateDialogue
             if (english is null)
             {
@@ -244,9 +249,13 @@ internal partial class GenericImporter
             {
                 error = "Japanese text contains neither kanji nor hiragana";
             }
-            else if (wordAligner.EnglishTokenizer.GetWordCount(english.Text) < MinimumEnglishWordCount)
+            else if (englishWordCount.Value < MinimumEnglishWordCount)
             {
                 error = "English word count is below threshold";
+            }
+            else if (englishWordCount.Value > MaximumEnglishWordCount)
+            {
+                error = "English word count exceeds threshold";
             }
             else
             {
