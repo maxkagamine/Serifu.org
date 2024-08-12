@@ -7,7 +7,7 @@
 - [G-senjou no Maou](#g-senjou-no-maou)
   - [Parsing .ks files](#parsing-ks-files)
     - [G-senjou custom macros](#g-senjou-custom-macros)
-  - [Matching the lines \& excluding H scenes](#matching-the-lines--excluding-h-scenes)
+  - [Matching lines between translations](#matching-lines-between-translations)
   - [Speaker names](#speaker-names)
 - [Nekopara Vol. 1 \& 2, Senren Banka, Maitetsu](#nekopara-vol-1--2-senren-banka-maitetsu)
   - [.scn / PSB format](#scn--psb-format)
@@ -72,30 +72,33 @@ Note: There are a number of lines that include ", said Tsubaki" etc. after the s
 
 It might be worth splitting on `[wveh]` and discarding everything after it, as it's not really part of the quote and the remainder isn't useful on its own, either.
 
-### Matching the lines & excluding H scenes
+### Matching lines between translations
 
-The English version's files in data/scenario are censored: mostly, this means removing the lines that call the h scenes, but there are a couple places in the JP & patched English versions where the h scene spills over into the main scenario files, so it's not enough to just exclude the h files. However we can easily exclude all H scenes by using the censored English version (i.e. don't include patch2) and skipping lines whose labels don't exist in both. (There are a couple spots where the patch changed existing lines in the regular file, but not in any meaningful way, e.g. a space after an ellipsis, so we don't need to worry about the JP versions not matching the EN versions for the lines that have matching labels.)
+First, the Japanese version uses `*pageXX`, while English uses `*pXX`. Ignoring those differences, we can attempt to pair lines with their translation using the filename, label, and index within the label (some labels have multiple lines) as a key. This _mostly_ works. However, there are several hundred lines where there's no match.
 
-_Note: The JP has a patch file, gstring_p, which contains an "alter_scenario" directory with what looks like fixed scenario files. After doing a diff and comparing the audio, only a few lines actually changed, and it's actually the original versions in data that are correct. Not sure what happened here, but safe to ignore this patch._
+Some of these are because the English version (without patch2) is censored, but the Japanese version isn't. The h scenes are largely in their own files which get called from the main scenario files, but there are a few spots where the h scene spills over into the main file, and the English version removes those lines.
 
-Need to confirm if there are any other lines that don't match though (e.g. a JP line was split into two EN lines, or the EN line translates two JP lines). In those cases, we'll need to configure explicit line mappings like:
+The rest are cases where the translation was split into fewer/additional lines. I considered going through these by hand and matching them up like this:
 
-```json
+```jsonc
 {
-  "LineMappings": {
-    "file.ks": [
-      {
-        "English": ["*p100a", "*p100b"],
-        "Japanese": ["*page100"]
-      }
-    ]
-  }
+  "LineMappings": [
+    {
+      "English": [
+        "g52.ks*p119[0]"  // Usami and Kyousuke had escaped into a blind alley, yet they were nowhere to be seen.
+      ],
+      "Japanese": [
+        "g52.ks*p119[0]", // 宇佐美と京介が逃げ込んだのは、行き止まりの袋小路だった。
+        "g52.ks*p120[0]"  // にもかかわらず、二人の姿はない。
+      ]
+    },
+  ]
 }
 ```
 
-...and then any remaining lines get matched by name.
-  
-Note: Japanese version uses `*pageXX`, English uses `*pXX`. Ignore those differences when matching lines.
+But given how much time that would take, for the time being I've decided to limit the G-senjou quotes to voiced lines only, since in those cases the TL team would have been pretty much forced to keep the translations 1:1. Consequently, the method of reading lines by label was probably unnecessary, as I could have simply read each `[nm]` up until a line separator and used the voice file as a key, but at least this way leaves the opportunity to bring in the unvoiced lines later.
+
+_Note: The JP has a patch file, gstring_p, which contains an "alter_scenario" directory with what looks like fixed scenario files. After doing a diff and comparing the audio, only a few lines actually changed, and it's actually the original versions in data that are correct. Not sure what happened here, but safe to ignore this patch._
 
 ### Speaker names
 

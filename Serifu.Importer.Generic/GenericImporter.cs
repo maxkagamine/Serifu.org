@@ -167,7 +167,18 @@ internal partial class GenericImporter
         foreach (var (language, globs) in options.DialogueFiles)
         {
             Matcher matcher = new(StringComparison.OrdinalIgnoreCase);
-            matcher.AddIncludePatterns(globs);
+
+            foreach (string glob in globs)
+            {
+                if (glob.StartsWith('!'))
+                {
+                    matcher.AddExclude(glob[1..]);
+                }
+                else
+                {
+                    matcher.AddInclude(glob);
+                }
+            }
 
             foreach (FilePatternMatch match in matcher.Execute(baseDir).Files)
             {
