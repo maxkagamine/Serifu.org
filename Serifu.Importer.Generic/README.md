@@ -467,3 +467,7 @@ Extracting all of the text arrays for all scn files, limiting to the first four 
 Grepping all of the used % formattings (with "from all scn files" modified to use `x[1]` instead of `x[x.length - 1]`):
 
 `jq -r .[] All\ lines\ with\ formatting.json | grep -Po '(?<!\\)%[^;]*' | sort -u`
+
+Checking the scene titles (may be used as Context):
+
+`fd '\.(ks|txt)\.json$' -X jq -r '.scenes[] | "\(input_filename)\(.label)\t\(if .title|type=="array" then .title[0] else .title end)\t\(if .title|type=="array" then .title[1] else .title end)"' | sort -V | cut -d$'\t' -f2- | uniq | column -t -s $'\t'`
