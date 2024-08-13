@@ -44,6 +44,12 @@ internal class JsonScnTranslationsConverter<T>(ScnParserOptions scnOptions) : Js
 {
     public override ScnTranslations<T>? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
+        if (reader.TokenType is JsonTokenType.String or JsonTokenType.Null && typeof(T) == typeof(string))
+        {
+            var str = (T)(object)(reader.GetString() ?? "");
+            return new(str, str);
+        }
+
         T[]? arr = JsonSerializer.Deserialize<T[]>(ref reader, options);
 
         if (arr is null || arr.Length - 1 < Math.Max(scnOptions.EnglishLanguageIndex, scnOptions.JapaneseLanguageIndex))
