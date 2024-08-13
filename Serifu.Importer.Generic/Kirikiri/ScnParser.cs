@@ -12,23 +12,25 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
-using System.ComponentModel;
 
-namespace Serifu.Data;
+using Microsoft.Extensions.Options;
+using Serilog;
 
-public enum Source : short
+namespace Serifu.Importer.Generic.Kirikiri;
+
+internal class ScnParser : IParser<ScnParserOptions>
 {
-    Kancolle,
-    Skyrim,
-    [Description("Witcher 3")]
-    Witcher3,
-    [Description("G-senjou no Maou")]
-    GSenjouNoMaou,
-    [Description("Nekopara Vol. 1")]
-    NekoparaVol1,
-    [Description("Nekopara Vol. 2")]
-    NekoparaVol2,
-    Maitetsu,
-    [Description("Senren＊Banka")]
-    SenrenBanka
+    private readonly ScnParserOptions options;
+    private readonly ILogger logger;
+
+    public ScnParser(IOptions<ScnParserOptions> options, ILogger logger)
+    {
+        this.options = options.Value;
+        this.logger = logger.ForContext<ScnParser>();
+    }
+
+    public IEnumerable<ParsedQuoteTranslation> Parse(string path, Language language)
+    {
+        throw new NotImplementedException();
+    }
 }
