@@ -7,6 +7,22 @@
     "G-senjou no Maou Importer": {
       "commandName": "Project",
       "commandLineArgs": "GSenjouNoMaou"
+    },
+    "Nekopara Vol. 1 Importer": {
+      "commandName": "Project",
+      "commandLineArgs": "NekoparaVol1"
+    },
+    "Nekopara Vol. 2 Importer": {
+      "commandName": "Project",
+      "commandLineArgs": "NekoparaVol2"
+    },
+    "Maitetsu Importer": {
+      "commandName": "Project",
+      "commandLineArgs": "Maitetsu"
+    },
+    "Senren＊Banka Importer": {
+      "commandName": "Project",
+      "commandLineArgs": "SenrenBanka"
     }
   }
 }

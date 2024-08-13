@@ -9,5 +9,12 @@ public enum Source : short
     [Description("Witcher 3")]
     Witcher3,
     [Description("G-senjou no Maou")]
-    GSenjouNoMaou
+    GSenjouNoMaou,
+    [Description("Nekopara Vol. 1")]
+    NekoparaVol1,
+    [Description("Nekopara Vol. 2")]
+    NekoparaVol2,
+    Maitetsu,
+    [Description("Senren＊Banka")]
+    SenrenBanka
 }

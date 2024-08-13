@@ -44,6 +44,9 @@ switch (parserName)
     case nameof(KsParser):
         AddParser<KsParser, KsParserOptions>();
         break;
+    case nameof(ScnParser):
+        AddParser<ScnParser, ScnParserOptions>();
+        break;
     case nameof(TsvParser):
         AddParser<TsvParser, TsvParserOptions>();
         break;
