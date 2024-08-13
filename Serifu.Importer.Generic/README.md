@@ -12,6 +12,7 @@
 - [Nekopara Vol. 1 \& 2, Senren Banka, Maitetsu](#nekopara-vol-1--2-senren-banka-maitetsu)
   - [.scn / PSB format](#scn--psb-format)
   - [Speaker names \& voice file](#speaker-names--voice-file)
+    - [Finding every speaker name \& its translation](#finding-every-speaker-name--its-translation)
   - [Formatting](#formatting)
     - [Regex to match %-formatting and furigana](#regex-to-match--formatting-and-furigana)
     - [Escaping](#escaping)
@@ -24,7 +25,7 @@
 - [KirikiriTools](https://github.com/arcusmaximus/KirikiriTools)'s KirikiriDescrambler.exe, for "scrambled" .ks files (Kirikiri engine)
 - [FreeMoteToolkit](https://github.com/UlyssesWu/FreeMote)'s PsbDecompile.exe, to convert .scn files to a usable JSON format (details below).
 
-Note: commands in this document make use of [fd](https://github.com/sharkdp/fd) and [fx](https://github.com/antonmedv/fx).
+Note: commands in this document make use of [fd](https://github.com/sharkdp/fd), [fx](https://github.com/antonmedv/fx), [jq](https://github.com/stedolan/jq), and [datamash](https://www.gnu.org/software/datamash/download/#packages).
 
 ## G-senjou no Maou
 
@@ -122,7 +123,7 @@ These games also use the Kirikiri engine, but their scenario text is in .scn fil
 Convert these to JSON using `fd '\.scn$' -x PsbDecompile.exe --json-array-indent`. These files can be compressed afterwards while leaving them on disk by running `compact.exe /c /s '*.scn' '*.json'` (searches recursively).
 
 > [!TIP]
-> To find added or replaced scenes in patches (to determine if any are relevant or just H scenes), from a directory containing separate folders for each extracted archive: `for d in *; do fd '\.scn$' "$d" | sed "s/.*\///; s/$/\t$d/"; done | datamash -s groupby 1 count 2 collapse 2 | sort | column -t` (apt install datamash; also useful to check .ogg). Add `| awk -F'\t' '$2>1'` before column to find only overridden files, or replace column with `| awk -F'\t' '{if ($2>1) print $1}' | xargs -d'\n' -I% fd -g % -X sha256sum` to see if any of those are just duplicates.
+> To find added or replaced scenes in patches (to determine if any are relevant or just H scenes), from a directory containing separate folders for each extracted archive: `for d in *; do fd '\.scn$' "$d" | sed "s/.*\///; s/$/\t$d/"; done | datamash -s groupby 1 count 2 collapse 2 | sort | column -t` (also useful to check .ogg). Add `| awk -F'\t' '$2>1'` before column to find only overridden files, or replace column with `| awk -F'\t' '{if ($2>1) print $1}' | xargs -d'\n' -I% fd -g % -X sha256sum` to see if any of those are just duplicates.
 
 ### Speaker names & voice file
 
@@ -268,6 +269,39 @@ Command to list the ones with multiple voice files:
 For lines with a single speaker, at least, the name in `[0]` is always the same as the name on the sound file:
 
 `fx All\ text\ arrays.json 'x => x.filter(x => x[3]?.length == 1 && x[3][0].name != x[0])'`
+
+#### Finding every speaker name & its translation
+
+I've decided to attribute quotes using the person's actual name, disregarding whatever alternate name ("Box", "???", etc.) might be appearing on screen at the time. As such, the names in `[1]` and `[2][][0]` can be disregarded, but we need to find the most frequent English translation (in `[2][1][0]`) for each name in `[0]` to form the English speaker name map:
+
+```sh
+fd '\.json$' -x fx {} 'x =>
+    x.scenes?.flatMap(x => x.texts?.flatMap(x =>
+    `${x[0] ?? ""}\t${x[2][1][0] ?? ""}`) ?? []) ?? []' |
+  jq -rs 'add|.[]' |
+  grep -Pv '^\s*$' |
+  datamash -sf groupby 1,2 count 1 |
+  sort -t $'\t' -k 1,1 -k 3nr |
+  datamash groupby 1 first 2 |
+  column -t -s $'\t'
+```
+
+Sometimes the Japanese name in `[0]` will _always_ be replaced with either the name in `[1]` or the one in `[2][0][0]`. An example is Milk in Nekopara Vol. 2; she's referred to in `[0]` as "屋台のネコ" like she was called in Vol. 1, but in Vol. 2 her name is always overridden as "ミルク". These need to be added to the Japanese speaker name map, if any:
+
+```sh
+fd '\.json$' -x fx {} 'x =>
+    x.scenes?.flatMap(x => x.texts?.flatMap(x =>
+    `${x[0] ?? ""}\t${x[2][0][0] ?? x[1] ?? ""}`) ?? []) ?? []' |
+  jq -rs 'add|.[]' |
+  grep -Pv '^\s*$' |
+  datamash -sf groupby 1,2 count 1 |
+  sort -t $'\t' -k 1,1 -k 3nr |
+  datamash groupby 1 first 2 |
+  grep -Pv '\t$' |
+  column -t -s $'\t'
+```
+
+To filter out multi-speaker voice lines: `x.texts?.filter(x => x[3] == null || x[3].length < 2)`
 
 ### Formatting
 
