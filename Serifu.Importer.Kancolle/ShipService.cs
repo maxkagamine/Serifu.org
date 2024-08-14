@@ -11,7 +11,7 @@ using System.Net;
 using static Serifu.Data.Sqlite.ImportHelper;
 using static Serifu.Importer.Kancolle.Regexes;
 
-namespace Serifu.Importer.Kancolle.Services;
+namespace Serifu.Importer.Kancolle;
 
 /// <summary>
 /// Handles scraping the individual ship pages.
@@ -25,7 +25,7 @@ internal class ShipService
     private const string JapaneseSelector = "td:only-child"; // Second row
     private const string NotesSelector = "td[rowspan=2]:last-child"; // SeasonalQuote only
 
-    private readonly WikiApiService wikiApiService;
+    private readonly WikiClient wiki;
     private readonly ContextTranslator translationService;
     private readonly ISqliteService sqliteService;
     private readonly IWordAligner wordAligner;
@@ -33,13 +33,13 @@ internal class ShipService
     private readonly HtmlSanitizer htmlSanitizer;
 
     public ShipService(
-        WikiApiService wikiApiService,
+        WikiClient wiki,
         ContextTranslator translationService,
         ISqliteService sqliteService,
         IWordAligner wordAligner,
         ILogger logger)
     {
-        this.wikiApiService = wikiApiService;
+        this.wiki = wiki;
         this.translationService = translationService;
         this.sqliteService = sqliteService;
         this.wordAligner = wordAligner;
@@ -63,7 +63,7 @@ internal class ShipService
     public async Task<IEnumerable<Quote>> GetQuotes(Ship ship, CancellationToken cancellationToken = default)
     {
         logger.Information("Fetching wiki page for {Ship}.", ship);
-        using var document = await wikiApiService.GetPage(ship.EnglishName, cancellationToken);
+        using var document = await wiki.GetPage(ship.EnglishName, cancellationToken);
 
         List<Quote> quotes = [];
 
@@ -127,7 +127,7 @@ internal class ShipService
             }
 
             // Run word alignment
-            Task<IEnumerable<Alignment>> alignmentDataTask = wordAligner.AlignSymmetric(textEnglish, textJapanese, cancellationToken);
+            var alignmentDataTask = wordAligner.AlignSymmetric(textEnglish, textJapanese, cancellationToken);
 
             // Wait for both to complete
             await Task.WhenAll(audioFileTask ?? Task.CompletedTask, alignmentDataTask);
@@ -191,7 +191,7 @@ internal class ShipService
                 Quotes = group.Select(q => new { q.Context, q.Text }),
                 AudioFile = group.Key,
                 Similarity = group.SelectMany(q1 => group.Except([q1]).Select(q2 => (q1, q2)))
-                    .Min(x => 1 - ((float)Levenshtein.Distance(x.q1.Text, x.q2.Text) / Math.Max(x.q1.Text.Length, x.q2.Text.Length)))
+                    .Min(x => 1 - (float)Levenshtein.Distance(x.q1.Text, x.q2.Text) / Math.Max(x.q1.Text.Length, x.q2.Text.Length))
             });
         }
 
@@ -205,7 +205,7 @@ internal class ShipService
     /// <returns>A collection of <see cref="QuoteTableRow"/> containing the relevant elements.</returns>
     private IEnumerable<QuoteTableRow> FindQuoteRows(IDocument document)
     {
-        foreach (IElement tr in document.QuerySelectorAll(RowsOfTopLevelTablesSelector))
+        foreach (var tr in document.QuerySelectorAll(RowsOfTopLevelTablesSelector))
         {
             var scenario = tr.QuerySelector(ScenarioSelector);
             var playButton = tr.QuerySelector<IHtmlAnchorElement>(PlayButtonSelector);
@@ -216,13 +216,13 @@ internal class ShipService
             if (scenario is not null && english is not null && japanese is not null)
             {
                 // Sanity check
-                IElement? nearestHeader = tr.Closest("table")!;
+                var nearestHeader = tr.Closest("table")!;
                 while (nearestHeader is not null && nearestHeader.TagName != "H2")
                 {
                     nearestHeader = nearestHeader.PreviousElementSibling;
                 }
 
-                if (nearestHeader?.TextContent.Trim() != "Voice Lines[edit]")
+                if (nearestHeader?.TextContent.Trim() != "Voice Lines")
                 {
                     logger.Warning("Returning a quote that doesn't appear to be within the \"Voice Lines\" section... check {Url} and make sure this is ok. Header = {Header}, Scenario = {Scenario}, English = {English}",
                         document.Url, nearestHeader?.TextContent, scenario.TextContent, english.TextContent);

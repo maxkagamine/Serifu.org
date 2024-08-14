@@ -3,23 +3,24 @@ using AngleSharp.Html.Dom;
 using Serifu.Importer.Kancolle.Models;
 using Serilog;
 
-namespace Serifu.Importer.Kancolle.Services;
+namespace Serifu.Importer.Kancolle;
 
 /// <summary>
 /// Handles scraping the "Ship list" page.
 /// </summary>
 internal class ShipListService
 {
-    const string ShipListPage = "Ship list";
+    private const string ShipListPage = "Ship list";
+    private const string ShipLinkSelector = ".mw-parser-output span[id^=\"shiplistkai-\"] a:not(.mw-redirect)";
 
-    private readonly WikiApiService wikiApiService;
+    private readonly WikiClient wiki;
     private readonly ILogger logger;
 
     public ShipListService(
-        WikiApiService wikiApiService,
+        WikiClient wiki,
         ILogger logger)
     {
-        this.wikiApiService = wikiApiService;
+        this.wiki = wiki;
         this.logger = logger.ForContext<ShipListService>();
     }
 
@@ -32,9 +33,9 @@ internal class ShipListService
     public async Task<IReadOnlyList<Ship>> GetShips(CancellationToken cancellationToken = default)
     {
         logger.Information("Getting ship list.");
-        using var document = await wikiApiService.GetPage(ShipListPage, cancellationToken);
+        using var document = await wiki.GetPage(ShipListPage, cancellationToken);
 
-        var ships = document.QuerySelectorAll<IHtmlAnchorElement>("span[id^=\"shiplistkai-\"] a:not(.mw-redirect)")
+        var ships = document.QuerySelectorAll<IHtmlAnchorElement>(ShipLinkSelector)
             .DistinctBy(link => link.Href) // Verniy links directly to Hibiki in the table, so isn't a redirect
             .Select(link =>
             {
