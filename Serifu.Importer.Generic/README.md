@@ -17,6 +17,7 @@
     - [Regex to match %-formatting and furigana](#regex-to-match--formatting-and-furigana)
     - [Escaping](#escaping)
   - [Useful commands for analyzing scn JSON](#useful-commands-for-analyzing-scn-json)
+- [Batch re-encoding audio files](#batch-re-encoding-audio-files)
 
 ## Tools
 
@@ -471,3 +472,13 @@ Grepping all of the used % formattings (with "from all scn files" modified to us
 Checking the scene titles (may be used as Context):
 
 `fd '\.(ks|txt)\.json$' -X jq -r '.scenes[] | "\(input_filename)\(.label)\t\(if .title|type=="array" then .title[0] else .title end)\t\(if .title|type=="array" then .title[1] else .title end)"' | sort -V | cut -d$'\t' -f2- | uniq | column -t -s $'\t'`
+
+## Batch re-encoding audio files
+
+`fd '\.ogg$' voice -x ffmpeg -hide_banner -v quiet -i {} -c:a libopus -b:a 32k -map_metadata -1 {.}.opus`
+
+Verify size reduction:
+
+`fd '\.ogg$' voice -x bash -c "ogg='{}'; opus='{.}.opus'; ogg_size=\$(stat --printf=%s '{}'); opus_size=\$(stat --printf=%s '{.}.opus'); if (( opus_size >= ogg_size )); then printf '%s\t%s\n%s\t%s\n' \"\$ogg\" \"\$ogg_size\" \"\$opus\" \"\$opus_size\"; fi"`
+
+`fd '\.ogg$' voice -X weigh && fd '\.opus$' voice -X weigh`
