@@ -7,7 +7,8 @@ using Serifu.Data.Sqlite;
 using Serifu.ML.Abstractions;
 using Serilog;
 using System.ComponentModel.DataAnnotations;
-using System.Text.RegularExpressions;
+
+using static Serifu.Data.Sqlite.ImportHelper;
 
 namespace Serifu.Importer.Generic;
 
@@ -23,9 +24,6 @@ internal partial class GenericImporter
     private readonly IWordAligner wordAligner;
     private readonly ParserOptions options;
     private readonly ILogger logger;
-
-    [GeneratedRegex(@"[一-龠ぁ-ゔ]")]
-    private static partial Regex KanjiOrHiraganaRegex();
 
     private record PairedWithKeyOrIndex(int KeyOrIndex, ParsedQuoteTranslation English, ParsedQuoteTranslation Japanese);
 
@@ -101,8 +99,6 @@ internal partial class GenericImporter
         await Task.WhenAll(englishAudioFileTask, japaneseAudioFileTask, alignmentDataTask);
 
         // Create quote
-        // TODO: Should make sure to remove newlines in the quote text (for all importers). Maybe make a shared helper
-        // that combines the whitespace & wrapping quote trimming.
         return new Quote()
         {
             Id = QuoteId.CreateGenericId(options.Source, keyOrIndex),
@@ -245,7 +241,7 @@ internal partial class GenericImporter
             {
                 error = "Japanese translation is empty";
             }
-            else if (!KanjiOrHiraganaRegex().IsMatch(japanese.Text))
+            else if (!ContainsKanjiOrHiragana(japanese.Text))
             {
                 error = "Japanese text contains neither kanji nor hiragana";
             }
@@ -262,8 +258,8 @@ internal partial class GenericImporter
                 // Return the paired translations with their texts trimmed of whitespace & wrapping quotes
                 yield return new(
                     KeyOrIndex: isIntKey ? (int)group.Key : index++,
-                    English: english with { Text = TrimQuoteText(english.Text) },
-                    Japanese: japanese with { Text = TrimQuoteText(japanese.Text) }
+                    English: english with { Text = FormatEnglishText(english.Text) },
+                    Japanese: japanese with { Text = FormatJapaneseText(japanese.Text) }
                 );
 
                 continue;
@@ -271,21 +267,6 @@ internal partial class GenericImporter
 
             logger.Warning("Skipping {Key}: {Reason}", group.Key, error);
         }
-    }
-
-    /// <summary>
-    /// Trims whitespace and wrapping quotes.
-    /// </summary>
-    private static string TrimQuoteText(ReadOnlySpan<char> text)
-    {
-        text = text.Trim();
-
-        if (text[0] is '"' or '“' or '「' or '『' && text[^1] is '"' or '”' or '」' or '』')
-        {
-            text = text[1..^1].Trim();
-        }
-
-        return text.ToString();
     }
 
     private ParsedQuoteTranslation ReplaceSpeakerName(ParsedQuoteTranslation tl)

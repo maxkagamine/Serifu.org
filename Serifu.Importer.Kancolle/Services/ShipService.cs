@@ -8,7 +8,7 @@ using Serifu.Importer.Kancolle.Models;
 using Serifu.ML.Abstractions;
 using Serilog;
 using System.Net;
-
+using static Serifu.Data.Sqlite.ImportHelper;
 using static Serifu.Importer.Kancolle.Regexes;
 
 namespace Serifu.Importer.Kancolle.Services;
@@ -75,8 +75,8 @@ internal class ShipService
             List<string> referenceIds = [];
 
             string scenario = GetText(row.Scenario);
-            string textEnglish = GetText(row.English, referenceIds);
-            string textJapanese = GetText(row.Japanese);
+            string textEnglish = FormatEnglishText(GetText(row.English, referenceIds));
+            string textJapanese = FormatJapaneseText(GetText(row.Japanese));
             string? audioFileUrl = row.PlayButton?.Href;
 
             string unsafeNotes = string.Join("<br>\n", (row.Notes is null ? [] : new[] { row.Notes })

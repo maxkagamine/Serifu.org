@@ -19,8 +19,8 @@ using Serilog.Context;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Text.RegularExpressions;
 using System.Web;
+using static Serifu.Data.Sqlite.ImportHelper;
 using Alignment = Serifu.Data.Alignment;
 
 namespace Serifu.Importer.Skyrim;
@@ -33,9 +33,6 @@ internal sealed partial class SkyrimImporter : IDisposable
         SubtypeName.PowerAttack, SubtypeName.VoicePowerEndLong, SubtypeName.VoicePowerEndShort,
         SubtypeName.VoicePowerStartLong, SubtypeName.VoicePowerStartShort,
     ];
-
-    [GeneratedRegex(@"[一-龠ぁ-ゔ]")]
-    private static partial Regex KanjiOrHiraganaRegex();
 
     private readonly IGameEnvironment<ISkyrimMod, ISkyrimModGetter> env;
     private readonly SceneActorResolver sceneActorResolver;
@@ -308,7 +305,7 @@ internal sealed partial class SkyrimImporter : IDisposable
         ITranslatedStringGetter? questJournalEntry,
         CancellationToken cancellationToken)
     {
-        var (englishText, japaneseText) = TrimQuoteText(response.Text);
+        var (englishText, japaneseText) = FormatQuoteText(response.Text);
         var (englishContext, japaneseContext) = questJournalEntry;
         FormID formId = formIdProvider.GetFormId(info);
 
@@ -601,7 +598,7 @@ internal sealed partial class SkyrimImporter : IDisposable
         {
             error = "English or Japanese text is wrapped in parenthesis";
         }
-        else if (!KanjiOrHiraganaRegex().IsMatch(japanese))
+        else if (!ContainsKanjiOrHiragana(japanese))
         {
             error = "Japanese text contains neither kanji nor hiragana";
         }
@@ -633,27 +630,13 @@ internal sealed partial class SkyrimImporter : IDisposable
         englishArchive.GetVoiceTypes(responseDataInfo, response).Intersect(japaneseArchive.GetVoiceTypes(responseDataInfo, response));
 
     /// <summary>
-    /// Trims whitespace and wrapping quotes.
+    /// Destructures <paramref name="text"/>, trims whitespace and wrapping quotes, and removes newlines / collapses
+    /// whitespace.
     /// </summary>
-    private static string TrimQuoteText(ReadOnlySpan<char> text)
-    {
-        text = text.Trim();
-
-        if (text[0] is '"' or '“' or '「' or '『' && text[^1] is '"' or '”' or '」' or '』')
-        {
-            text = text[1..^1].Trim();
-        }
-
-        return text.ToString();
-    }
-
-    /// <summary>
-    /// Destructures <paramref name="text"/> and trims whitespace and wrapping quotes.
-    /// </summary>
-    private static (string English, string Japanese) TrimQuoteText(ITranslatedStringGetter text)
+    private static (string English, string Japanese) FormatQuoteText(ITranslatedStringGetter text)
     {
         var (english, japanese) = text;
-        return (TrimQuoteText(english), TrimQuoteText(japanese));
+        return (FormatEnglishText(english), FormatJapaneseText(japanese));
     }
 
     public void Dispose()
