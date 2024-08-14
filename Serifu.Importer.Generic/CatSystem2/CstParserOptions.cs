@@ -12,25 +12,12 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
-using System.ComponentModel;
+namespace Serifu.Importer.Generic.CatSystem2;
 
-namespace Serifu.Data;
-
-public enum Source : short
+internal class CstParserOptions : ParserOptions
 {
-    Kancolle,
-    Skyrim,
-    [Description("Witcher 3")]
-    Witcher3,
-    [Description("G-senjou no Maou")]
-    GSenjouNoMaou,
-    [Description("Nekopara Vol. 1")]
-    NekoparaVol1,
-    [Description("Nekopara Vol. 2")]
-    NekoparaVol2,
-    Maitetsu,
-    [Description("Senren＊Banka")]
-    SenrenBanka,
-    [Description("Newton to Ringo no Ki")]
-    NewtonToRingoNoKi
+    /// <summary>
+    /// Dump each scene to a readable format for analysis.
+    /// </summary>
+    public bool DumpCst { get; set; }
 }
