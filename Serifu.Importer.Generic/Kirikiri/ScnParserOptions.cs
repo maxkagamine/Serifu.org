@@ -36,4 +36,9 @@ internal class ScnParserOptions : ParserOptions
     /// given language and the value is the string to use instead.
     /// </summary>
     public Dictionary<Language, Dictionary<string, string>> SceneTitleMap { get; set; } = [];
+
+    /// <summary>
+    /// Scenes to skip, as an array of "filename*label" (basename without scn/json extension, e.g. "02_00_b.ks*start").
+    /// </summary>
+    public HashSet<string> ExcludedScenes { get; set; } = [];
 }

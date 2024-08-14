@@ -75,7 +75,7 @@ internal partial class ScnParser : IParser<ScnParserOptions>
         }
 
         using FileStream stream = File.OpenRead(path);
-        string filename = Path.GetFileName(path);
+        string filename = Path.GetFileNameWithoutExtension(path);
         ScnFile file = JsonSerializer.Deserialize<ScnFile>(stream, jsonOptions)!;
 
         // These will basically always be false & true respectively, but this should work even if the voice isn't jp
@@ -84,6 +84,13 @@ internal partial class ScnParser : IParser<ScnParserOptions>
 
         foreach (ScnScene scene in file.Scenes)
         {
+            string sceneKey = filename + scene.Label;
+
+            if (options.ExcludedScenes.Contains(sceneKey))
+            {
+                continue;
+            }
+
             string englishContext = MapSceneTitle(scene.Title.English, Language.English);
             string japaneseContext = MapSceneTitle(scene.Title.Japanese, Language.Japanese);
 
@@ -91,7 +98,7 @@ internal partial class ScnParser : IParser<ScnParserOptions>
 
             foreach (ScnSceneText sceneText in scene.Texts)
             {
-                string key = $"{filename}{scene.Label}[{i++}]";
+                string key = $"{sceneKey}[{i++}]";
 
                 // Skip lines where multiple people are talking at the same time (usu. shouting in unison), as the text
                 // often contains multiple quotes in one, and they aren't particularly useful either.
