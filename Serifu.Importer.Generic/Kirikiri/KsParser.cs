@@ -182,12 +182,6 @@ internal partial class KsParser : IParser<KsParserOptions>
                     case 1:
                         string? speakerName = EmptyStringToNull(matches[0].Groups["t"].Value);
                         string? audioFile = EmptyStringToNull(matches[0].Groups["s"].Value);
-
-                        if (audioFile is not null)
-                        {
-                            audioFile += ".ogg";
-                        }
-
                         return (speakerName, audioFile);
                     default:
                         throw new Exception("More than one [nm] tag was found in the text; the dialogue line separator is probably wrong.");
