@@ -33,6 +33,8 @@ internal partial class GenericImporter
     private const int MinimumEnglishWordCount = 2;
     private const int MaximumEnglishWordCount = 100;
 
+    private static readonly string[] AudioFileExtensions = ["opus", "ogg", "mp3"];
+
     private readonly IParser parser;
     private readonly ISqliteService sqliteService;
     private readonly IWordAligner wordAligner;
@@ -146,31 +148,37 @@ internal partial class GenericImporter
             return null;
         }
 
-        // Check cache
-        string relativePath = Path.Combine(options.AudioDirectories[tl.Language], tl.AudioFilePath).Replace('\\', '/');
-        Uri cacheKey = new($"file:///{options.Source}/{relativePath}");
+        // Try the file path as given, then with each file extension until we find it in the cache or on disk
+        IEnumerable<string> audioFilePaths = AudioFileExtensions.Select(x => $"{tl.AudioFilePath}.{x}")
+            .Prepend(tl.AudioFilePath);
 
-        if (await sqliteService.GetCachedAudioFile(cacheKey, cancellationToken) is string objectName)
+        foreach (string audioFilePath in audioFilePaths)
         {
-            return objectName;
+            // Check cache
+            string relativePath = Path.Combine(options.AudioDirectories[tl.Language], audioFilePath).Replace('\\', '/');
+            Uri cacheKey = new($"file:///{options.Source}/{relativePath}");
+
+            if (await sqliteService.GetCachedAudioFile(cacheKey, cancellationToken) is string objectName)
+            {
+                return objectName;
+            }
+
+            // Check directory
+            string absolutePath = Path.GetFullPath(relativePath, options.BaseDirectory);
+
+            if (File.Exists(absolutePath))
+            {
+                logger.Information("Importing {Path}", absolutePath);
+
+                using FileStream stream = File.OpenRead(absolutePath);
+                return await sqliteService.ImportAudioFile(stream, cacheKey, cancellationToken);
+            }
         }
 
-        // Import file
-        // Note: this assumes the audio files have already been converted. Import will throw if not a supported format.
-        string absolutePath = Path.GetFullPath(relativePath, options.BaseDirectory);
+        logger.Error("Audio file {Path} for {Key} ({Language}) does not exist (searched for {AudioFilePaths} in {AudioDirectory}).",
+            tl.AudioFilePath, tl.Key, tl.Language, audioFilePaths, Path.GetFullPath(options.AudioDirectories[tl.Language], options.BaseDirectory));
 
-        if (!File.Exists(absolutePath))
-        {
-            logger.Error("Audio file {Path} for {Key} ({Language}) does not exist.",
-                relativePath, tl.Key, tl.Language);
-
-            return null;
-        }
-
-        logger.Information("Importing {Path}", absolutePath);
-
-        using FileStream stream = File.OpenRead(absolutePath);
-        return await sqliteService.ImportAudioFile(stream, cacheKey, cancellationToken);
+        return null;
     }
 
     private IEnumerable<(Language Language, string Path)> EnumerateDialogueFiles()

@@ -57,7 +57,8 @@ internal record ParsedQuoteTranslation
 
     /// <summary>
     /// The relative audio file path within one of the <see cref="ParserOptions.AudioDirectories"/> corresponding to the
-    /// language, or <see langword="null"/> if audio is not available for this quote or language.
+    /// language (possibly omitting the extension), or <see langword="null"/> if audio is not available for this quote
+    /// or language.
     /// </summary>
     public required string? AudioFilePath { get; init; }
 
