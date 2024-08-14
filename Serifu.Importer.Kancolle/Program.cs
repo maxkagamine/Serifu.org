@@ -21,7 +21,6 @@ using Microsoft.Extensions.Options;
 using Serifu.Data;
 using Serifu.Data.Sqlite;
 using Serifu.Importer.Kancolle;
-using Serifu.Importer.Kancolle.Services;
 using Serifu.ML;
 using Serilog;
 
@@ -39,7 +38,7 @@ builder.Services.AddHttpClient(Options.DefaultName).AddHttpMessageHandler<RateLi
 
 builder.Services.AddScoped<ShipListService>();
 builder.Services.AddScoped<ShipService>();
-builder.Services.AddScoped<WikiApiService>();
+builder.Services.AddScoped<WikiClient>();
 builder.Services.AddScoped<ContextTranslator>();
 
 builder.Run(async (
