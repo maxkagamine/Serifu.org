@@ -23,6 +23,10 @@
     "Senren＊Banka Importer": {
       "commandName": "Project",
       "commandLineArgs": "SenrenBanka"
+    },
+    "Newton to Ringo no Ki Importer": {
+      "commandName": "Project",
+      "commandLineArgs": "NewtonToRingoNoKi"
     }
   }
 }

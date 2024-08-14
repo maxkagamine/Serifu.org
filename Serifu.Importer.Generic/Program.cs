@@ -6,6 +6,7 @@ using Microsoft.Extensions.Options;
 using Serifu.Data;
 using Serifu.Data.Sqlite;
 using Serifu.Importer.Generic;
+using Serifu.Importer.Generic.CatSystem2;
 using Serifu.Importer.Generic.Kirikiri;
 using Serifu.Importer.Generic.Tsv;
 using Serifu.ML;
@@ -22,8 +23,7 @@ var source = Enum.Parse<Source>(args[0]);
 string parserName = builder.Configuration.GetSection(args[0])[nameof(ParserOptions.Parser)] ??
     throw new Exception($"No parser configured for {source}.");
 
-Console.Title = (typeof(Source).GetField(source.ToString())?
-    .GetCustomAttribute<DescriptionAttribute>()?
+Console.Title = (typeof(Source).GetField(source.ToString())?.GetCustomAttribute<DescriptionAttribute>()?
     .Description ?? source.ToString()) + " Importer";
 
 void AddParser<TParser, TOptions>()
@@ -41,6 +41,9 @@ void AddParser<TParser, TOptions>()
 
 switch (parserName)
 {
+    case nameof(CstParser):
+        AddParser<CstParser, CstParserOptions>();
+        break;
     case nameof(KsParser):
         AddParser<KsParser, KsParserOptions>();
         break;

@@ -16,5 +16,7 @@ public enum Source : short
     NekoparaVol2,
     Maitetsu,
     [Description("Senren＊Banka")]
-    SenrenBanka
+    SenrenBanka,
+    [Description("Newton to Ringo no Ki")]
+    NewtonToRingoNoKi
 }

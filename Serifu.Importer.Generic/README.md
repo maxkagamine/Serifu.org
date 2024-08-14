@@ -17,6 +17,8 @@
     - [Regex to match %-formatting and furigana](#regex-to-match--formatting-and-furigana)
     - [Escaping](#escaping)
   - [Useful commands for analyzing scn JSON](#useful-commands-for-analyzing-scn-json)
+- [Newton to Ringo no Ki](#newton-to-ringo-no-ki)
+  - [Censorship...](#censorship)
 - [Batch re-encoding audio files](#batch-re-encoding-audio-files)
 
 ## Tools
@@ -25,6 +27,7 @@
   - Run in Sandbox. Place exe & dll in game folder and drop the game exe onto krkr. May need to use Locale Emulator: "copy as path" the game exe, right click on krkrextract, and use a LE application profile to run it with the game exe in the arguments field.
 - [KirikiriTools](https://github.com/arcusmaximus/KirikiriTools)'s KirikiriDescrambler.exe, for "scrambled" .ks files (Kirikiri engine)
 - [FreeMoteToolkit](https://github.com/UlyssesWu/FreeMote)'s PsbDecompile.exe, to convert .scn files to a usable JSON format (details below).
+- [GARbro](https://github.com/morkt/GARbro/releases) for extracting various archive formats including .int (CatSystem2 engine)
 
 Note: commands in this document make use of [fd](https://github.com/sharkdp/fd), [fx](https://github.com/antonmedv/fx), [jq](https://github.com/stedolan/jq), and [datamash](https://www.gnu.org/software/datamash/download/#packages).
 
@@ -472,6 +475,101 @@ Grepping all of the used % formattings (with "from all scn files" modified to us
 Checking the scene titles (may be used as Context):
 
 `fd '\.(ks|txt)\.json$' -X jq -r '.scenes[] | "\(input_filename)\(.label)\t\(if .title|type=="array" then .title[0] else .title end)\t\(if .title|type=="array" then .title[1] else .title end)"' | sort -V | cut -d$'\t' -f2- | uniq | column -t -s $'\t'`
+
+## Newton to Ringo no Ki
+
+_CatSystem2 engine. Use GARbro to extract .int's._
+
+Refer to https://github.com/trigger-segfault/TriggersTools.CatSystem2/wiki
+
+The CST scene files are a binary format, but fortunately the above project has a NuGet package for reading these. <i>Un</i>fortunately, CSTs are single-language. Therefore, learning from [my mistake](#matching-lines-between-translations) with the KsParser, I'm implementing this one using the voice file as the key and ignoring lines that aren't voiced.
+
+Dumping the CstScene object to JSON is helpful in figuring out how they're structured:
+
+- Voice files aren't associated with dialogue; rather, they're played via commands, same as sound effects. The difference is `SoundType` is `Pcm` and `CommandName` is `"pcm"`.
+  - Looking at [the source](https://github.com/trigger-segfault/TriggersTools.CatSystem2/blob/47fdcb605c16a5d93a97cb2894684326f21885c8/src/TriggersTools.CatSystem2.Shared/Scenes/Commands/Sounds/SoundType.cs), these will always be the same, so we can just use the enum.
+  - Also, `SoundFile` is [literally just](https://github.com/trigger-segfault/TriggersTools.CatSystem2/blob/47fdcb605c16a5d93a97cb2894684326f21885c8/src/TriggersTools.CatSystem2.Shared/Scenes/Commands/Sounds/SoundPlayCommand.cs) `$"{Sound}.ogg"`, so we don't need to worry about those being different either.
+- The speaker name is set via `Name` lines preceding the dialogue.
+- The dialogue text is displayed with a `Message`, then finally an `Input` waits for click.
+  - There can be multiple `Message` in a row, and they're simply concatenated.
+  - Should check if there can be multiple `Pcm` before a `Message`. This might be a "multiple people talking at the same time" line, which we'll probably want to skip, [same as with the ScnParser](#speaker-names--voice-file).
+- It appears that either the `Message` or `Input` clears the name, as unspoken (narrator / inner thoughts) lines sometimes immediately follow.
+
+A typical dialogue line looks like this, with the first two being optional:
+
+```json
+{
+  "Sound": "D_com_002_013",
+  "SoundFile": "D_com_002_013.ogg",
+  "Pan": 0,
+  "Delay": 0,
+  "IsCommandPriority": 0,
+  "SoundType": "Pcm",
+  "Bank": 0,
+  "HasBank": false,
+  "Parameters": [
+    "pcm",
+    "D_com_002_013"
+  ],
+  "Content": "pcm D_com_002_013",
+  "CommandName": "pcm",
+  "Count": 2,
+  "Type": "Command"
+},
+{
+  "Type": "Name",
+  "Content": "Lavi",
+  "Name": "Lavi"
+},
+{
+  "Type": "Message",
+  "Content": "\\fn[\u201CHey,] [you,] [you\\\u0027re] [not] [a] [human] [from] [this] [time] [period] [either,] [are] [you?\u201D] \\fn",
+  "HasBlock": false,
+  "Message": "\u201CHey, you, you\u0027re not a human from this time period either, are you?\u201D "
+},
+{
+  "Type": "Input",
+  "Content": ""
+},
+```
+
+### Censorship...
+
+In the case of Newton to Ringo no Ki, specifically, the censored version (i.e. without update20.int) didn't just remove the H scenes; they went full _American censorship mode_ and changed a bunch of lines to make it G rated:
+
+|||
+|-|-|
+| **Japanese** | お、お前は童貞だから！！！だからどうせ……このまま何もなく、帰っちゃうんだ！あたしには分かるんだ…… |
+| **English&nbsp;(Correct)**  | Y-You're such a virgin! That's why... you'll go back without doing anything! I can tell... |
+| **English&nbsp;(Censored)** | Y-You're such a moron! That's why... you'll go back without doing anything! I can tell... |
+
+|||
+|-|-|
+| **Japanese** | お、お前！！！　何故あたしの胸を触ってるんだ！！！ |
+| **English&nbsp;(Correct)**  | Wh-Why you...! Why are you touching my chest!? |
+| **English&nbsp;(Censored)** | Wh-Why you...! Why are you lying on top of me!? |
+
+|||
+|-|-|
+| **Japanese** | じゃあ……二人っきりで、お風呂に入れるのか？ |
+| **English&nbsp;(Correct)**  | Then... we can take a bath, just the two of us? |
+| **English&nbsp;(Censored)** | Then... I can take a bath any time I want? |
+
+|||
+|-|-|
+| **Japanese** | 修二はＭなのか？ |
+| **English&nbsp;(Correct)**  | Syuji a masochist or something? |
+| **English&nbsp;(Censored)** | Are you a happy guy, Syuji? |
+
+_Really?_
+
+The funny part is, these are all voiced lines. And it's not like they re-recorded the audio, so you can still plainly hear the "naughty words."
+
+Western censorship stupidity aside, this poses a problem for our purpose of language learning, as the censored lines no longer match the Japanese. In some cases, this will present itself as an incorrect translation (童貞 ≠ moron), while others are just completely different. So we have basically two options here:
+
+1. For the files that differ, take the patched versions. This will still exclude the H scenes while making sure we have the correct translations. The caveat is there's some "mature" parts of the regular scenes (mostly Lavi's fault) that the censored version removes, so we'd be adding those too.
+
+2. The alternative: import the scenes both with and without the patch applied. For each, use the sqlite CLI to dump a TSV containing the audio file's original filename and the English text. Combine those, sort unique, group by audio file, and filter to count > 1. Those will be the lines that the censored version changed. Extract the audio filenames and use them as a configured exclusion list to throw out all of the wrong translations while still using the censored version.
 
 ## Batch re-encoding audio files
 
