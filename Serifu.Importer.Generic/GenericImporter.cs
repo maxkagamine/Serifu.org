@@ -6,7 +6,7 @@ using Serifu.Data;
 using Serifu.Data.Sqlite;
 using Serifu.ML.Abstractions;
 using Serilog;
-using System.ComponentModel.DataAnnotations;
+using Serilog.Events;
 
 using static Serifu.Data.Sqlite.ImportHelper;
 
@@ -65,7 +65,7 @@ internal partial class GenericImporter
             .ToArray();
 
         // Filter out unusable quotes and duplicates, preferring quotes with speakers over those without
-        PairedWithKeyOrIndex[] paired = ValidateAndFilter(groupedByKey)
+        PairedWithKeyOrIndex[] paired = ValidateAndFilter(groupedByKey, cancellationToken)
             .GroupBy(x => (x.English.Text, x.Japanese.Text))
             .Select(g => g.FirstOrDefault(x => x.English.SpeakerName != "") ?? g.First())
             .ToArray();
@@ -196,7 +196,7 @@ internal partial class GenericImporter
     }
 
     private IEnumerable<PairedWithKeyOrIndex> ValidateAndFilter(
-        IEnumerable<IGrouping<object, ParsedQuoteTranslation>> groupedByKey)
+        IEnumerable<IGrouping<object, ParsedQuoteTranslation>> groupedByKey, CancellationToken cancellationToken)
     {
         if (!groupedByKey.Any())
         {
@@ -213,21 +213,28 @@ internal partial class GenericImporter
 
         foreach (var group in groupedByKey)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             if (group.Any(x => x.Language is not (Language.English or Language.Japanese)))
             {
                 logger.Fatal("Group {Key} contains invalid languages: {@Group}", group.Key, group.ToArray());
-                throw new ValidationException($"Group {group.Key} contains invalid languages.");
+                throw new Exception($"Group {group.Key} contains invalid languages.");
             }
 
             if (group.Count(x => x.Language == Language.English) > 1 ||
                 group.Count(x => x.Language == Language.Japanese) > 1)
             {
-                logger.Fatal("Group {Key} contains the same language multiple times: {@Group}", group.Key, group.ToArray());
-                throw new ValidationException($"Group {group.Key} contains the same language multiple times.");
+                logger.Write(options.IgnoreDuplicateKeysWithinLanguage ? LogEventLevel.Warning : LogEventLevel.Fatal,
+                    "Group {Key} contains the same language multiple times: {@Group}", group.Key, group.ToArray());
+
+                if (!options.IgnoreDuplicateKeysWithinLanguage)
+                {
+                    throw new Exception($"Group {group.Key} contains the same language multiple times.");
+                }
             }
 
-            var english = group.SingleOrDefault(x => x.Language == Language.English);
-            var japanese = group.SingleOrDefault(x => x.Language == Language.Japanese);
+            var english = group.FirstOrDefault(x => x.Language == Language.English);
+            var japanese = group.FirstOrDefault(x => x.Language == Language.Japanese);
             string error;
 
             Lazy<int> englishWordCount = new(() => wordAligner.EnglishTokenizer.GetWordCount(english!.Text));

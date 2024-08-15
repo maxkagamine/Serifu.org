@@ -18,6 +18,7 @@
     - [Escaping](#escaping)
   - [Useful commands for analyzing scn JSON](#useful-commands-for-analyzing-scn-json)
 - [Newton to Ringo no Ki](#newton-to-ringo-no-ki)
+  - [Speaker names](#speaker-names-1)
   - [Censorship...](#censorship)
 - [Batch re-encoding audio files](#batch-re-encoding-audio-files)
 
@@ -490,9 +491,10 @@ Dumping the CstScene object to JSON is helpful in figuring out how they're struc
   - Looking at [the source](https://github.com/trigger-segfault/TriggersTools.CatSystem2/blob/47fdcb605c16a5d93a97cb2894684326f21885c8/src/TriggersTools.CatSystem2.Shared/Scenes/Commands/Sounds/SoundType.cs), these will always be the same, so we can just use the enum.
   - Also, `SoundFile` is [literally just](https://github.com/trigger-segfault/TriggersTools.CatSystem2/blob/47fdcb605c16a5d93a97cb2894684326f21885c8/src/TriggersTools.CatSystem2.Shared/Scenes/Commands/Sounds/SoundPlayCommand.cs) `$"{Sound}.ogg"`, so we don't need to worry about those being different either.
 - The speaker name is set via `Name` lines preceding the dialogue.
+  - It seems like `Name` is used as a comment sometimes. There's one where there's a name "・いや、気のせいか……", then the actual name "修二", followed by the text "「そうだな、気のせいか……」". The first one might have been a previous version of the text? We can handle this by ignoring multiple `Name`s in a row and only using the last one (i.e. let them overwrite each other).
 - The dialogue text is displayed with a `Message`, then finally an `Input` waits for click.
   - There can be multiple `Message` in a row, and they're simply concatenated.
-  - Should check if there can be multiple `Pcm` before a `Message`. This might be a "multiple people talking at the same time" line, which we'll probably want to skip, [same as with the ScnParser](#speaker-names--voice-file).
+  - There can be multiple `Pcm` before a `Message` when it's multiple people talking at the same time. We'll want to skip those, [same as with the ScnParser](#speaker-names--voice-file).
 - It appears that either the `Message` or `Input` clears the name, as unspoken (narrator / inner thoughts) lines sometimes immediately follow.
 
 A typical dialogue line looks like this, with the first two being optional:
@@ -533,6 +535,26 @@ A typical dialogue line looks like this, with the first two being optional:
 },
 ```
 
+### Speaker names
+
+The `Name` is in the format "actual name＠display name" (Note: that's U+FF20 Fullwidth Commercial At). Underscores seem to get replaced with spaces. If there's no ＠, then the actual name is displayed.
+
+As with the other ones, we'll want to attribute quotes to their actual names and not "???" etc.
+
+Once the scenes have been exported to json (set `"DumpCst": true` in config), use the following command to list all of the names:
+
+`jq -rs 'add | map(select(.Type == "Name")) | map(.Name) | unique | .[]' *.json`
+
+The ones we need to be on the lookout for are where the actual name is never used, like these:
+
+```
+Heyday_Syuichiro＠Old_Man
+Heyday_Syuichiro＠Syuichiro
+Young_Yotsuko＠Girl
+```
+
+In these cases it's really Syuichiro and Yotsuko; the names "Heyday Syuichiro" and "Young Yotsuko" never appear on screen (apparently the character image in the dialogue box is controlled by the "actual name," so this would be a different sprite for the same person). The ones that have multiple names like "Syuji&Emmy" and "Both" can probably be ignored since we filter out lines with multiple speakers, although in the former case one of them is the unvoiced MC, so it's probably best to change it to Emmy.
+
 ### Censorship...
 
 In the case of Newton to Ringo no Ki, specifically, the censored version (i.e. without update20.int) didn't just remove the H scenes; they went full _American censorship mode_ and changed a bunch of lines to make it G rated:
@@ -570,6 +592,28 @@ Western censorship stupidity aside, this poses a problem for our purpose of lang
 1. For the files that differ, take the patched versions. This will still exclude the H scenes while making sure we have the correct translations. The caveat is there's some "mature" parts of the regular scenes (mostly Lavi's fault) that the censored version removes, so we'd be adding those too.
 
 2. The alternative: import the scenes both with and without the patch applied. For each, use the sqlite CLI to dump a TSV containing the audio file's original filename and the English text. Combine those, sort unique, group by audio file, and filter to count > 1. Those will be the lines that the censored version changed. Extract the audio filenames and use them as a configured exclusion list to throw out all of the wrong translations while still using the censored version.
+
+```sql
+sqlite> .mode tabs
+sqlite> .once censored.tsv -- and again for patched.tsv
+sqlite> select substr(c.OriginalUri, 33), q.English_Text from quotes q left join AudioFileCache c on c.ObjectName = q.Japanese_AudioFile where q.Source = 'NewtonToRingoNoKi';
+```
+
+```sh
+# Find lines that the censored version changed (not added or removed) and copy
+# the exclusion list for Option #2 to the clipboard
+cat censored.tsv patched.tsv |
+  datamash -s groupby 1 countunique 2 unique 2 |
+  awk -F'\t' '$2>1' |
+  tee changed.tsv |
+  cut -d$'\t' -f1 |
+  clip
+
+# Find lines that would be added if we went with Option #1 instead
+cat <(sed 's/^/censored\t/' censored.tsv) <(sed 's/^/patched\t/' patched.tsv) |
+  datamash -s groupby 2 unique 1 countunique 3 unique 3 |
+  awk -F'\t' '$3==1 && $2=="patched"' > patched_only.tsv
+```
 
 ## Batch re-encoding audio files
 
