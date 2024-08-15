@@ -51,6 +51,16 @@ internal abstract class ParserOptions : IValidatableObject
     /// </summary>
     public Dictionary<Language, Dictionary<string, string>> SpeakerNameMap { get; set; } = [];
 
+    /// <summary>
+    /// If there are multiple translations for a given key and language even after removing duplicates, by default an
+    /// exception will be thrown. If this is true, the quote will be discarded instead and a warning logged.
+    /// </summary>
+    /// <remarks>
+    /// Normally this would indicate a bug, but it can also happen if the audio file is used as a key and the dialogue
+    /// appears in multiple scenes (different routes) but with slightly different text.
+    /// </remarks>
+    public bool IgnoreDuplicateKeysWithinLanguage { get; set; }
+
     public virtual IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
         if (Source == default)
