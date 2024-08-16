@@ -237,6 +237,16 @@ internal partial class GenericImporter
             var japanese = group.FirstOrDefault(x => x.Language == Language.Japanese);
             string error;
 
+            if (english is not null && japanese is not null &&
+                ((english.SpeakerName == "" && japanese.SpeakerName != "") ||
+                 (english.SpeakerName != "" && japanese.SpeakerName == "")))
+            {
+                logger.Fatal("One of the translations for {Key} has a speaker name but not the other: {@Group}",
+                    group.Key, group.ToArray());
+
+                throw new Exception($"One of the translations for {group.Key} has a speaker name but not the other.");
+            }
+
             Lazy<int> englishWordCount = new(() => wordAligner.EnglishTokenizer.GetWordCount(english!.Text));
 
             // This part is similar to the Skyrim importer's ValidateDialogue
