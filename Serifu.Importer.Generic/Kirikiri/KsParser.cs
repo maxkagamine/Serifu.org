@@ -75,7 +75,7 @@ internal partial class KsParser : IParser<KsParserOptions>
         List<ParsedQuoteTranslation> result = [];
 
         // Labels are *supposed* to be unique, but there's a duplicated label in one of G-senjou's scenarios, so we'll
-        // have to remember and increment the last index for the label instead of using an the split text's indexes.
+        // have to remember and increment the last index for the label instead of using the split text's indexes.
         Dictionary<string, int> indexesPerLabel = [];
 
         // We read the text in between labels first, then split that text using the configured separator tags (depends
@@ -196,6 +196,13 @@ internal partial class KsParser : IParser<KsParserOptions>
                     case 1:
                         string? speakerName = EmptyStringToNull(matches[0].Groups["t"].Value);
                         string? audioFile = EmptyStringToNull(matches[0].Groups["s"].Value);
+
+                        // For some reason, a lot of Maou's lines in the JP version have the name empty
+                        if (speakerName is null && audioFile is not null && audioFile.StartsWith("mao_"))
+                        {
+                            speakerName = "魔王";
+                        }
+
                         return (speakerName, audioFile);
                     default:
                         throw new Exception("More than one [nm] tag was found in the text; the dialogue line separator is probably wrong.");
