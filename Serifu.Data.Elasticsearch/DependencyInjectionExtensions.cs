@@ -21,7 +21,7 @@ public static class DependencyInjectionExtensions
             new SingleNodePool(new Uri(serverUrl)),
             (_, settings) => new SourceSerializer(settings));
 
-        settings.DefaultIndex("quotes");
+        settings.DefaultIndex(QuotesIndex.Name);
         settings.ThrowExceptions();
 
 #if DEBUG

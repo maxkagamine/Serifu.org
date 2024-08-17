@@ -3,11 +3,11 @@ using Elastic.Clients.Elasticsearch.IndexManagement;
 using Elastic.Clients.Elasticsearch.Mapping;
 using System.Text.Json.Serialization;
 
-namespace Serifu.Data.Elasticsearch.Build;
+namespace Serifu.Data.Elasticsearch;
 
-internal static class QuotesIndex
+public static class QuotesIndex
 {
-    private const string IndexName = "quotes";
+    public const string Name = "quotes";
 
     private const string EnglishConjugationsAnalyzer = "english"; // Built-in
     private const string JapaneseConjugationsAnalyzer = "serifu_japanese_conjugations";
@@ -17,13 +17,7 @@ internal static class QuotesIndex
     private const string CjkFilter = "serifu_cjk_filter";
     private const string DesDivFilter = "serifu_desdiv_filter";
 
-    public static CreateIndexRequest Create() => new(IndexName)
-    {
-        Mappings = CreateMappings(),
-        Settings = CreateSettings(),
-    };
-
-    private static TypeMapping CreateMappings() => new()
+    public static TypeMapping Mappings => new()
     {
         Dynamic = DynamicMapping.Strict,
         Properties = new()
@@ -41,6 +35,14 @@ internal static class QuotesIndex
                 Index = false
             }
         }
+    };
+
+    public static IndexSettings Settings => new()
+    {
+        Analysis = CreateAnalysisSettings(),
+        NumberOfShards = 1,
+        NumberOfReplicas = 0,
+        RefreshInterval = -1
     };
 
     private static ObjectProperty CreateTranslationMappings(string conjugationsAnalyzer) => new()
@@ -78,14 +80,6 @@ internal static class QuotesIndex
                 Index = false
             }
         }
-    };
-
-    private static IndexSettings CreateSettings() => new()
-    {
-        Analysis = CreateAnalysisSettings(),
-        NumberOfShards = 1,
-        NumberOfReplicas = 0,
-        RefreshInterval = -1
     };
 
     private static IndexSettingsAnalysis CreateAnalysisSettings() => new()
