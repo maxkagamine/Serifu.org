@@ -16,12 +16,13 @@ using Elastic.Clients.Elasticsearch;
 using Kagamine.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Serifu.Data;
 using Serifu.Data.Elasticsearch;
 using Serifu.Data.Elasticsearch.Build;
 using Serifu.Data.Sqlite;
 using Serilog;
 using Serilog.Events;
+
+const int BatchSize = 100_000;
 
 var builder = ConsoleApplication.CreateBuilder();
 
@@ -52,20 +53,26 @@ builder.Run(async (
         cancellationToken);
 
     logger.Information("Loading quotes from sqlite db");
-    List<Quote> quotes = await sqlite.Quotes.ToListAsync(cancellationToken);
+    var quotes = await sqlite.Quotes.ToArrayAsync(cancellationToken);
+    var batches = quotes.Chunk(BatchSize).ToArray();
 
-    logger.Information("Indexing quotes");
-    var res = await elasticsearch.BulkAsync(x => x.IndexMany(quotes), cancellationToken);
-    
-    if (res.Errors)
+    for (int i = 0; i < batches.Length; i++)
     {
-        foreach (var item in res.ItemsWithErrors)
-        {
-            logger.Error("Failed to index quote {QuoteId}: {ErrorType}: {ErrorReason}",
-                item.Id, item.Error!.Type, item.Error!.Reason);
-        }
+        logger.Information("Indexing quotes (batch {Batch} of {Count})", i + 1, batches.Length);
 
-        return 1;
+        var batch = batches[i];
+        var res = await elasticsearch.BulkAsync(x => x.IndexMany(batch), cancellationToken);
+
+        if (res.Errors)
+        {
+            foreach (var item in res.ItemsWithErrors)
+            {
+                logger.Error("Failed to index quote {QuoteId}: {ErrorType}: {ErrorReason}",
+                    item.Id, item.Error!.Type, item.Error!.Reason);
+            }
+
+            return 1;
+        }
     }
 
     logger.Information("Flushing index to disk");
