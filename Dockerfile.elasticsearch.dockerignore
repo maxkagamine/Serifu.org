@@ -1,5 +1,10 @@
 *
-!Serifu.*
+!Serifu.Data
+!Serifu.Data.Elasticsearch
+!Serifu.Data.Elasticsearch.Build
+!Serifu.Data.Sqlite
+!Serifu.ML
 !Directory.Build.props
+!Serifu.db
 **/bin
 **/obj
