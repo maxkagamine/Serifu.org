@@ -13,11 +13,14 @@
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
 
+using Ganss.Xss;
 using Kagamine.Extensions.Logging;
+using Kagamine.Extensions.Utilities;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Serilog;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Text.Json;
 using System.Xml.Serialization;
 
@@ -27,9 +30,15 @@ using GameObject = (LsjTranslatedString? DisplayName, Guid? TemplateId, string? 
 
 internal class LsjParser : IParser<LsjParserOptions>
 {
+    private const string NarratorKey = "NARRATOR";
+    private const string NarratorStringId = "h0fd7e77ag106bg47d5ga587g6cfeed742d5d";
+    private const string TavNamePrefix = "S_Player_GenericOrigin";
+    private const string TavStringId = "ha0b302dag3025g44e2gaf63g7fd9ec937241";
+
     private readonly LsjParserOptions options;
     private readonly ILogger logger;
     private readonly IHostApplicationLifetime lifetime;
+    private readonly HtmlSanitizer htmlSanitizer;
 
     private readonly Dictionary<LsjTranslatedString, string> englishStrings = [];
     private readonly Dictionary<LsjTranslatedString, string> japaneseStrings = [];
@@ -41,6 +50,8 @@ internal class LsjParser : IParser<LsjParserOptions>
         this.logger = logger.ForContext<LsjParser>();
         this.lifetime = lifetime;
 
+        htmlSanitizer = new HtmlSanitizer(new HtmlSanitizerOptions()) { KeepChildNodes = true };
+
         // The BG3 import operates in two steps: first, the localization files and game objects are indexed (the latter
         // of which involves iterating over all lsj files), then, once indexing is complete, the generic importer begins
         // its process of iterating over the dialogue files, which in this case should be the voice meta files. Note
@@ -50,6 +61,9 @@ internal class LsjParser : IParser<LsjParserOptions>
 
     private async Task Initialize()
     {
+        using var progress = new TerminalProgressBar();
+        progress.SetIndeterminate();
+
         using (logger.BeginTimedOperation("Indexing localization files"))
         {
             ReadLocalizationXml("Localization/English/english.xml", englishStrings);
@@ -71,7 +85,7 @@ internal class LsjParser : IParser<LsjParserOptions>
 
         XmlSerializer serializer = new(typeof(LocalizationXml));
         string path = Path.GetFullPath(relativePath, options.BaseDirectory);
-        using var file = File.OpenRead(path);
+        using FileStream file = File.OpenRead(path);
         var xml = (LocalizationXml)serializer.Deserialize(file)!;
 
         foreach (var content in xml.Content)
@@ -84,7 +98,9 @@ internal class LsjParser : IParser<LsjParserOptions>
     {
         try
         {
-            using var file = File.OpenRead(path);
+            logger.Information("Reading {File}", Path.GetRelativePath(options.BaseDirectory, path).Replace('\\', '/'));
+
+            using FileStream file = File.OpenRead(path);
             LsjFile lsj = (await JsonSerializer.DeserializeAsync(file, LsjSourceGenerationContext.Default.LsjFile, cancellationToken))!;
 
             if (lsj.Save.Regions.Templates is LsjTemplates templates)
@@ -147,6 +163,117 @@ internal class LsjParser : IParser<LsjParserOptions>
 
     public IEnumerable<ParsedQuoteTranslation> Parse(string path, Language language)
     {
-        throw new NotImplementedException();
+        if (language is not Language.Multilingual)
+        {
+            throw new ArgumentException($"Language must be {nameof(Language.Multilingual)}.", nameof(language));
+        }
+
+        using FileStream file = File.OpenRead(path);
+        LsjFile lsj = JsonSerializer.Deserialize(file, LsjSourceGenerationContext.Default.LsjFile)!;
+
+        if (lsj.Save.Regions.VoiceMetaData is not LsjVoiceMetaData voiceMetaData)
+        {
+            throw new InvalidDataException($"File does not contain a VoiceMetaData region (wrong LSJ type): {path}");
+        }
+
+        foreach (LsjVoiceSpeakerMetaData speakerMetaData in voiceMetaData.VoiceSpeakerMetaData)
+        {
+            string speakerId = speakerMetaData.MapKey.Value;
+            LsjTranslatedString? speakerName = speakerId == NarratorKey ? new(NarratorStringId) :
+                ResolveSpeakerName(Guid.Parse(speakerId));
+
+            TryGetString(speakerName, Language.English, out string englishSpeakerName);
+            TryGetString(speakerName, Language.Japanese, out string japaneseSpeakerName);
+
+            foreach (LsjVoiceTextMetaData voiceTextMetaData in speakerMetaData.MapValue.SelectMany(x => x.VoiceTextMetaData ?? []))
+            {
+                LsjTranslatedString stringId = new(voiceTextMetaData.MapKey.Value);
+                string audioFile = voiceTextMetaData.MapValue.Single().Source.Value.Replace(".wem", ".opus");
+
+                // Filter out unused dialogue
+                if (!TryGetString(stringId, Language.English, out string englishText) ||
+                    !TryGetString(stringId, Language.Japanese, out string japaneseText) ||
+                    !File.Exists(Path.Combine(options.BaseDirectory, options.AudioDirectories[Language.English], audioFile)))
+                {
+                    continue;
+                }
+
+                // Filter out dialogue text containing string interpolation
+                if (englishText.Contains('[') || japaneseText.Contains('['))
+                {
+                    continue;
+                }
+
+                yield return new ParsedQuoteTranslation()
+                {
+                    Key = audioFile,
+                    Language = Language.English,
+                    Text = englishText,
+                    SpeakerName = englishSpeakerName,
+                    AudioFilePath = audioFile
+                };
+
+                yield return new ParsedQuoteTranslation()
+                {
+                    Key = audioFile,
+                    Language = Language.Japanese,
+                    Text = japaneseText,
+                    SpeakerName = japaneseSpeakerName,
+                    AudioFilePath = null
+                };
+            }
+        }
+    }
+
+    private LsjTranslatedString? ResolveSpeakerName(Guid? speakerId)
+    {
+        while (speakerId.HasValue)
+        {
+            if (!objects.TryGetValue(speakerId.Value, out GameObject gameObject))
+            {
+                break;
+            }
+
+            if (gameObject.Name?.StartsWith(TavNamePrefix) == true)
+            {
+                return new(TavStringId);
+            }
+
+            if (gameObject.DisplayName is LsjTranslatedString displayName)
+            {
+                return displayName;
+            }
+
+            speakerId = gameObject.TemplateId;
+        }
+
+        return null;
+    }
+
+    private bool TryGetString(LsjTranslatedString? stringId, Language language, out string sanitizedString)
+    {
+        Dictionary<LsjTranslatedString, string> strings = language switch
+        {
+            Language.English => englishStrings,
+            Language.Japanese => japaneseStrings,
+            _ => throw new UnreachableException()
+        };
+
+        if (!stringId.HasValue || !strings.TryGetValue(stringId.Value, out string? str))
+        {
+            sanitizedString = "";
+            return false;
+        }
+
+        if (language is Language.English)
+        {
+            str = str.Replace("<br>", " ");
+        }
+
+        str = htmlSanitizer.Sanitize(str);
+        str = str.Trim(' ', '*', '(', ')');
+
+        sanitizedString = str;
+        return true;
     }
 }
