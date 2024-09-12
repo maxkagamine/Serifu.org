@@ -1,11 +1,4 @@
-﻿using System.Text.Json.Serialization;
-
-namespace Serifu.Importer.Generic.Larian;
-
-[JsonSerializable(typeof(LsjFile), GenerationMode = JsonSourceGenerationMode.Metadata)]
-[JsonSourceGenerationOptions(PropertyNameCaseInsensitive = true)]
-internal partial class LsjSourceGenerationContext : JsonSerializerContext
-{ }
+﻿namespace Serifu.Importer.Generic.Larian;
 
 internal record LsjFile(LsjSave Save)
 { }
@@ -28,11 +21,11 @@ internal record LsjOrigins(LsjOrigin[] Origin);
 /// <param name="TemplateName">The object's template MapKey.</param>
 /// <param name="ParentTemplateId">The template's template MapKey.</param>
 internal record LsjGameObject(
-    LsjTranslatedStringValue? DisplayName,
-    LsjGuidValue? MapKey,
-    LsjStringValue? Name,
-    LsjGuidValue? TemplateName,
-    LsjGuidValue? ParentTemplateId);
+    LsjTranslatedString? DisplayName,
+    LsjGuid? MapKey,
+    LsjString? Name,
+    LsjGuid? TemplateName,
+    LsjGuid? ParentTemplateId);
 
 /// <summary>
 /// Represents one of the origin characters.
@@ -40,11 +33,11 @@ internal record LsjGameObject(
 /// <param name="DisplayName">The localization XML string ID.</param>
 /// <param name="GlobalTemplate">For our purposes, the "speaker ID" and primary key for this type.</param>
 internal record LsjOrigin(
-    LsjTranslatedStringValue? DisplayName,
-    LsjGuidValue? GlobalTemplate);
+    LsjTranslatedString? DisplayName,
+    LsjGuid? GlobalTemplate);
 
-internal record LsjStringValue(string Value);
+internal record struct LsjString(string Value);
 
-internal record LsjGuidValue(Guid Value);
+internal record struct LsjGuid(Guid Value);
 
-internal record LsjTranslatedStringValue(string Handle);
+internal record struct LsjTranslatedString(string Handle);

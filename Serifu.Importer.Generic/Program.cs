@@ -8,6 +8,7 @@ using Serifu.Data.Sqlite;
 using Serifu.Importer.Generic;
 using Serifu.Importer.Generic.CatSystem2;
 using Serifu.Importer.Generic.Kirikiri;
+using Serifu.Importer.Generic.Larian;
 using Serifu.Importer.Generic.Tsv;
 using Serifu.ML;
 using Serilog;
@@ -49,6 +50,9 @@ switch (parserName)
         break;
     case nameof(ScnParser):
         AddParser<ScnParser, ScnParserOptions>();
+        break;
+    case nameof(LsjParser):
+        AddParser<LsjParser, LsjParserOptions>();
         break;
     case nameof(TsvParser):
         AddParser<TsvParser, TsvParserOptions>();
