@@ -18,5 +18,7 @@ public enum Source : short
     [Description("Senren＊Banka")]
     SenrenBanka,
     [Description("Newton to Ringo no Ki")]
-    NewtonToRingoNoKi
+    NewtonToRingoNoKi,
+    [Description("Baldur's Gate 3")]
+    BaldursGate3,
 }
