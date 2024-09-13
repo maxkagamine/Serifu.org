@@ -164,9 +164,25 @@ internal class LsjParser : IParser<LsjParserOptions>
 
         foreach (LsjVoiceSpeakerMetaData speakerMetaData in voiceMetaData.VoiceSpeakerMetaData)
         {
-            string speakerId = speakerMetaData.MapKey.Value;
-            LsjTranslatedString? speakerName = speakerId == NarratorKey ? new(NarratorStringId) :
-                ResolveSpeakerName(Guid.Parse(speakerId));
+            LsjTranslatedString? speakerName;
+            string speakerIdStr = speakerMetaData.MapKey.Value;
+            int weight = 1;
+            
+            if (speakerIdStr == NarratorKey)
+            {
+                speakerName = new(NarratorStringId);
+            }
+            else
+            {
+                Guid speakerId = Guid.Parse(speakerIdStr);
+
+                if (options.PreferredSpeakerIds.Contains(speakerId))
+                {
+                    weight = 2;
+                }
+
+                speakerName = ResolveSpeakerName(speakerId);
+            }
 
             TryGetString(speakerName, Language.English, out string englishSpeakerName);
             TryGetString(speakerName, Language.Japanese, out string japaneseSpeakerName);
@@ -176,17 +192,34 @@ internal class LsjParser : IParser<LsjParserOptions>
                 LsjTranslatedString stringId = new(voiceTextMetaData.MapKey.Value);
                 string audioFile = voiceTextMetaData.MapValue.Single().Source.Value.Replace(".wem", ".opus");
 
-                // Filter out unused dialogue
-                if (!TryGetString(stringId, Language.English, out string englishText) ||
-                    !TryGetString(stringId, Language.Japanese, out string japaneseText) ||
-                    !File.Exists(Path.Combine(options.BaseDirectory, options.AudioDirectories[Language.English], audioFile)))
+                if (!audioFile.StartsWith($"v{speakerIdStr.Replace("-", "")}"))
                 {
+                    throw new Exception("Unexpected speaker ID / audio file name mismatch.");
+                }
+
+                // Filter out unused/untranslated dialogue
+                if (!TryGetString(stringId, Language.English, out string englishText))
+                {
+                    logger.Warning("Skipping {Key}: {Reason}", audioFile, "String not found in English localization file");
+                    continue;
+                }
+
+                if (!TryGetString(stringId, Language.Japanese, out string japaneseText))
+                {
+                    logger.Warning("Skipping {Key}: {Reason}", audioFile, "String found in English but not Japanese localization file");
+                    continue;
+                }
+
+                if (!File.Exists(Path.Combine(options.BaseDirectory, options.AudioDirectories[Language.English], audioFile)))
+                {
+                    logger.Warning("Skipping {Key}: {Reason}", audioFile, "Audio file does not exist");
                     continue;
                 }
 
                 // Filter out dialogue text containing string interpolation
                 if (englishText.Contains('[') || japaneseText.Contains('['))
                 {
+                    logger.Warning("Skipping {Key}: {Reason}", audioFile, "Dialogue text contains string interpolation");
                     continue;
                 }
 
@@ -196,7 +229,8 @@ internal class LsjParser : IParser<LsjParserOptions>
                     Language = Language.English,
                     Text = englishText,
                     SpeakerName = englishSpeakerName,
-                    AudioFilePath = audioFile
+                    AudioFilePath = audioFile,
+                    Weight = weight
                 };
 
                 yield return new ParsedQuoteTranslation()
@@ -205,7 +239,8 @@ internal class LsjParser : IParser<LsjParserOptions>
                     Language = Language.Japanese,
                     Text = japaneseText,
                     SpeakerName = japaneseSpeakerName,
-                    AudioFilePath = null
+                    AudioFilePath = null,
+                    Weight = weight
                 };
             }
         }

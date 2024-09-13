@@ -65,8 +65,10 @@ internal partial class GenericImporter
             .ToArray();
 
         // Filter out unusable quotes and duplicates, preferring quotes with speakers over those without
+        // TODO: Should this take a (seeded) random element, rather than simply the first?
         PairedWithKeyOrIndex[] paired = ValidateAndFilter(groupedByKey, cancellationToken)
             .GroupBy(x => (x.English.Text, x.Japanese.Text))
+            .Select(g => g.OrderByDescending(x => x.English.Weight + x.Japanese.Weight))
             .Select(g => g.FirstOrDefault(x => x.English.SpeakerName != "") ?? g.First())
             .ToArray();
 
