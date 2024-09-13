@@ -54,3 +54,29 @@
 ```sh
 find . -type f -not \( -name '*.lsj' -o -name '*.xml' -o -name '*.opus' \) -delete && find . -depth -type d -empty -delete
 ```
+
+## Tav voices
+
+"These boots have seen everything" has three string IDs:
+
+- `h9f01aa67g70d7g4fb8gbf3eg526194a368df` (Normal)
+- `h472a3f55gfc77g4e31g9a21g8aa78dd4858c` (Alternate)
+- `h4184ab70g2a86g42b5g8243g7d283ae6b747` (Whispered)
+
+Which lead to the eight different player voice/speaker IDs:
+
+- `24247531-c432-4f0f-8f35-6c90c4844aa8` (Voice 1, Male)
+- `869248f0-468a-4747-82d7-e8efc3bbcacf` (Voice 2, Female)
+- `4df6dba0-8574-4704-a9fb-a500da38e1e1` (Voice 3, Male)
+- `3347e417-d7ad-4088-bdd6-d5565efcd815` (Voice 4, Female)
+- `f5b335b2-9cd9-4b38-a4c1-458b846ab499` (Voice 5, Male)
+- `b9b26a44-943b-4427-9890-d81c7e81a75b` (Voice 6, Female)
+- `2d206fda-0d4f-457f-b4ea-0fc18866f5dd` (Voice 7, Male)
+- `fb6b5353-8d14-4507-9222-ceaec990fce9` (Voice 8, Female)
+
+Sadly, the iconic boots line appears to be missing a Japanese translation. In fact, of the 6,033 "point-and-click" lines, for Tav or any origin character, only two are translated as of v4.1.1.5849914:
+
+```sh
+readarray -t strings < <(grep -Porh 'h[0-9a-f]{8}g[0-9a-f]{4}g[0-9a-f]{4}g[0-9a-f]{4}g[0-9a-f]{12}' Mods/Gustav/Story/DialogsBinary/Global/BG_PointAndClick)
+for s in "${strings[@]}"; do if grep -qF "$s" Localization/Japanese/japanese.xml; then grep -F "$s" Localization/English/english.xml; fi; done
+```
