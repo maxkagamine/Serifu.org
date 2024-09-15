@@ -12,27 +12,28 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
-using System.ComponentModel;
+using System.Diagnostics;
+using System.Xml.Serialization;
 
-namespace Serifu.Data;
+namespace Serifu.Importer.Generic.Larian;
 
-public enum Source : short
+[Serializable]
+[XmlRoot(ElementName = "contentList")]
+public class LocalizationXml
 {
-    Kancolle,
-    Skyrim,
-    [Description("Witcher 3")]
-    Witcher3,
-    [Description("G-senjou no Maou")]
-    GSenjouNoMaou,
-    [Description("Nekopara Vol. 1")]
-    NekoparaVol1,
-    [Description("Nekopara Vol. 2")]
-    NekoparaVol2,
-    Maitetsu,
-    [Description("Senren＊Banka")]
-    SenrenBanka,
-    [Description("Newton to Ringo no Ki")]
-    NewtonToRingoNoKi,
-    [Description("Baldur's Gate 3")]
-    BaldursGate3,
+    [XmlElement("content")]
+    [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+    public required LocalizationXmlContent[] Content { get; set; }
 }
+
+[Serializable]
+[DebuggerDisplay("{Value,nq}", Name = "{ContentUid,nq}")]
+public class LocalizationXmlContent
+{
+    [XmlAttribute(AttributeName = "contentuid")]
+    public required string ContentUid { get; set; }
+
+    [XmlText]
+    public required string Value { get; set; }
+}
+

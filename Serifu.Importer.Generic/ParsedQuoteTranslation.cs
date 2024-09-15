@@ -76,4 +76,9 @@ internal record ParsedQuoteTranslation
     /// Translation notes, if any. Contains sanitized HTML.
     /// </summary>
     public string Notes { get; init; } = "";
+
+    /// <summary>
+    /// In the event of duplicate quotes with different speakers, the quote with the highest weight will be chosen.
+    /// </summary>
+    public int Weight { get; init; } = 1;
 }

@@ -12,27 +12,9 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
-using System.ComponentModel;
+namespace Serifu.Importer.Generic.Larian;
 
-namespace Serifu.Data;
-
-public enum Source : short
+internal class LsjParserOptions : ParserOptions
 {
-    Kancolle,
-    Skyrim,
-    [Description("Witcher 3")]
-    Witcher3,
-    [Description("G-senjou no Maou")]
-    GSenjouNoMaou,
-    [Description("Nekopara Vol. 1")]
-    NekoparaVol1,
-    [Description("Nekopara Vol. 2")]
-    NekoparaVol2,
-    Maitetsu,
-    [Description("Senren＊Banka")]
-    SenrenBanka,
-    [Description("Newton to Ringo no Ki")]
-    NewtonToRingoNoKi,
-    [Description("Baldur's Gate 3")]
-    BaldursGate3,
+    public HashSet<Guid> PreferredSpeakerIds { get; set; } = [];
 }
