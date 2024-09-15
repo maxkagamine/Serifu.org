@@ -102,6 +102,10 @@ internal class ShipService
             int wordCountJapanese = wordAligner.JapaneseTokenizer.GetWordCount(textJapanese);
 
             // Validate
+            //
+            // Note: GetQuotesForExport() does the "Japanese text contains kanji or hiragana" check for us so that we
+            // can keep the ships' non-Japanese lines saved in the local db for backup purposes, even though we can't
+            // use them in the app. Verniy's Russian voice is too cute to throw out, after all.
             if (EmptyOrQuestionMarks.IsMatch(textEnglish))
             {
                 logger.Warning("{Ship}'s {Context} quote is missing a translation.", ship, scenario);

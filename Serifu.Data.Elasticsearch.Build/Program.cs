@@ -39,7 +39,7 @@ builder.Services.AddSingleton<ElasticsearchServer>();
 builder.Run(async (
     ElasticsearchServer server,
     ElasticsearchClient elasticsearch,
-    SerifuDbContext sqlite,
+    ISqliteService sqlite,
     ILogger logger,
     CancellationToken cancellationToken) =>
 {
@@ -53,8 +53,8 @@ builder.Run(async (
         cancellationToken);
 
     logger.Information("Loading quotes from sqlite db");
-    var quotes = await sqlite.Quotes.ToArrayAsync(cancellationToken);
-    var batches = quotes.Chunk(BatchSize).ToArray();
+    var quotes = sqlite.GetQuotesForExport(cancellationToken);
+    var batches = await quotes.Buffer(BatchSize).ToArrayAsync(cancellationToken);
 
     for (int i = 0; i < batches.Length; i++)
     {
