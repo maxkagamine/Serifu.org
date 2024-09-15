@@ -2,6 +2,7 @@
 using Kagamine.Extensions.EntityFramework;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 
 namespace Serifu.Data.Sqlite;
@@ -17,6 +18,23 @@ public class SqliteService : ISqliteService
         this.dbFactory = dbFactory;
         this.httpClient = httpClient;
         this.logger = logger.ForContext<SqliteService>();
+    }
+
+    public async IAsyncEnumerable<Quote> GetQuotesForExport([EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        using var db = dbFactory.CreateDbContext();
+
+        await foreach (var quote in db.Quotes.AsAsyncEnumerable().WithCancellation(cancellationToken))
+        {
+            // This check is typically performed when importing, but for Kancolle I wanted to preserve a backup of all
+            // of the ships' quotes, just in case the wiki might someday disappear. So this will filter out the quotes
+            // that aren't useful for English/Japanese language learning, like Verniy's "Хорошо.", Kongou's "Burning...
+            // love!", and many of the foreign ships' lines, without having to delete them entirely.
+            if (ImportHelper.ContainsKanjiOrHiragana(quote.Japanese.Text))
+            {
+                yield return quote;
+            }
+        }
     }
 
     public async Task SaveQuotes(Source source, IEnumerable<Quote> quotes, CancellationToken cancellationToken = default)

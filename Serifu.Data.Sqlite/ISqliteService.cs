@@ -5,6 +5,12 @@ namespace Serifu.Data.Sqlite;
 public interface ISqliteService
 {
     /// <summary>
+    /// Gets the final collection of quotes to be added to the Elasticsearch index.
+    /// </summary>
+    /// <param name="cancellationToken">The async enumerator cancellation token.</param>
+    IAsyncEnumerable<Quote> GetQuotesForExport(CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Deletes all quotes for <paramref name="source"/> and replaces them with <paramref name="quotes"/>.
     /// </summary>
     /// <param name="source">The source whose quotes are being imported or updated.</param>
