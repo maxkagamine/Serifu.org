@@ -1,5 +1,5 @@
 > [!IMPORTANT]
-> The "generic importer" is used for games that require prior extraction & conversion using external tools that aren't practical to run from or port to C#. Mostly, this refers to visual novels, but The Witcher 3's quotes also use this method: see [**README_WITCHER.md**](README_WITCHER.md) for details. **This repo does not contain any code for extracting or decrypting VN assets.**
+> The "generic importer" is used for games that require prior extraction & conversion using external tools that aren't practical to run from or port to C#. Mostly, this refers to visual novels, but due to its flexibility, The Witcher 3 and Baldur's Gate also use this method: see [**README_WITCHER.md**](README_WITCHER.md) and [**README_BG3.md**](README_BG3.md) for details. **This repo does not contain any code for extracting or decrypting VN assets.**
 
 # VN Importer Notes
 

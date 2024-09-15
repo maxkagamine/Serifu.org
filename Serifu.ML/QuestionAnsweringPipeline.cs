@@ -32,21 +32,23 @@ internal class QuestionAnsweringPipeline : IQuestionAnsweringPipeline
             // https://github.com/huggingface/transformers/blob/v4.36.2/src/transformers/pipelines/question_answering.py#L392
             if (PyDict.IsDictType(result))
             {
-                predictions.Add(new(
-                    Score: result["score"],
-                    Start: result["start"],
-                    End: result["end"],
-                    Answer: result["answer"]));
+                double score = result["score"];
+                int start = result["start"];
+                int end = result["end"];
+                string answer = result["answer"];
+
+                predictions.Add(new(score, start, end, answer));
             }
             else
             {
                 foreach (dynamic prediction in result)
                 {
-                    predictions.Add(new(
-                        Score: prediction["score"],
-                        Start: prediction["start"],
-                        End: prediction["end"],
-                        Answer: prediction["answer"]));
+                    double score = prediction["score"];
+                    int start = prediction["start"];
+                    int end = prediction["end"];
+                    string answer = prediction["answer"];
+
+                    predictions.Add(new(score, start, end, answer));
                 }
             }
 
