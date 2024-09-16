@@ -6,6 +6,8 @@ namespace Serifu.Analysis;
 
 internal class WordFrequenciesBySource : Dictionary<Source, WordFrequencies>
 {
+    public int TotalCount => Values.Sum(x => x.TotalCount);
+
     /// <summary>
     /// Gets or creates the frequency collection for <paramref name="source"/> and adds the word and its stem,
     /// incrementing its count by one if it already exists.
@@ -19,7 +21,7 @@ internal class WordFrequenciesBySource : Dictionary<Source, WordFrequencies>
     /// Gets the total count of all words for the given stem across all sources.
     /// </summary>
     /// <param name="stemmed">The stemmed word.</param>
-    public int GetTotalCount(string stemmed) => this.Sum(x => x.Value.GetCount(stemmed));
+    public int GetTotalCount(string stemmed) => Values.Sum(x => x.GetCount(stemmed));
 }
 
 internal class WordFrequencies
@@ -39,6 +41,8 @@ internal class WordFrequencies
 
     public IEnumerable<string> Stems => inner.Keys;
 
+    public int TotalCount { get; private set; }
+
     /// <summary>
     /// Add the word and its stem to the frequency collection, incrementing its count by one if it already exists.
     /// </summary>
@@ -49,6 +53,7 @@ internal class WordFrequencies
         var originalFormCounts = inner.GetOrAdd(stemmed, _ => new(StringComparer.OrdinalIgnoreCase));
         ref int count = ref CollectionsMarshal.GetValueRefOrAddDefault(originalFormCounts, word, out _);
         count++;
+        TotalCount++;
     }
 
     /// <summary>

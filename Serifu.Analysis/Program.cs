@@ -1,4 +1,5 @@
-﻿using Kagamine.Extensions.Hosting;
+﻿using Kagamine.Extensions.Collections;
+using Kagamine.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Serifu.Analysis;
@@ -15,10 +16,12 @@ var builder = ConsoleApplication.CreateBuilder(new HostApplicationBuilderSetting
     EnvironmentName = Environments.Development
 });
 
+builder.Services.AddSerifuAnalysis();
 builder.Services.AddSerifuSerilog();
 builder.Services.AddSerifuSqlite();
 
 builder.Run(async (
+    VocabAnalyzer vocabAnalyzer,
     ISqliteService sqliteService,
     SerifuDbContext db,
     ILogger logger,
@@ -34,54 +37,42 @@ builder.Run(async (
     [DisplayName("Run analysis")]
     async Task RunAnalysis()
     {
-        IReadOnlyDictionary<Source, IReadOnlyList<VocabWord>> englishVocab = null!;
-        IReadOnlyDictionary<Source, IReadOnlyList<VocabWord>> japaneseVocab = null!;
+        IEnumerable<Vocab> vocab = [];
 
-        // Not strictly accurate as ~250 will be removed by GetQuotesForExport, but good enough for a progress bar and
+        // Not strictly accurate as ~250 will be removed in GetQuotesForExport, but good enough for a progress bar and
         // avoids having to load all of the quotes into memory first
         int approxCount = await db.Quotes.CountAsync(cancellationToken);
+
         await AnsiConsole.Progress().StartAsync(async ctx =>
         {
-            var task1 = ctx.AddTask("Indexing words", maxValue: approxCount);
-
-            VocabAnalyzer englishVocabAnalyzer = new(new EnglishWordExtractor(), q => q.English);
-            VocabAnalyzer japaneseVocabAnalyzer = new(new JapaneseWordExtractor(), q => q.Japanese);
+            var task = ctx.AddTask("Analyzing", maxValue: approxCount);
 
             await foreach (Quote quote in sqliteService.GetQuotesForExport(cancellationToken))
             {
-                englishVocabAnalyzer.Pipe(quote);
-                japaneseVocabAnalyzer.Pipe(quote);
-
-                task1.Increment(1);
+                vocabAnalyzer.Pipe(quote);
+                task.Increment(1);
             }
 
-            task1.Value = approxCount;
-            var task2 = ctx.AddTask("Analyzing");
-            task2.IsIndeterminate = true;
-
-            englishVocab = englishVocabAnalyzer.ExtractVocab();
-            japaneseVocab = japaneseVocabAnalyzer.ExtractVocab();
-
-            task2.IsIndeterminate = false;
-            task2.Value = 100;
+            task.Value = task.MaxValue;
+            vocab = vocabAnalyzer.BuildVocab();
         });
 
-        foreach (Source source in englishVocab.Keys)
+        static Table CreateTable(ValueArray<VocabWord> vocab)
         {
-            static Table CreateTable(IReadOnlyList<VocabWord> vocab)
+            var table = new Table().AddColumns("Word", "Count", "Total count", "Score");
+
+            foreach (var word in vocab)
             {
-                var table = new Table().AddColumns("Word", "Count", "Total count", "Score");
-
-                foreach (var word in vocab)
-                {
-                    table.AddRow([word.Word, word.Count.ToString(), word.TotalCount.ToString(), word.Score.ToString("f4")]);
-                }
-
-                return table;
+                table.AddRow([word.Word, word.Count.ToString(), word.TotalCount.ToString(), word.Score.ToString("f4")]);
             }
 
+            return table;
+        }
+
+        foreach (var (source, englishWords, japaneseWords) in vocab)
+        {
             AnsiConsole.Write(new Rule(source.ToString()));
-            AnsiConsole.Write(new Columns(CreateTable(englishVocab[source]), CreateTable(japaneseVocab[source])));
+            AnsiConsole.Write(new Columns(CreateTable(englishWords), CreateTable(japaneseWords)));
         }
     }
 
