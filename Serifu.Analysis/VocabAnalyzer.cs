@@ -1,5 +1,4 @@
-﻿using Kagamine.Extensions.Collections;
-using Serifu.Analysis.WordExtractors;
+﻿using Serifu.Analysis.WordExtractors;
 using Serifu.Data;
 using System.Collections.Concurrent;
 
@@ -9,88 +8,89 @@ public class VocabAnalyzer
 {
     private const int VocabSize = 100;
 
-    private readonly EnglishWordExtractor englishWordExtractor = new();
-    private readonly WordFrequenciesBySource englishWordFrequenciesBySource = [];
-
-    private readonly JapaneseWordExtractor japaneseWordExtractor = new();
-    private readonly WordFrequenciesBySource japaneseWordFrequenciesBySource = [];
+    private readonly WordFrequencies englishWordFrequencies = new(new EnglishWordExtractor());
+    private readonly WordFrequencies japaneseWordFrequencies = new(new JapaneseWordExtractor());
 
     /// <summary>
     /// Runs a quote through the analyzer.
     /// </summary>
     public void Pipe(Quote quote)
     {
-        foreach (var (word, stemmed) in englishWordExtractor.ExtractWords(quote.English.Text))
-        {
-            englishWordFrequenciesBySource.Add(quote.Source, word, stemmed);
-        }
-
-        foreach (var (word, stemmed) in japaneseWordExtractor.ExtractWords(quote.Japanese.Text))
-        {
-            japaneseWordFrequenciesBySource.Add(quote.Source, word, stemmed);
-        }
+        englishWordFrequencies.Add(quote.Source, quote.English.Text);
+        japaneseWordFrequencies.Add(quote.Source, quote.Japanese.Text);
     }
 
     /// <summary>
     /// Analyzes the collected word frequencies and builds vocab lists for each source and language.
     /// </summary>
-    public IEnumerable<Vocab> BuildVocab()
+    public IEnumerable<Vocab> BuildVocab(int size = VocabSize)
     {
         ConcurrentBag<Vocab> result = [];
 
-        Parallel.ForEach(englishWordFrequenciesBySource.Keys, (source, _) =>
+        Parallel.ForEach(Enum.GetValues<Source>(), (source, _) =>
         {
             result.Add(new(
                 Source: source,
-                English: BuildVocab(source, englishWordFrequenciesBySource),
-                Japanese: BuildVocab(source, japaneseWordFrequenciesBySource)));
+                English: BuildVocab(source, englishWordFrequencies, size),
+                Japanese: BuildVocab(source, japaneseWordFrequencies, size)));
         });
 
         return result;
     }
 
-    private static ValueArray<VocabWord> BuildVocab(Source source, WordFrequenciesBySource wordFrequenciesBySource)
+    private static VocabWord[] BuildVocab(Source source, WordFrequencies wordFrequencies, int size)
     {
         List<VocabWord> words = [];
+        WordFrequenciesForSource wordFreqsForSource = wordFrequencies[source];
 
-        foreach (var stemmed in wordFrequenciesBySource[source].Stems)
+        // For NGD, it seems like it may be better to use the maximum of any f(x), f(y), or f(xy) as the normalization
+        // factor rather than the total size (M) so that the addition of new quotes has a limited effect on similarity
+        // scores, only reducing the score for a word if it becomes more common in the larger set. (See page 6.)
+        long normalizingFactor = Math.Max(wordFreqsForSource.SourceSize,
+            wordFreqsForSource.SourceSize == 0 ? 0 :
+            wordFreqsForSource.Max(x => Math.Max(
+                wordFrequencies.GetTotalStemFrequency(x.Key),
+                x.Value.StemFrequency)));
+
+        foreach (var (stem, wordFreqsForStem) in wordFreqsForSource)
         {
-            string word = wordFrequenciesBySource[source].GetMostCommonForm(stemmed);
-            int count = wordFrequenciesBySource[source].GetCount(stemmed);
-            int totalCount = wordFrequenciesBySource.GetTotalCount(stemmed);
+            string word = wordFreqsForStem.GetMostCommonWordForm();
+            long totalFreq = wordFrequencies.GetTotalStemFrequency(stem);
+            long sourceFreq = wordFreqsForStem.StemFrequency;
+            double score = CalculateSignificanceScore(
+                totalSize: normalizingFactor,
+                sourceSize: wordFreqsForSource.SourceSize,
+                totalFreq: totalFreq,
+                sourceFreq: sourceFreq);
 
-            double score = CalculateNgd(
-                totalCount,
-                wordFrequenciesBySource[source].TotalCount,
-                count,
-                wordFrequenciesBySource.TotalCount);
-
-            words.Add(new(word, count, totalCount, score));
+            words.Add(new(word, sourceFreq, totalFreq, score));
         }
 
-        // Return the N most significant words, sorted by frequency.
         return words
             .OrderByDescending(x => x.Score)
-            .Take(VocabSize)
-            .OrderByDescending(x => x.Count)
+            .Take(size)
             .ToArray();
     }
 
-    /// <summary>
-    /// Calculated the normalized Google distance, as described in https://arxiv.org/pdf/cs/0412098v3 (III.3, page 5).
-    /// </summary>
-    /// <param name="x">The number of results for "x".</param>
-    /// <param name="y">The number of results for "y".</param>
-    /// <param name="xy">The number of results for both "x" and "y".</param>
-    /// <param name="n">The total number of entries.</param>
-    private static double CalculateNgd(int x, int y, int xy, int n)
-    {
-        double logX = Math.Log10(x);
-        double logY = Math.Log10(y);
-        double logXY = Math.Log10(xy);
-        double logN = Math.Log10(n);
+    private static double CalculateSignificanceScore(long totalSize, long sourceSize, long totalFreq, long sourceFreq)
+        => Math.Exp(CalculateNgd(totalFreq, sourceSize, sourceFreq, totalSize) * -1);
 
-        return (Math.Max(logX, logY) - logXY) /
-               (logN - Math.Min(logX, logY));
+    /// <summary>
+    /// Calculates the normalized Google distance, as described in <see href="https://arxiv.org/pdf/cs/0412098v3"/>
+    /// (III.3, page 5).
+    /// </summary>
+    /// <param name="fx">The number of results for "x".</param>
+    /// <param name="fy">The number of results for "y".</param>
+    /// <param name="fxy">The number of results for "x AND y".</param>
+    /// <param name="n">The total number of entries.</param>
+    private static double CalculateNgd(long fx, long fy, long fxy, long n)
+    {
+        double logFx = Math.Log(fx);
+        double logFy = Math.Log(fy);
+        double logFxy = Math.Log(fxy);
+        double logN = Math.Log(n);
+
+        return (Math.Max(logFx, logFy) - logFxy) /
+               (logN - Math.Min(logFx, logFy));
     }
 }

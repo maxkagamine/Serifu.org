@@ -63,11 +63,18 @@ builder.Run(async (
 
             foreach (var word in vocab)
             {
-                table.AddRow([word.Word, word.Count.ToString(), word.TotalCount.ToString(), word.Score.ToString("f4")]);
+                table.AddRow([
+                    word.Word,
+                    word.Frequency.ToString(),
+                    word.TotalFrequency.ToString(),
+                    word.Score.ToString("f4")
+                ]);
             }
 
             return table;
         }
+
+        AnsiConsole.Clear();
 
         foreach (var (source, englishWords, japaneseWords) in vocab)
         {

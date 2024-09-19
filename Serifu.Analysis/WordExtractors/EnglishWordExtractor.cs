@@ -13,10 +13,20 @@ internal class EnglishWordExtractor : IWordExtractor
     {
         foreach (Token token in tokenizer.Tokenize(text))
         {
-            string word = text[(Range)token];
+            string word = RemovePossessive(text[(Range)token]);
             string stemmed = stemmer.Stem(word).Value;
 
             yield return (word, stemmed);
         }
+    }
+
+    private static string RemovePossessive(string word)
+    {
+        if (word.EndsWith("'s") || word.EndsWith("’s"))
+        {
+            return word[..^2];
+        }
+
+        return word;
     }
 }
