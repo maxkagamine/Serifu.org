@@ -28,19 +28,19 @@ internal static class AudioFormatUtility
         }
 
         Span<byte> buffer = stackalloc byte[MaxHeaderLength];
-        file.Read(buffer);
+        _ = file.Read(buffer);
 
         if (buffer[..Mpeg1Layer3Header.Length].SequenceEqual(Mpeg1Layer3Header) ||
             buffer[..Id3Header.Length].SequenceEqual(Id3Header))
         {
             return "mp3";
-        } 
+        }
 
         if (buffer[..OggHeader.Length].SequenceEqual(OggHeader))
         {
             buffer = stackalloc byte[MaxOggStreamHeaderLength];
             file.Seek(OggStreamIndex, SeekOrigin.Begin);
-            file.Read(buffer);
+            _ = file.Read(buffer);
 
             if (buffer[..VorbisStreamHeader.Length].SequenceEqual(VorbisStreamHeader))
             {

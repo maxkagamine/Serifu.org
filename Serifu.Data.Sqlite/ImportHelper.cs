@@ -12,7 +12,7 @@ public static partial class ImportHelper
     public static string FormatEnglishText(string text)
     {
         text = TrimQuoteText(text);
-        return WhitespaceRegex().Replace(text, " ");
+        return WhitespaceRegex.Replace(text, " ");
     }
 
     /// <summary>
@@ -23,7 +23,7 @@ public static partial class ImportHelper
     public static string FormatJapaneseText(string text)
     {
         text = TrimQuoteText(text);
-        return NewlinesRegex().Replace(text, "");
+        return NewlinesRegex.Replace(text, "");
     }
 
     /// <summary>
@@ -31,7 +31,7 @@ public static partial class ImportHelper
     /// contains Japanese (to catch errors / untranslated lines) and isn't just katakana (to filter out grunts and SFX).
     /// </summary>
     /// <param name="text">The Japanese text to search.</param>
-    public static bool ContainsKanjiOrHiragana(string text) => KanjiOrHiraganaRegex().IsMatch(text);
+    public static bool ContainsKanjiOrHiragana(string text) => KanjiOrHiraganaRegex.IsMatch(text);
 
     private static string TrimQuoteText(ReadOnlySpan<char> text)
     {
@@ -47,11 +47,11 @@ public static partial class ImportHelper
     }
 
     [GeneratedRegex(@"[一-龠ぁ-ゔ]")]
-    private static partial Regex KanjiOrHiraganaRegex();
+    private static partial Regex KanjiOrHiraganaRegex { get; }
 
     [GeneratedRegex(@"\s+")]
-    private static partial Regex WhitespaceRegex();
+    private static partial Regex WhitespaceRegex { get; }
 
     [GeneratedRegex(@"\r|\n")]
-    private static partial Regex NewlinesRegex();
+    private static partial Regex NewlinesRegex { get; }
 }

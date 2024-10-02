@@ -18,7 +18,7 @@ internal partial class VoiceFileArchive
     private readonly Dictionary<(FormKey, int), Dictionary<string, IArchiveFile>> voiceFiles = []; // (DialogInfo, ResponseNumber) -> VoiceType -> Files
 
     [GeneratedRegex(@"^sound[\\/]voice[\\/](?<Mod>[^\\/]+)[\\/](?<VoiceType>[^\\/]+)[\\/].*_(?<FormId>[0-9a-f]{8})_(?<ResponseNumber>\d+)\.fuz$", RegexOptions.IgnoreCase)]
-    private static partial Regex VoiceFileRegex();
+    private static partial Regex VoiceFileRegex { get; }
 
     public VoiceFileArchive(IEnumerable<string> archivePaths, IEnumerable<string> excludedVoiceFiles, ILogger logger)
     {
@@ -50,7 +50,7 @@ internal partial class VoiceFileArchive
                 continue;
             }
 
-            Match match = VoiceFileRegex().Match(file.Path);
+            Match match = VoiceFileRegex.Match(file.Path);
 
             if (!match.Success)
             {
