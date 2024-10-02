@@ -2,7 +2,7 @@
 
 ARG ES_VERSION
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS dotnet
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS dotnet
 
 ARG RUNTIME_IDENTIFIER=linux-x64
 WORKDIR /src

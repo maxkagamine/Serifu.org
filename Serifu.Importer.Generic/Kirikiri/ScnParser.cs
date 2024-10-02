@@ -36,18 +36,18 @@ internal partial class ScnParser : IParser<ScnParserOptions>
         )
         """,
         RegexOptions.IgnorePatternWhitespace | RegexOptions.IgnoreCase)]
-    private partial Regex FormattingRegex();
+    private partial Regex FormattingRegex { get; }
 
     // We'll need to check any new %-tags to see if they take multiple arguments like %l or not.
     [GeneratedRegex(@"(?<!\\)%[^\d;dfl]", RegexOptions.IgnoreCase)]
-    private partial Regex UnknownPercentTagRegex();
+    private partial Regex UnknownPercentTagRegex { get; }
 
     // The ampersand was seen escaped, which implies it might have special meaning (perhaps HTML entities are allowed?)
     [GeneratedRegex(@"(?<!\\)&")]
-    private partial Regex UnescapedAmpersand();
+    private partial Regex UnescapedAmpersandRegex { get; }
 
     [GeneratedRegex(@"\\.", RegexOptions.Singleline)]
-    private partial Regex EscapeCharacter();
+    private partial Regex EscapeCharacterRegex { get; }
 
     public ScnParser(IOptions<ScnParserOptions> options, ILogger logger)
     {
@@ -134,7 +134,7 @@ internal partial class ScnParser : IParser<ScnParserOptions>
     private string StripFormatting(string text, string key)
     {
         // Check for unknown percent tags
-        Match match = UnknownPercentTagRegex().Match(text);
+        Match match = UnknownPercentTagRegex.Match(text);
         if (match.Success)
         {
             throw new Exception($"""
@@ -144,17 +144,17 @@ internal partial class ScnParser : IParser<ScnParserOptions>
         }
 
         // Remove percent tags & furigana
-        text = FormattingRegex().Replace(text, "");
+        text = FormattingRegex.Replace(text, "");
 
         // Check for unescaped ampersands
-        match = UnescapedAmpersand().Match(text);
+        match = UnescapedAmpersandRegex.Match(text);
         if (match.Success)
         {
             throw new Exception($"{key} contains an unescaped ampersand; check if these have special meaning or not.");
         }
 
         // Unescape text
-        text = EscapeCharacter().Replace(text, m => m.ValueSpan[1] switch
+        text = EscapeCharacterRegex.Replace(text, m => m.ValueSpan[1] switch
         {
             '\\' => "\\",
             '%' => "%",

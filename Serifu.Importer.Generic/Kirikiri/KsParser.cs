@@ -40,10 +40,10 @@ internal partial class KsParser : IParser<KsParserOptions>
         )+
         """,
         RegexOptions.IgnorePatternWhitespace | RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture)]
-    private partial Regex GSenjouNmTagRegex();
+    private partial Regex GSenjouNmTagRegex { get; }
 
     [GeneratedRegex(@"(?<!\[)\[[^\]]*\]")]
-    private partial Regex TagRegex();
+    private partial Regex TagRegex { get; }
 
     public KsParser(IOptions<KsParserOptions> options, ILogger logger)
     {
@@ -188,7 +188,7 @@ internal partial class KsParser : IParser<KsParserOptions>
         switch (options.Source)
         {
             case Source.GSenjouNoMaou:
-                var matches = GSenjouNmTagRegex().Matches(text);
+                var matches = GSenjouNmTagRegex.Matches(text);
                 switch (matches.Count)
                 {
                     case 0:
@@ -216,6 +216,6 @@ internal partial class KsParser : IParser<KsParserOptions>
 
     private string StripFormatting(string text)
     {
-        return TagRegex().Replace(text, "");
+        return TagRegex.Replace(text, "");
     }
 }
