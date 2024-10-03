@@ -27,38 +27,53 @@ public class VocabAnalyzer
     {
         ConcurrentBag<Vocab> result = [];
 
+        HashSet<string> englishStopWordStems = FindStopWordStems(englishWordFrequencies);
+        HashSet<string> japaneseStopWordStems = FindStopWordStems(japaneseWordFrequencies);
+
         Parallel.ForEach(Enum.GetValues<Source>(), (source, _) =>
         {
             result.Add(new(
                 Source: source,
-                English: BuildVocab(source, englishWordFrequencies, size),
-                Japanese: BuildVocab(source, japaneseWordFrequencies, size)));
+                English: BuildVocab(source, englishWordFrequencies, size, englishStopWordStems),
+                Japanese: BuildVocab(source, japaneseWordFrequencies, size, japaneseStopWordStems)));
         });
 
         return result;
     }
 
-    private static VocabWord[] BuildVocab(Source source, WordFrequencies wordFrequencies, int size)
+    private static HashSet<string> FindStopWordStems(WordFrequencies wordFrequencies)
+    {
+        Dictionary<string, int> sourceCountsForStems = wordFrequencies.Stems
+            .ToDictionary(s => s, wordFrequencies.GetSourceCountForStem);
+
+        int threshold = Enum.GetValues<Source>().Length / 2;
+
+        return new(sourceCountsForStems.Where(x => x.Value > threshold).Select(x => x.Key));
+    }
+
+    private static VocabWord[] BuildVocab(Source source, WordFrequencies wordFrequencies, int size, HashSet<string> stopWordStems)
     {
         List<VocabWord> words = [];
         WordFrequenciesForSource wordFreqsForSource = wordFrequencies[source];
 
-        // For NGD, it seems like it may be better to use the maximum of any f(x), f(y), or f(xy) as the normalization
-        // factor rather than the total size (M) so that the addition of new quotes has a limited effect on similarity
-        // scores, only reducing the score for a word if it becomes more common in the larger set. (See page 6.)
-        long normalizingFactor = Math.Max(wordFreqsForSource.SourceSize,
-            wordFreqsForSource.SourceSize == 0 ? 0 :
-            wordFreqsForSource.Max(x => Math.Max(
-                wordFrequencies.GetTotalStemFrequency(x.Key),
-                x.Value.StemFrequency)));
-
         foreach (var (stem, wordFreqsForStem) in wordFreqsForSource)
         {
+            // TODO: Need to find a better way to identify stop words or remove this. The stem "admir" apparently
+            // exists in every source; probably words like "admire" getting combined with "admiral".
+            //
+            // Perhaps we should limit the vocab lists to dictionary words only. Would still need to find a dictionary
+            // stemmer that can de-conjugate verbs and adjectives without mangling nouns like "commander".
+            //
+            //if (stopWordStems.Contains(stem))
+            //{
+            //    continue;
+            //}
+
             string word = wordFreqsForStem.GetMostCommonWordForm();
             long totalFreq = wordFrequencies.GetTotalStemFrequency(stem);
             long sourceFreq = wordFreqsForStem.StemFrequency;
             double score = CalculateSignificanceScore(
-                totalSize: normalizingFactor,
+                totalSize: wordFrequencies.TotalSize,
                 sourceSize: wordFreqsForSource.SourceSize,
                 totalFreq: totalFreq,
                 sourceFreq: sourceFreq);
@@ -67,30 +82,31 @@ public class VocabAnalyzer
         }
 
         return words
-            .OrderByDescending(x => x.Score)
+            //.OrderByDescending(x => x.Score)
+            .OrderByDescending(x => x.Frequency)
             .Take(size)
             .ToArray();
     }
 
-    private static double CalculateSignificanceScore(long totalSize, long sourceSize, long totalFreq, long sourceFreq)
-        => Math.Exp(CalculateNgd(totalFreq, sourceSize, sourceFreq, totalSize) * -1);
 
     /// <summary>
-    /// Calculates the normalized Google distance, as described in <see href="https://arxiv.org/pdf/cs/0412098v3"/>
-    /// (III.3, page 5).
+    /// Calculates the "JLH score" as used by Elasticsearch's significant terms aggregation.
     /// </summary>
-    /// <param name="fx">The number of results for "x".</param>
-    /// <param name="fy">The number of results for "y".</param>
-    /// <param name="fxy">The number of results for "x AND y".</param>
-    /// <param name="n">The total number of entries.</param>
-    private static double CalculateNgd(long fx, long fy, long fxy, long n)
+    /// <remarks>
+    /// “The absolute change in popularity (foregroundPercent - backgroundPercent) would favor common terms whereas
+    /// the relative change in popularity (foregroundPercent / backgroundPercent) would favor rare terms. Rare vs common
+    /// is essentially a precision vs recall balance and so the absolute and relative changes are multiplied to provide
+    /// a sweet spot between precision and recall.”
+    /// <see href="https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-significantterms-aggregation.html#_jlh_score"/>
+    /// </remarks>
+    private static double CalculateSignificanceScore(long totalSize, long sourceSize, long totalFreq, long sourceFreq)
     {
-        double logFx = Math.Log(fx);
-        double logFy = Math.Log(fy);
-        double logFxy = Math.Log(fxy);
-        double logN = Math.Log(n);
+        double subsetProbability = (double)sourceFreq / sourceSize;
+        double supersetProbability = (double)totalFreq / totalSize;
 
-        return (Math.Max(logFx, logFy) - logFxy) /
-               (logN - Math.Min(logFx, logFy));
+        double absoluteProbabilityChange = subsetProbability - supersetProbability;
+        double relativeProbabilityChange = subsetProbability / supersetProbability;
+
+        return absoluteProbabilityChange * relativeProbabilityChange;
     }
 }

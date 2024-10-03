@@ -31,9 +31,17 @@ internal class JapaneseWordExtractor : IWordExtractor
 
             consumedNodes.AddAll(word.Tokens);
 
-            // Using the lemma exclusively for Japanese since it's the proper dictionary form:
-            // 上がれば => 上がる, 見せできます => 見せる
-            yield return (word.Lemma, word.Lemma);
+            // Using the lemma exclusively for Japanese since it's the proper dictionary form (上がれば => 上がる, 見せ
+            // できます => 見せる). Need to trim off the asterisk that MeCab prepends for suffixes, though. Non-words
+            // will be just an asterisk.
+            string lemma = word.Lemma.Trim('*');
+
+            if (lemma == "")
+            {
+                continue;
+            }
+
+            yield return (lemma, lemma);
         }
     }
 }

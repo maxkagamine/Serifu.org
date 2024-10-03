@@ -22,8 +22,7 @@ namespace Serifu.Analysis;
 // seems to be sufficient, so we can feed that in as both the "stemmed word" and "original form". If needed, though,
 // we can do the same thing as with English using the VeWord's Word & Lemma instead.
 //
-// For determining the significant vocab words, we'll use the stemmed versions and their counts; the final
-// dictionary containing the original forms comes into play only when converting those stems back into actual words.
+// The Add() methods are not thread-safe.
 internal class WordFrequencies
 {
     private readonly IWordExtractor wordExtractor;
@@ -38,6 +37,8 @@ internal class WordFrequencies
     public long TotalSize { get; private set; }
 
     public WordFrequenciesForSource this[Source source] => sources.GetValueOrDefault(source) ?? [];
+
+    public IReadOnlyCollection<string> Stems => stems.Keys;
 
     public void Add(Source source, string text)
     {
@@ -56,6 +57,8 @@ internal class WordFrequencies
     }
 
     public long GetTotalStemFrequency(string stem) => stems[stem];
+
+    public int GetSourceCountForStem(string stem) => sources.Count(s => s.Value.ContainsStem(stem));
 }
 
 internal class WordFrequenciesForSource : IReadOnlyDictionary<string, WordFrequenciesForStem>
@@ -66,11 +69,15 @@ internal class WordFrequenciesForSource : IReadOnlyDictionary<string, WordFreque
 
     public long SourceSize { get; private set; }
 
+    public IReadOnlyCollection<string> Stems => stems.Keys;
+
     public void Add(string stem, string word)
     {
         stems.GetOrAdd(stem).Add(word);
         SourceSize++;
     }
+
+    public bool ContainsStem(string stem) => stems.ContainsKey(stem);
 
     public IEnumerator<KeyValuePair<string, WordFrequenciesForStem>> GetEnumerator() => stems.GetEnumerator();
 

@@ -4,7 +4,7 @@ namespace Serifu.Data;
 
 /// <summary>
 /// Holds the vocab for a given source. These are the words found through text analysis to be most prevalant in the
-/// source yet not as common in quotes for other sources.
+/// source yet not as common in quotes from other sources.
 /// </summary>
 /// <param name="Source">The source.</param>
 /// <param name="English">The source's English vocab.</param>

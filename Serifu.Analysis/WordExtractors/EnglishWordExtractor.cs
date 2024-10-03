@@ -13,16 +13,24 @@ internal class EnglishWordExtractor : IWordExtractor
     {
         foreach (Token token in tokenizer.Tokenize(text))
         {
-            string word = RemovePossessive(text[(Range)token]);
+            string word = Normalize(text[(Range)token]);
+
+            if (!word.Any(char.IsLetter)) // Filter out numbers and such
+            {
+                continue;
+            }
+
             string stemmed = stemmer.Stem(word).Value;
 
             yield return (word, stemmed);
         }
     }
 
-    private static string RemovePossessive(string word)
+    private static string Normalize(string word)
     {
-        if (word.EndsWith("'s") || word.EndsWith("’s"))
+        word = word.Replace('’', '\'');
+
+        if (word.EndsWith("'s"))
         {
             return word[..^2];
         }
