@@ -140,8 +140,9 @@ public static class QuotesIndex
             [DesDivFilter] = new PatternCaptureTokenFilter()
             {
                 Patterns = [
-                    // A search for "desdiv" should pull up "DesDiv3" etc.
-                    @"^((?:bat|car|cru|des|dru)div)\d+$"
+                    // A search for "desdiv" should pull up "DesDiv3", "4thDesDiv" etc.
+                    // See https://en.kancollewiki.net/Historical_Formations
+                    @"^(\\d+(?:st|nd|rd|th))?((?:bat|car|cru|des)(?:div|ron))(\\d+)?$"
                 ],
                 PreserveOriginal = false
             },
