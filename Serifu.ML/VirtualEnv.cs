@@ -12,6 +12,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
+using System.Diagnostics.CodeAnalysis;
+
 namespace Serifu.ML;
 
 /// <summary>
@@ -20,20 +22,19 @@ namespace Serifu.ML;
 internal static class VirtualEnv
 {
     private const string VirtualEnvName = ".python"; // Created in csproj
-
-    private static string? venvDirectory;
     private static Dictionary<string, string>? venvConfig;
 
     /// <summary>
     /// Gets the absolute path to the venv directory, searching from the current directory upward.
     /// </summary>
+    [field: MaybeNull]
     public static string VirtualEnvDirectory
     {
         get
         {
-            if (venvDirectory is not null)
+            if (field is not null)
             {
-                return venvDirectory;
+                return field;
             }
 
             DirectoryInfo? dir = new(Environment.CurrentDirectory);
@@ -44,8 +45,8 @@ internal static class VirtualEnv
 
                 if (Directory.Exists(venv))
                 {
-                    venvDirectory = venv;
-                    return venvDirectory;
+                    field = venv;
+                    return field;
                 }
 
                 dir = dir.Parent;

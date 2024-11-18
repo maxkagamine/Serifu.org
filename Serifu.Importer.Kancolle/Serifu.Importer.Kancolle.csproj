@@ -10,7 +10,7 @@
     <PackageReference Include="Fastenshtein" Version="1.0.10" />
     <PackageReference Include="Flurl" Version="4.0.0" />
     <PackageReference Include="HtmlSanitizer" Version="8.1.748-beta" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.0-rc.1.24451.1">
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>

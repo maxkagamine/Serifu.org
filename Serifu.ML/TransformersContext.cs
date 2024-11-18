@@ -34,7 +34,6 @@ public sealed class TransformersContext : ITransformersContext
     private readonly int device = 0; // -1 = CPU, 0 = GPU (CUDA)
     private bool disposed;
 
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0300:Simplify collection initialization", Justification = "Analyzer doesn't seem to understand 'dynamic'.")]
     public TransformersContext(ILogger logger)
     {
         this.logger = logger = logger.ForContext<TransformersContext>();

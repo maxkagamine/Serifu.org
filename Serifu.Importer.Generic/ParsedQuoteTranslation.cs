@@ -23,8 +23,6 @@ namespace Serifu.Importer.Generic;
 /// </summary>
 internal record ParsedQuoteTranslation
 {
-    private Language language;
-
     /// <summary>
     /// A key that will be used to pair translations of a quote, as they may be coming from separate files. If all
     /// instances' keys are of type <see cref="int"/>, it will be used in the <see cref="Quote.Id"/> as-is. This should
@@ -37,7 +35,7 @@ internal record ParsedQuoteTranslation
     /// </summary>
     public required Language Language
     {
-        get => language;
+        get;
         init
         {
             if (value is Language.Multilingual || !Enum.IsDefined(value))
@@ -45,7 +43,7 @@ internal record ParsedQuoteTranslation
                 throw new ArgumentException($"Invalid language: {value}", nameof(value));
             }
 
-            language = value;
+            field = value;
         }
     }
 
