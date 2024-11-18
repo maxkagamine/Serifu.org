@@ -1,6 +1,6 @@
 root = true
 
-[*.{cs,vb}]
+[*.{cs,vb,cshtml}]
 dotnet_code_quality_unused_parameters = all:suggestion
 dotnet_naming_rule.interface_should_be_begins_with_i.severity = suggestion
 dotnet_naming_rule.interface_should_be_begins_with_i.style = begins_with_i
@@ -70,7 +70,7 @@ dotnet_diagnostic.CA2213.severity = warning
 dotnet_diagnostic.CA2216.severity = warning
 dotnet_diagnostic.CA1063.severity = warning
 
-[*.cs]
+[*.{cs,cshtml}]
 csharp_indent_block_contents = true
 csharp_indent_braces = false
 csharp_indent_case_contents = true
