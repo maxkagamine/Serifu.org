@@ -1,4 +1,5 @@
 import type { UserConfig } from 'vite';
+import biomePlugin from 'vite-plugin-biome';
 
 export default {
   appType: 'custom',
@@ -18,4 +19,10 @@ export default {
       usePolling: true,
     },
   },
+  plugins: [
+    biomePlugin({
+      mode: 'check',
+      applyFixes: true,
+    }),
+  ],
 } satisfies UserConfig;
