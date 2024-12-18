@@ -13,17 +13,24 @@
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
 using Microsoft.AspNetCore.Mvc;
+using System.Globalization;
 
 namespace Serifu.Web.Controllers;
 
 public class HomeController : Controller
 {
-    public HomeController()
+    [HttpGet("/")]
+    public ActionResult Index()
     {
-
+        // This is the only route that won't have a "lang" route value set. This causes the culture provider to fall
+        // back to using a cookie if set and Accept-Language otherwise; we can then use the determined culture to
+        // redirect to the appropriate homepage.
+        return RedirectToAction(nameof(Home), new { lang = CultureInfo.CurrentCulture.TwoLetterISOLanguageName });
     }
 
-    public IActionResult Index()
+    [HttpGet("/translate")]
+    [HttpGet("/翻訳")]
+    public ActionResult Home()
     {
         return View();
     }

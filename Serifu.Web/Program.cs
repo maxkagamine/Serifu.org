@@ -12,9 +12,27 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
+using Microsoft.AspNetCore.Localization;
+using Serifu.Web.Localization;
+
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews()
+    .AddMvcLocalization();
+
+builder.Services.AddRequestLocalization(options =>
+{
+    options
+        .AddSupportedCultures("en", "ja")
+        .AddSupportedUICultures("en", "ja")
+        .SetDefaultCulture("en");
+
+    options.RequestCultureProviders = [
+        new LocalizedRouteCultureProvider(), // Custom
+        new CookieRequestCultureProvider(),
+        new AcceptLanguageHeaderRequestCultureProvider()
+    ];
+});
 
 var app = builder.Build();
 
@@ -24,6 +42,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseRouting();
-app.MapControllers();
+app.UseRequestLocalization();
+app.MapControllers()
+    .WithLocalizedRoutes();
 
 app.Run();
