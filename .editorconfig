@@ -1,5 +1,12 @@
 root = true
 
+[*.{ts,css}]
+end_of_line = lf
+indent_size = 2
+indent_style = space
+insert_final_newline = true
+tab_width = 2
+
 [*.{cs,vb,cshtml}]
 dotnet_code_quality_unused_parameters = all:suggestion
 dotnet_naming_rule.interface_should_be_begins_with_i.severity = suggestion

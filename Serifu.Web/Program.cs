@@ -14,11 +14,14 @@
 
 using Microsoft.AspNetCore.Localization;
 using Serifu.Web.Localization;
+using Vite.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews()
     .AddMvcLocalization();
+
+builder.Services.AddViteServices();
 
 builder.Services.AddRequestLocalization(options =>
 {
@@ -41,9 +44,17 @@ if (app.Environment.IsDevelopment())
     app.UseDeveloperExceptionPage();
 }
 
+app.UseStaticFiles();
 app.UseRouting();
 app.UseRequestLocalization();
+
 app.MapControllers()
     .WithLocalizedRoutes();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseWebSockets();
+    app.UseViteDevelopmentServer(useMiddleware: true);
+}
 
 app.Run();

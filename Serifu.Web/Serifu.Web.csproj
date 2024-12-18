@@ -2,6 +2,9 @@
 
   <PropertyGroup>
     <NeutralLanguage>en</NeutralLanguage>
+
+    <Npm>npm</Npm>
+    <Npm Condition="'$(OS)' == 'Windows_NT'">wsl.exe npm</Npm>
   </PropertyGroup>
 
   <ItemGroup>
@@ -9,6 +12,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Vite.AspNetCore" Version="2.3.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -16,5 +20,17 @@
       <EmitFormatMethods>true</EmitFormatMethods>
     </EmbeddedResource>
   </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="wwwroot\.vite\**" />
+  </ItemGroup>
+
+  <Target Name="NpmInstall" BeforeTargets="Build; NpmRunBuild" Condition="!Exists('node_modules')">
+    <Exec Command="$(Npm) install" />
+  </Target>
+
+  <Target Name="NpmRunBuild" BeforeTargets="Build" Condition="'$(Configuration)' == 'Release'">
+    <Exec Command="$(Npm) run build" />
+  </Target>
 
 </Project>
