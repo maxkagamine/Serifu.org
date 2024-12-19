@@ -1,3 +1,30 @@
 :root {
   color-scheme: dark;
+  font-optical-sizing: auto;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+[lang='en'] {
+  font-family: 'Merriweather', serif;
+  font-size-adjust: 0.555;
+}
+
+[lang='ja'] {
+  font-family: 'Noto Serif JP', serif;
+  font-size-adjust: none;
+}
+
+body > header,
+main {
+  width: 900px;
+  margin: 0 auto;
+}
+
+body > header {
+  margin-top: 96px;
+}
+
+main {
+  margin-top: 30px;
 }
