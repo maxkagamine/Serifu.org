@@ -3,6 +3,8 @@
   font-optical-sizing: auto;
   font-size: 16px;
   line-height: 1.5;
+  background: #111;
+  color: #f2f2f2;
 }
 
 [lang='en'] {
@@ -19,10 +21,6 @@ body > header,
 main {
   width: 900px;
   margin: 0 auto;
-}
-
-body > header {
-  margin-top: 96px;
 }
 
 main {

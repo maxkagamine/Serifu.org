@@ -120,4 +120,10 @@
   <data name="HomepageText" xml:space="preserve">
     <value>Homepage stuff</value>
   </data>
+  <data name="NavLinkAbout" xml:space="preserve">
+    <value>About</value>
+  </data>
+  <data name="NavSubtitle" xml:space="preserve">
+    <value>a fan project by Max Kagamine</value>
+  </data>
 </root>

@@ -1,0 +1,57 @@
+﻿body > header {
+  margin-top: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  h1 {
+    margin: 0;
+    font-size: 2.5em;
+
+    img {
+      display: block;
+      border: none;
+      height: 1em;
+    }
+  }
+
+  nav {
+    display: flex;
+    font-size: 0.94em;
+
+    a {
+      color: inherit;
+      white-space: nowrap;
+
+      + a {
+        margin-left: 2em;
+      }
+
+      &:not(:hover) {
+        text-decoration: none;
+      }
+    }
+
+    /* Align baselines */
+    &:lang(en) a:lang(ja) {
+      position: relative;
+      top: -0.1em;
+    }
+    &:lang(ja) a:lang(en) {
+      position: relative;
+      top: 0.1em;
+    }
+  }
+
+  .subtitle {
+    &:lang(en) {
+      font-style: italic;
+    }
+
+    &::before {
+      content: '\B7'; /* Middle dot */
+      display: inline-block;
+      margin: 0 1.4em;
+    }
+  }
+}

@@ -1,3 +1,4 @@
-import './style.css';
+import './global.css';
+import './header.css';
 
 console.log('hi!');
