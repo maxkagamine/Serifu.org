@@ -1,0 +1,132 @@
+@property --total-length {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 0px;
+}
+
+@property --stroke-offset {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 0px;
+}
+
+@property --stroke-length {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 0px;
+}
+
+#search {
+  --search-height: 50px;
+
+  margin: 1.25em auto 0;
+  position: relative;
+  box-shadow: inset 0 0 0 1px #fff3;
+  height: var(--search-height);
+  font-size: 0.94em;
+
+  input {
+    display: block;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    font: inherit;
+    line-height: 1;
+    padding: 0 18px;
+    background: transparent;
+    color: inherit;
+
+    &, &:focus {
+      border: none;
+      outline: none;
+    }
+
+    &::placeholder {
+      color: inherit;
+      opacity: 0.8;
+    }
+  }
+
+  /*
+    Chrome has a compositing bug[1] that causes the svg to become blurry when
+    the input is focused (putting position absolute on the input and nudging it
+    down, you can even see the point where it gets "far enough away" that the
+    svg no longer becomes blurry). For whatever reason, borders aren't affected,
+    so when not doing the loading animation we'll display these boxes instead
+    which look identical. Then when loading, we disable the input to make sure
+    it isn't focused.
+
+    [1] Possibly https://issues.chromium.org/issues/40897496
+  */
+  &::before, &::after {
+    content: ' ';
+    position: absolute;
+    pointer-events: none;
+    border: 0 solid #b8b8b8;
+    height: calc(var(--search-height) * 0.5);
+    width: calc(var(--search-height) * 0.25);
+  }
+
+  &::before {
+    top: 0;
+    left: 0;
+    border-width: 2px 0 0 2px;
+  }
+
+  &::after {
+    right: 0;
+    bottom: 0;
+    border-width: 0 2px 2px 0;
+  }
+
+  svg {
+    --duration: 2s;
+    --stroke-offset: 0px;
+
+    visibility: hidden;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+
+    polygon, path, rect {
+      stroke-width: 4px;
+      stroke: #b8b8b8;
+      fill: none;
+      stroke-dasharray: var(--stroke-length) calc((var(--total-length) / 2) - var(--stroke-length));
+      stroke-dashoffset: calc((var(--stroke-length) / 2) + (var(--stroke-offset) * -1));
+    }
+
+    .loading & {
+      visibility: visible;
+      animation: var(--duration) infinite cubic-bezier(0.65, 0.35, 0.35, 0.65) loading-spin,
+                 calc(var(--duration) / 2) infinite cubic-bezier(0.65, 0.35, 0.35, 0.65) alternate loading-stretch;
+    }
+  }
+}
+
+body.loading {
+  #search::before, #search::after {
+    display: none;
+  }
+}
+
+/*
+  Firefox bug... can't animate a variable using var(). Variable on the left side
+  works, variable on the right side works, but if you set a variable to another
+  variable, Firefox won't animate it. Works fine in Chrome; Firefox's keyframes
+  implementation is just broken. Workaround is to create them in JS using string
+  interpolation.
+*/
+/* @keyframes loading-spin {
+  to {
+    --stroke-offset: var(--total-length);
+  }
+}
+@keyframes loading-stretch {
+  to {
+    --stroke-length: calc(var(--total-length) / 8);
+  }
+} */

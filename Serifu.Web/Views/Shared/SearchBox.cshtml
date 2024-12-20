@@ -1,0 +1,15 @@
+﻿<form id="search" role="search">
+    <input placeholder="@Strings.SearchBoxPlaceholder" />
+
+    <!--
+    For animation purposes, the stroke length is centered on its midpoint, and the
+    offset starts at 0. The shape's origin is therefore placed 1/8th down so that
+    the stroke starts exactly halfway down and extends to the right 1/3 its length.
+    -->
+    <svg viewBox="0 0 8 8" preserveAspectRatio="none">
+        <polygon vector-effect="non-scaling-stroke" points="0,1 0,0 8,0 8,8 0,8" />
+    </svg>
+</form>
+
+<!-- Firefox workaround, see css -->
+<style id="searchBoxKeyframes"></style>

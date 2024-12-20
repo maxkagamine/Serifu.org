@@ -129,4 +129,7 @@
   <data name="NavSubtitle" xml:space="preserve">
     <value>鏡音マックスによるファン制作</value>
   </data>
+  <data name="SearchBoxPlaceholder" xml:space="preserve">
+    <value>日本語か英語の言葉か表現を検索する</value>
+  </data>
 </root>

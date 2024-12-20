@@ -18,15 +18,11 @@
 }
 
 body {
-  margin: 1em;
-}
-
-body > header,
-main {
   max-width: 900px;
   margin: 0 auto;
+  padding: 1em;
 }
 
 main {
-  margin-top: 30px;
+  margin-top: 2em;
 }

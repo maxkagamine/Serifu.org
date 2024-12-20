@@ -129,4 +129,7 @@
   <data name="NavSubtitle" xml:space="preserve">
     <value>a fan project by Max Kagamine</value>
   </data>
+  <data name="SearchBoxPlaceholder" xml:space="preserve">
+    <value>Search for English or Japanese words or phrases</value>
+  </data>
 </root>

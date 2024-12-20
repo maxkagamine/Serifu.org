@@ -1,4 +1,5 @@
 import './global.css';
 import './header.css';
+import './search-box.css';
 
-console.log('hi!');
+import './search-box';

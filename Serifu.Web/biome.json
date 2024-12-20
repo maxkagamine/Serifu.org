@@ -9,7 +9,8 @@
       "style": {
         "noParameterAssign": "off",
         "useEnumInitializers": "off",
-        "useNumberNamespace": "off"
+        "useNumberNamespace": "off",
+        "useTemplate": "off"
       },
       "suspicious": {
         "noDoubleEquals": {
@@ -23,7 +24,8 @@
     }
   },
   "formatter": {
-    "indentStyle": "space"
+    "indentStyle": "space",
+    "lineWidth": 120
   },
   "javascript": {
     "formatter": {
