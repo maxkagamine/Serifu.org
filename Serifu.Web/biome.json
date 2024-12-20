@@ -39,7 +39,7 @@
   },
   "css": {
     "formatter": {
-      "quoteStyle": "single"
+      "enabled": false
     }
   }
 }

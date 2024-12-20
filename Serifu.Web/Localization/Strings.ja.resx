@@ -123,6 +123,9 @@
   <data name="NavLinkAbout" xml:space="preserve">
     <value>について</value>
   </data>
+  <data name="NavLinkGitHub" xml:space="preserve">
+    <value>ギットハブ</value>
+  </data>
   <data name="NavSubtitle" xml:space="preserve">
     <value>鏡音マックスによるファン制作</value>
   </data>

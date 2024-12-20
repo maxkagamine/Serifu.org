@@ -17,9 +17,13 @@
   font-size-adjust: none;
 }
 
+body {
+  margin: 1em;
+}
+
 body > header,
 main {
-  width: 900px;
+  max-width: 900px;
   margin: 0 auto;
 }
 

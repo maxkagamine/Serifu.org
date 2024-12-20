@@ -123,6 +123,9 @@
   <data name="NavLinkAbout" xml:space="preserve">
     <value>About</value>
   </data>
+  <data name="NavLinkGitHub" xml:space="preserve">
+    <value>GitHub</value>
+  </data>
   <data name="NavSubtitle" xml:space="preserve">
     <value>a fan project by Max Kagamine</value>
   </data>

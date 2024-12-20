@@ -4,7 +4,7 @@
     </h1>
     <nav>
         <a href="#">@Strings.NavLinkAbout</a>
-        <a href="https://github.com/maxkagamine/Serifu" target="_blank">GitHub</a>
+        <a href="https://github.com/maxkagamine/Serifu" target="_blank">@Strings.NavLinkGitHub</a>
         @if (CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "en")
         {
             <a asp-route-lang="ja" lang="ja" hreflang="ja">日本語</a>
@@ -15,4 +15,21 @@
         }
         <span class="subtitle">@Strings.NavSubtitle</span>
     </nav>
+    <button popovertarget="drawer" class="menu-button material-symbols-outlined">menu</button>
 </header>
+
+<div popover id="drawer">
+    <nav>
+        <a href="#">@Strings.NavLinkAbout</a>
+        <a href="https://github.com/maxkagamine/Serifu" target="_blank">@Strings.NavLinkGitHub</a>
+        @if (CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "en")
+        {
+            <a asp-route-lang="ja" lang="ja" hreflang="ja">日本語</a>
+        }
+        else
+        {
+            <a asp-route-lang="en" lang="en" hreflang="en">English</a>
+        }
+    </nav>
+    <div class="subtitle">@Strings.NavSubtitle</div>
+</div>
