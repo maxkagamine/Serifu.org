@@ -16,7 +16,7 @@
   initial-value: 0px;
 }
 
-#search {
+#searchBox {
   --search-height: 50px;
 
   margin: 1.25em auto 0;
@@ -108,7 +108,7 @@
 }
 
 body.loading {
-  #search::before, #search::after {
+  #searchBox::before, #searchBox::after {
     display: none;
   }
 }

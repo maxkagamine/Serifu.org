@@ -13,6 +13,7 @@
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
 using Microsoft.AspNetCore.Localization;
+using Microsoft.AspNetCore.Mvc.Razor;
 using Serifu.Web.Localization;
 using Vite.AspNetCore;
 
@@ -20,6 +21,13 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews()
     .AddMvcLocalization();
+
+builder.Services.Configure<RazorViewEngineOptions>(options =>
+{
+    options.ViewLocationFormats.Add("/Views/{0}.cshtml");
+    options.ViewLocationFormats.Add("/Views/Components/{0}.cshtml");
+    options.ViewLocationFormats.Add("/Views/Layouts/{0}.cshtml");
+});
 
 builder.Services.AddViteServices();
 

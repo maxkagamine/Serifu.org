@@ -7,6 +7,7 @@
   "linter": {
     "rules": {
       "style": {
+        "noNonNullAssertion": "off",
         "noParameterAssign": "off",
         "useEnumInitializers": "off",
         "useNumberNamespace": "off",

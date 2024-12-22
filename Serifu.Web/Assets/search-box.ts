@@ -1,5 +1,5 @@
 const keyframes = document.getElementById('searchBoxKeyframes') as HTMLStyleElement;
-const form = document.getElementById('search') as HTMLFormElement;
+const form = document.getElementById('searchBox') as HTMLFormElement;
 const svg = form.querySelector('svg') as SVGSVGElement;
 const input = form.querySelector('input') as HTMLInputElement;
 
@@ -28,7 +28,13 @@ window.addEventListener('resize', update);
 update();
 
 form.addEventListener('submit', e => {
-  e.preventDefault(); // TODO: Remove me
+  e.preventDefault();
+  if (!input.value) {
+    return;
+  }
+  const routeTemplate = form.dataset.routeTemplate!;
+  const url = routeTemplate.replace('__QUERY__', encodeURIComponent(input.value));
   document.body.classList.add('loading');
-  input.disabled = true;
+  form.disabled = true;
+  document.location = url;
 });

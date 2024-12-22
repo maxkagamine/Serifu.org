@@ -17,7 +17,7 @@ using System.Globalization;
 
 namespace Serifu.Web.Controllers;
 
-public class HomeController : Controller
+public class DefaultController : Controller
 {
     [HttpGet("/")]
     public ActionResult Index()
@@ -30,7 +30,29 @@ public class HomeController : Controller
 
     [HttpGet("/translate")]
     [HttpGet("/翻訳")]
-    public ActionResult Home()
+    public ActionResult Home(string? query)
+    {
+        if (query is not null)
+        {
+            // Fallback in case user has JS disabled
+            Response.Headers.Append("X-Robots-Tag", "noindex");
+            return RedirectToAction(nameof(Results), new { query });
+        }
+
+        return View();
+    }
+
+    [HttpGet("/translate/{query}")]
+    [HttpGet("/翻訳/{query}")]
+    public async Task<ActionResult> Results(string query)
+    {
+        await Task.Delay(3000);
+        return View();
+    }
+
+    [HttpGet("/about")]
+    [HttpGet("/について")]
+    public ActionResult About()
     {
         return View();
     }
