@@ -1,5 +1,6 @@
 ﻿body > header {
-  margin-top: 96px;
+  /* Scale top margin to match space on left/right on smaller viewports */
+  margin-top: calc(clamp(0.25em, (100vw - var(--page-width)) / 2 - var(--body-padding), 96px));
   display: flex;
   align-items: center;
   justify-content: space-between;

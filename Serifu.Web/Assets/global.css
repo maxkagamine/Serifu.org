@@ -1,4 +1,7 @@
 :root {
+  --page-width: 900px;
+  --body-padding: 1em;
+
   color-scheme: dark;
   font-optical-sizing: auto;
   font-size: 16px;
@@ -18,9 +21,9 @@
 }
 
 body {
-  max-width: 900px;
+  max-width: var(--page-width);
   margin: 0 auto;
-  padding: 1em;
+  padding: var(--body-padding);
   visibility: visible !important;
 }
 
