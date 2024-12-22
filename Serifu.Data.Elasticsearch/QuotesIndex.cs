@@ -56,7 +56,16 @@ public static class QuotesIndex
         Analysis = CreateAnalysisSettings(),
         NumberOfShards = 1,
         NumberOfReplicas = 0,
-        RefreshInterval = -1
+        RefreshInterval = -1,
+        Similarity = new()
+        {
+            ["default"] = new SettingsSimilarityBm25()
+            {
+                // Do not take document length into account when scoring (prevents Elasticsearch from effectively
+                // sorting results by word count, putting shorter and less useful quotes at the top)
+                b = 0
+            }
+        }
     };
 
     private static ObjectProperty CreateTranslationMappings(string conjugationsAnalyzer) => new()
