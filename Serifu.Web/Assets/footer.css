@@ -1,0 +1,21 @@
+﻿body > footer.narrow {
+  text-align: center;
+  font-size: var(--font-size-smallish);
+
+  /* Using an hr instead of footer::before ensures it has the proper ARIA role and doesn't get spoken as text */
+  hr {
+    border: none;
+    margin: 3em 0 0.3em;
+    opacity: 0.6;
+
+    &::before {
+      content: '*\2002*\2002*'; /* en space */
+      font-family: 'Merriweather', Georgia, serif;
+      font-size-adjust: 0.555;
+    }
+  }
+
+  a {
+    white-space: nowrap;
+  }
+}

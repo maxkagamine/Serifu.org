@@ -15,6 +15,10 @@
     <main>
         @RenderBody()
     </main>
+    @if ((bool?)ViewBag.SuppressFooter != true)
+    {
+        <partial name="Footer" />
+    }
     <script type="module" vite-src="~/main.ts"></script>
 </body>
 </html>

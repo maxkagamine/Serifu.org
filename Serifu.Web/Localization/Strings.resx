@@ -117,6 +117,9 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="FooterText" xml:space="preserve">
+    <value>For educational use only. Quotes are copyright their respective publishers; see the &lt;a href="{aboutUrl}"&gt;about page&lt;/a&gt; for details.</value>
+  </data>
   <data name="NavLinkAbout" xml:space="preserve">
     <value>About</value>
   </data>
