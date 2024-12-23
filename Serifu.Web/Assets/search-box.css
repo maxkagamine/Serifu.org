@@ -23,7 +23,18 @@
   position: relative;
   box-shadow: inset 0 0 0 1px #fff3;
   height: var(--search-height);
-  font-size: 0.94em;
+  font-size: var(--font-size-smallish);
+
+  /*
+    The 400 weight Merriweather is a bit too strong to mix with Noto Serif in
+    the same body of text, but 500 weight Noto Serif JP is less readable and 300
+    weight Merriweather doesn't look as good, so in general I'm using Merri for
+    EN only and Noto for JA only, using Noto's Latin script for EN-in-JA. The
+    search box is essentially both languages, so it makes sense to combine them
+    here. Unfortunately font-size-adjust doesn't support multiple fallbacks.
+  */
+  font-family: 'Merriweather', 'Noto Serif JP', Georgia, serif;
+  font-size-adjust: none;
 
   input {
     display: block;
@@ -44,6 +55,12 @@
     &::placeholder {
       color: inherit;
       opacity: 0.8;
+    }
+
+    /* https://stackoverflow.com/a/69364368 */
+    &:-webkit-autofill,
+    &:-webkit-autofill:focus {
+      transition: background-color 600000s 0s, color 600000s 0s;
     }
   }
 

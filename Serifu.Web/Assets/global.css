@@ -2,6 +2,9 @@
   --page-width: 900px;
   --body-padding: 1em;
 
+  /* Merriweather's lowercase 'g' renders weird in Chrome at 15px */
+  --font-size-smallish: 15.1px;
+
   color-scheme: dark;
   font-optical-sizing: auto;
   font-size: 16px;
@@ -11,7 +14,7 @@
 }
 
 [lang='en'] {
-  font-family: 'Merriweather', serif;
+  font-family: 'Merriweather', Georgia, serif;
   font-size-adjust: 0.555;
 }
 

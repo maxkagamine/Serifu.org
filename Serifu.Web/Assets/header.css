@@ -18,7 +18,7 @@
 
   nav {
     display: flex;
-    font-size: 0.94em;
+    font-size: var(--font-size-smallish);
 
     a {
       color: inherit;
@@ -139,4 +139,13 @@
   .subtitle:lang(en) {
     font-style: italic;
   }
+}
+
+/* Prevent accidentally clicking links etc. when light-dismissing the popover */
+body:has(#drawer:popover-open)::before {
+  content: ' ';
+  display: block;
+  z-index: 1000;
+  position: fixed;
+  inset: 0;
 }
