@@ -39,11 +39,12 @@ form.addEventListener('submit', e => {
   document.location = url;
 });
 
+// Links with data-search will put the value in the textbox and start the loading animation
 document.addEventListener('click', e => {
   const link = (e.target as HTMLElement)?.closest('a');
-  if (!input.disabled && link?.dataset.search) {
+  if (link?.dataset.search) {
+    document.body.classList.add('loading');
     input.value = link.dataset.search;
-    form.requestSubmit();
-    e.preventDefault();
+    input.disabled = true;
   }
 });

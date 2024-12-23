@@ -2,6 +2,8 @@
     var routeValues = Context.GetRouteData().Values
         .Where(x => x.Key != "lang" && x.Value is string)
         .ToDictionary(x => x.Key, x => (string)x.Value!);
+
+    string? query = routeValues.GetValueOrDefault("query");
 }
 
 <header>
@@ -13,11 +15,11 @@
         <a href="https://github.com/maxkagamine/Serifu" target="_blank" rel="external noreferrer">@Strings.NavLinkGitHub</a>
         @if (CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "en")
         {
-            <a asp-all-route-data="routeValues" asp-route-lang="ja" lang="ja" hreflang="ja">日本語</a>
+            <a asp-all-route-data="routeValues" asp-route-lang="ja" lang="ja" hreflang="ja" data-search="@query">日本語</a>
         }
         else
         {
-            <a asp-all-route-data="routeValues" asp-route-lang="en" lang="en" hreflang="en">English</a>
+            <a asp-all-route-data="routeValues" asp-route-lang="en" lang="en" hreflang="en" data-search="@query">English</a>
         }
         <span class="subtitle">@Strings.NavSubtitle</span>
     </nav>
@@ -30,11 +32,11 @@
         <a href="https://github.com/maxkagamine/Serifu" target="_blank" rel="external noreferrer">@Strings.NavLinkGitHub</a>
         @if (CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "en")
         {
-            <a asp-all-route-data="routeValues" asp-route-lang="ja" lang="ja" hreflang="ja">日本語</a>
+            <a asp-all-route-data="routeValues" asp-route-lang="ja" lang="ja" hreflang="ja" data-search="@query">日本語</a>
         }
         else
         {
-            <a asp-all-route-data="routeValues" asp-route-lang="en" lang="en" hreflang="en">English</a>
+            <a asp-all-route-data="routeValues" asp-route-lang="en" lang="en" hreflang="en" data-search="@query">English</a>
         }
     </nav>
     <div class="subtitle">@Strings.NavSubtitle</div>
