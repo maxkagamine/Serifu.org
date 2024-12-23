@@ -5,12 +5,11 @@
   /* Merriweather's lowercase 'g' renders weird in Chrome at 15px */
   --font-size-smallish: 15.1px;
 
-  color-scheme: dark;
   font-optical-sizing: auto;
   font-size: 16px;
-  line-height: 1.5;
-  background: #111;
+  line-height: 1.6;
   color: #f2f2f2;
+  visibility: visible !important;
 }
 
 [lang='en'] {
@@ -27,7 +26,6 @@ body {
   max-width: var(--page-width);
   margin: 0 auto;
   padding: var(--body-padding);
-  visibility: visible !important;
 }
 
 main {

@@ -115,18 +115,18 @@
       stroke-dasharray: var(--stroke-length) calc((var(--total-length) / 2) - var(--stroke-length));
       stroke-dashoffset: calc((var(--stroke-length) / 2) + (var(--stroke-offset) * -1));
     }
-
-    .loading & {
-      visibility: visible;
-      animation: var(--duration) infinite cubic-bezier(0.65, 0.35, 0.35, 0.65) loading-spin,
-                 calc(var(--duration) / 2) infinite cubic-bezier(0.65, 0.35, 0.35, 0.65) alternate loading-stretch;
-    }
   }
 }
 
-body.loading {
-  #searchBox::before, #searchBox::after {
+body.loading #searchBox {
+  &::before, &::after {
     display: none;
+  }
+
+  svg {
+    visibility: visible;
+    animation: var(--duration) infinite cubic-bezier(0.65, 0.35, 0.35, 0.65) loading-spin,
+               calc(var(--duration) / 2) infinite cubic-bezier(0.65, 0.35, 0.35, 0.65) alternate loading-stretch;
   }
 }
 

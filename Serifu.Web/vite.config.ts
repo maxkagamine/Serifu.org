@@ -12,6 +12,10 @@ export default {
     rollupOptions: {
       input: 'Assets/main.ts',
     },
+    cssMinify: 'lightningcss',
+  },
+  css: {
+    transformer: 'lightningcss',
   },
   server: {
     strictPort: true,

@@ -8,6 +8,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
+    "lightningcss": "1.28.2",
     "typescript": "5.7.2",
     "vite": "6.0.3",
     "vite-plugin-biome": "1.0.12"
