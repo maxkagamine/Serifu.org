@@ -35,6 +35,15 @@ form.addEventListener('submit', e => {
   const routeTemplate = form.dataset.routeTemplate!;
   const url = routeTemplate.replace('__QUERY__', encodeURIComponent(input.value));
   document.body.classList.add('loading');
-  form.disabled = true;
+  input.disabled = true;
   document.location = url;
+});
+
+document.addEventListener('click', e => {
+  const link = (e.target as HTMLElement)?.closest('a');
+  if (!input.disabled && link?.dataset.search) {
+    input.value = link.dataset.search;
+    form.requestSubmit();
+    e.preventDefault();
+  }
 });

@@ -30,3 +30,17 @@ body {
 main {
   margin-top: 2em;
 }
+
+a:not(:active) {
+  color: inherit;
+}
+
+rt {
+  user-select: none;
+}
+
+.narrow {
+  max-width: 520px;
+  margin: 0 auto;
+  text-align: justify;
+}
