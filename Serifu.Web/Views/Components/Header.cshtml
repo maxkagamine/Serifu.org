@@ -1,4 +1,4 @@
-﻿@{
+@{
     var routeValues = Context.GetRouteData().Values
         .Where(x => x.Key != "lang" && x.Value is string)
         .ToDictionary(x => x.Key, x => (string)x.Value!);
@@ -8,7 +8,7 @@
 
 <header>
     <h1>
-        <a asp-action="Home" aria-label="Serifu.org"><img src="/serifu.svg" aria-hidden="true" /></a>
+        <a asp-action="Home" aria-label="Serifu.org"><img src="~/serifu.svg" asp-append-version="true" aria-hidden="true" /></a>
     </h1>
     <nav>
         <a asp-action="About">@Strings.NavLinkAbout</a>
