@@ -25,6 +25,10 @@
     <Content Include="wwwroot\.vite\**" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Serifu.Data\Serifu.Data.csproj" />
+  </ItemGroup>
+
   <Target Name="NpmInstall" BeforeTargets="Build; NpmRunBuild" Condition="!Exists('node_modules')">
     <Exec Command="$(Npm) install" />
   </Target>
