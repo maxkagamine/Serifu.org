@@ -323,6 +323,9 @@ internal sealed partial class SkyrimImporter : IDisposable
         var (englishContext, japaneseContext) = questJournalEntry;
         FormID formId = formIdProvider.GetFormId(info);
 
+        // Fix encoding error found in two lines of dialogue (this appears to be a Bethesda mistake; it appears in SSEEdit as well and was fixed by USSEP)
+        englishText = englishText.Replace("â€¦", "...");
+
         // Import voice files
         Task<string> englishVoiceFileTask = ImportVoiceFile(englishArchive, responseDataInfo, response, voiceType, "Skyrim - Voices_en0.bsa", cancellationToken);
         Task<string> japaneseVoiceFileTask = ImportVoiceFile(japaneseArchive, responseDataInfo, response, voiceType, "Skyrim - Voices_ja0.bsa", cancellationToken);
