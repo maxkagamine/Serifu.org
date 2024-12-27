@@ -1,5 +1,5 @@
-﻿<form asp-action="Home" method="get" id="searchBox" role="search" data-route-template="@Url.Action("Results", new { query = "__QUERY__" })">
-    <input name="query" placeholder="@Strings.SearchBoxPlaceholder" />
+<form asp-action="Home" method="get" id="searchBox" role="search" data-route-template="@Url.Action("Results", new { query = "__QUERY__" })">
+    <input name="query" placeholder="@Strings.SearchBoxPlaceholder" value="@Context.GetRouteValue("query")" />
 
     <!--
     For animation purposes, the stroke length is centered on its midpoint, and the
