@@ -165,41 +165,4 @@
   <data name="SourceTitle_Witcher3" xml:space="preserve">
     <value>ウィッチャー3 ワイルドハント</value>
   </data>
-  <data name="SourceUrl_BaldursGate3" xml:space="preserve">
-    <value>https://baldursgate3.game/</value>
-    <comment>There is no Japanese site</comment>
-  </data>
-  <data name="SourceUrl_GSenjouNoMaou" xml:space="preserve">
-    <value>https://dlsoft.dmm.co.jp/detail/akbs_0028/</value>
-    <comment>The official site is so ancient it uses framesets (and there's no link to buy it there either)</comment>
-  </data>
-  <data name="SourceUrl_Kancolle" xml:space="preserve">
-    <value>https://kancolle-a.sega.jp/</value>
-    <comment>There doesn't appear to be an official site for the franchise as a whole.</comment>
-  </data>
-  <data name="SourceUrl_Maitetsu" xml:space="preserve">
-    <value>https://www.dlsite.com/pro/work/=/product_id/VJ013196.html</value>
-    <comment>Lose closed their doors in 2022, so there's no official site anymore.</comment>
-  </data>
-  <data name="SourceUrl_NekoparaVol1" xml:space="preserve">
-    <value>http://pc.nekopara.com/vol/vol01_ent.html</value>
-  </data>
-  <data name="SourceUrl_NekoparaVol2" xml:space="preserve">
-    <value>http://pc.nekopara.com/vol/vol02_ent.html</value>
-  </data>
-  <data name="SourceUrl_NewtonToRingoNoKi" xml:space="preserve">
-    <value>https://dlsoft.dmm.co.jp/detail/hobe_0358/</value>
-    <comment>Official website is gone</comment>
-  </data>
-  <data name="SourceUrl_SenrenBanka" xml:space="preserve">
-    <value>https://www.yuzu-soft.com/products/senren/</value>
-  </data>
-  <data name="SourceUrl_Skyrim" xml:space="preserve">
-    <value>https://www.gog.com/en/game/the_elder_scrolls_v_skyrim_special_edition</value>
-    <comment>GOG doesn't have a Japanese site, but the game on GOG supports Japanese and it's DRM-free, so I'm preferring it over Steam.</comment>
-  </data>
-  <data name="SourceUrl_Witcher3" xml:space="preserve">
-    <value>https://www.gog.com/en/game/the_witcher_3_wild_hunt_game_of_the_year_edition</value>
-    <comment>GOG doesn't have a Japanese site, but the game on GOG supports Japanese and it's DRM-free, so I'm preferring it over Steam.</comment>
-  </data>
 </root>

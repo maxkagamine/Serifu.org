@@ -16,11 +16,14 @@ using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.WebEncoders;
+using Serifu.Web;
 using Serifu.Web.Localization;
 using System.Text.Unicode;
 using Vite.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddOptions<SerifuOptions>().BindConfiguration("");
 
 builder.Services.Configure<RazorViewEngineOptions>(options =>
 {

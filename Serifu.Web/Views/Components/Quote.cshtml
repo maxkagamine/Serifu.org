@@ -1,4 +1,5 @@
 @model QuoteViewModel
+@inject IOptions<SerifuOptions> Options
 
 <li class="quote">
     <div class="translations">
@@ -25,9 +26,14 @@
         class="source-links"
         style="position-anchor: --source-links-@Model.Id"
     >
-        <a href="#" target="_blank" rel="external noreferrer">GOG</a>
-        <a href="#" target="_blank" rel="external noreferrer">DLsite</a>
-        <a href="#" target="_blank" rel="external noreferrer">Steam</a>
-        <a href="#" target="_blank" rel="external noreferrer">VNDB</a>
+        @foreach (ExternalLink link in Options.Value.SourceLinks[Model.Source])
+        {
+            if (link.Language is not null && link.Language != CultureInfo.CurrentCulture.TwoLetterISOLanguageName)
+            {
+                continue;
+            }
+
+            <a href="@link.Url" target="_blank" rel="external noreferrer">@link.Label</a>
+        }
     </div>
 </li>
