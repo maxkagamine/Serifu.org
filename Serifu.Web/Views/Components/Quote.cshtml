@@ -6,12 +6,25 @@
         <partial name="Translation" model="Model.Right" />
     </div>
     <div class="source">
-        <button popovertarget="source-links-@Model.Id" class="source-title" style="anchor-name: --source-links-@Model.Id">@Model.Source.GetLocalizedTitle()</button>@(
-            Model.HasContext ? $"{Strings.SourceTitleContextSeparator}{Model.Context}" : null
-        )
-
+        <div class="source-icon" style="--sprite-index: @((int)Model.Source)"></div>
+        <button
+            popovertarget="source-links-@Model.Id"
+            class="source-title"
+            style="anchor-name: --source-links-@Model.Id"
+        >
+            @Strings.GetResourceString($"SourceTitle_{Model.Source}")
+        </button>
+        @if (Model.HasContext)
+        {
+            <span>@Strings.SourceTitleContextSeparator@Model.Context</span>
+        }
     </div>
-    <div popover id="source-links-@Model.Id" class="source-links" style="position-anchor: --source-links-@Model.Id">
+    <div
+        popover
+        id="source-links-@Model.Id"
+        class="source-links"
+        style="position-anchor: --source-links-@Model.Id"
+    >
         <a href="#" target="_blank" rel="external noreferrer">GOG</a>
         <a href="#" target="_blank" rel="external noreferrer">DLsite</a>
         <a href="#" target="_blank" rel="external noreferrer">Steam</a>
