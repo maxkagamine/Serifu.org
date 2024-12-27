@@ -15,13 +15,12 @@
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.WebEncoders;
 using Serifu.Web.Localization;
+using System.Text.Unicode;
 using Vite.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
-
-builder.Services.AddControllersWithViews()
-    .AddMvcLocalization();
 
 builder.Services.Configure<RazorViewEngineOptions>(options =>
 {
@@ -29,6 +28,15 @@ builder.Services.Configure<RazorViewEngineOptions>(options =>
     options.ViewLocationFormats.Add("/Views/Components/{0}.cshtml");
     options.ViewLocationFormats.Add("/Views/Layouts/{0}.cshtml");
 });
+
+builder.Services.Configure<WebEncoderOptions>(options =>
+{
+    // Don't need to html-encode every single Japanese character
+    options.TextEncoderSettings = new(UnicodeRanges.All);
+});
+
+builder.Services.AddControllersWithViews()
+    .AddMvcLocalization();
 
 builder.Services.AddViteServices();
 
