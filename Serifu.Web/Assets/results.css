@@ -44,6 +44,7 @@
     padding: 0;
     min-width: 250px;
     text-align: left;
+    box-shadow: 0 20px 50px #111, 0 10px 25px #111;
 
     a {
       display: block;
@@ -67,6 +68,7 @@
       position-area: span-bottom left;
       position-try: span-bottom right, span-top left, span-top right, bottom span-right, top span-right;
       min-width: 125px;
+      box-shadow: 0 10px 25px #111;
 
       a {
         padding: 0.5em 1em;
