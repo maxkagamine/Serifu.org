@@ -40,22 +40,6 @@
   }
 
   /* This could be broken out and reused if other popover menus are needed */
-  @position-try --left-downward {
-    inset: anchor(top) calc(anchor(left) + 0.5em) auto auto;
-  }
-
-  @position-try --right-downward {
-    inset: anchor(top) auto auto calc(anchor(right) + 0.5em);
-  }
-
-  @position-try --left-upward {
-    inset: auto calc(anchor(left) + 0.5em) anchor(bottom) auto;
-  }
-
-  @position-try --right-upward {
-    inset: auto auto anchor(bottom) calc(anchor(right) + 0.5em);
-  }
-
   .source-links {
     padding: 0;
     min-width: 250px;
@@ -78,10 +62,10 @@
       For browsers that don't support anchor positioning, the popover will
       appear in the middle and larger, like a dialog rather than a context menu.
     */
-    @supports (inset: anchor(top)) {
+    @supports (position-area: span-bottom left) {
       margin: 0;
-      inset: anchor(top) calc(anchor(left) + 0.5em) auto auto;
-      position-try: most-width --left-downward, --right-downward, --left-upward, --right-upward;
+      position-area: span-bottom left;
+      position-try: span-bottom right, span-top left, span-top right, bottom span-right, top span-right;
       min-width: 125px;
 
       a {

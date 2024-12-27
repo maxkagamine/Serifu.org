@@ -21,6 +21,9 @@
           },
           "fix": "safe"
         }
+      },
+      "correctness": {
+        "noUnknownProperty": "off"
       }
     }
   },
