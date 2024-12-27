@@ -20,4 +20,7 @@ public static class SourceExtensions
 {
     public static string GetLocalizedTitle(this Source source) =>
         Strings.GetResourceString($"SourceTitle_{source}") ?? throw new Exception($"No localized title for {source}.");
+
+    public static string GetLocalizedUrl(this Source source) =>
+        Strings.GetResourceString($"SourceUrl_{source}") ?? throw new Exception($"No localized title for {source}.");
 }

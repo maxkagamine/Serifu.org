@@ -6,13 +6,8 @@
         <partial name="Translation" model="Model.Right" />
     </div>
     <div class="source">
-        @if (Model.HasContext)
-        {
-            @Strings.FormatSourceTitleAndContext(title: Model.Source.GetLocalizedTitle(), context: Model.Context)
-        }
-        else
-        {
-            @Model.Source.GetLocalizedTitle()
-        }
+        <a href="@Model.Source.GetLocalizedUrl()" target="_blank" rel="external noreferrer">@Model.Source.GetLocalizedTitle()</a>@(
+            Model.HasContext ? $"{Strings.SourceTitleContextSeparator}{Model.Context}" : null
+        )
     </div>
 </li>

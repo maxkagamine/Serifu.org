@@ -132,8 +132,8 @@
   <data name="SearchBoxPlaceholder" xml:space="preserve">
     <value>Search for English or Japanese words or phrases</value>
   </data>
-  <data name="SourceTitleAndContext" xml:space="preserve">
-    <value>{title}, {context}</value>
+  <data name="SourceTitleContextSeparator" xml:space="preserve">
+    <value>, </value>
   </data>
   <data name="SourceTitle_BaldursGate3" xml:space="preserve">
     <value>Baldur's Gate 3</value>
@@ -164,5 +164,41 @@
   </data>
   <data name="SourceTitle_Witcher3" xml:space="preserve">
     <value>The Witcher 3: Wild Hunt</value>
+  </data>
+  <data name="SourceUrl_BaldursGate3" xml:space="preserve">
+    <value>https://baldursgate3.game/</value>
+  </data>
+  <data name="SourceUrl_GSenjouNoMaou" xml:space="preserve">
+    <value>https://vndb.org/v211</value>
+    <comment>Linking to VNDB as the only options are Steam (which is famously anti-Japanese-games) or blocked in Japan (which doesn't work as lots of Japanese-learners live here).</comment>
+  </data>
+  <data name="SourceUrl_Kancolle" xml:space="preserve">
+    <value>https://en.kancollewiki.net/Kancolle_Wiki</value>
+    <comment>There's no English site. The TLs are from the wiki anyway, so this is probably the best choice.</comment>
+  </data>
+  <data name="SourceUrl_Maitetsu" xml:space="preserve">
+    <value>https://vndb.org/v18131</value>
+    <comment>Linking to VNDB as the only options are Steam (which is famously anti-Japanese-games) or blocked in Japan (which doesn't work as lots of Japanese-learners live here).</comment>
+  </data>
+  <data name="SourceUrl_NekoparaVol1" xml:space="preserve">
+    <value>https://vndb.org/v15538</value>
+    <comment>Linking to VNDB as the only options are Steam (which is famously anti-Japanese-games), are blocked in Japan (which doesn't work as lots of Japanese-learners live here), or aren't usable outside of Japan (which is the same problem in reverse).</comment>
+  </data>
+  <data name="SourceUrl_NekoparaVol2" xml:space="preserve">
+    <value>https://vndb.org/v18713</value>
+    <comment>Linking to VNDB as the only options are Steam (which is famously anti-Japanese-games), are blocked in Japan (which doesn't work as lots of Japanese-learners live here), or aren't usable outside of Japan (which is the same problem in reverse).</comment>
+  </data>
+  <data name="SourceUrl_NewtonToRingoNoKi" xml:space="preserve">
+    <value>https://vndb.org/v20330</value>
+    <comment>Linking to VNDB as the only options are Steam (which is famously anti-Japanese-games) or blocked in Japan (which doesn't work as lots of Japanese-learners live here).</comment>
+  </data>
+  <data name="SourceUrl_SenrenBanka" xml:space="preserve">
+    <value>https://www.gog.com/en/game/senren_banka</value>
+  </data>
+  <data name="SourceUrl_Skyrim" xml:space="preserve">
+    <value>https://www.gog.com/en/game/the_elder_scrolls_v_skyrim_special_edition</value>
+  </data>
+  <data name="SourceUrl_Witcher3" xml:space="preserve">
+    <value>https://www.gog.com/en/game/the_witcher_3_wild_hunt_game_of_the_year_edition</value>
   </data>
 </root>
