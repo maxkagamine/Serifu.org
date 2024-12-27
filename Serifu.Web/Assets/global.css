@@ -1,6 +1,7 @@
 :root {
   --page-width: 900px;
   --body-padding: 1em;
+  --menu-hover-background: #111;
 
   /* Merriweather's lowercase 'g' renders weird in Chrome at 15px */
   --font-size-smallish: 15.1px;
@@ -44,4 +45,14 @@ rt {
   max-width: 520px;
   margin: 0 auto;
   text-align: justify;
+}
+
+[popover] {
+  display: none;
+  border: 1px solid #414141;
+  background: #1c1c1c;
+
+  &:popover-open {
+    display: block;
+  }
 }

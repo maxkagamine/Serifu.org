@@ -6,8 +6,15 @@
         <partial name="Translation" model="Model.Right" />
     </div>
     <div class="source">
-        <a href="@Model.Source.GetLocalizedUrl()" target="_blank" rel="external noreferrer">@Model.Source.GetLocalizedTitle()</a>@(
+        <button popovertarget="source-links-@Model.Id" class="source-title" style="anchor-name: --source-links-@Model.Id">@Model.Source.GetLocalizedTitle()</button>@(
             Model.HasContext ? $"{Strings.SourceTitleContextSeparator}{Model.Context}" : null
         )
+
+    </div>
+    <div popover id="source-links-@Model.Id" class="source-links" style="position-anchor: --source-links-@Model.Id">
+        <a href="#" target="_blank" rel="external noreferrer">GOG</a>
+        <a href="#" target="_blank" rel="external noreferrer">DLsite</a>
+        <a href="#" target="_blank" rel="external noreferrer">Steam</a>
+        <a href="#" target="_blank" rel="external noreferrer">VNDB</a>
     </div>
 </li>

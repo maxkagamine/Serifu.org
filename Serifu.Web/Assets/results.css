@@ -3,3 +3,63 @@
   margin: 0;
   padding: 0;
 }
+
+.quote {
+  .source {
+    text-align: right;
+    font-size: 0.75em;
+    font-family: system-ui;
+    color: rgb(from currentcolor r g b / 75%); /* Keeps active color fully opaque, as opposed to setting opacity */
+  }
+
+  .source-title {
+    all: unset;
+    display: inline;
+    cursor: pointer;
+    text-decoration: underline;
+
+    &:active {
+      color: ActiveText;
+      color: -webkit-activelink; /* ActiveText is blue in Chrome for some reason */
+    }
+  }
+
+  /* This could be broken out and reused if other popover menus are needed */
+  @position-try --left-downward {
+    inset: anchor(top) calc(anchor(left) + 0.5em) auto auto;
+  }
+
+  @position-try --right-downward {
+    inset: anchor(top) auto auto calc(anchor(right) + 0.5em);
+  }
+
+  @position-try --left-upward {
+    inset: auto calc(anchor(left) + 0.5em) anchor(bottom) auto;
+  }
+
+  @position-try --right-upward {
+    inset: auto auto anchor(bottom) calc(anchor(right) + 0.5em);
+  }
+
+  .source-links {
+    margin: 0;
+    padding: 0;
+    inset: anchor(top) calc(anchor(left) + 0.5em) auto auto;
+    position-try: most-width --left-downward, --right-downward, --left-upward, --right-upward;
+    min-width: 125px;
+    text-align: left;
+
+    a {
+      display: block;
+      padding: 0.5em 1em;
+      color: inherit;
+      text-decoration: none;
+      line-height: 1;
+    }
+
+    a:hover, a:focus {
+      background: var(--menu-hover-background);
+      outline: none;
+    }
+  }
+}

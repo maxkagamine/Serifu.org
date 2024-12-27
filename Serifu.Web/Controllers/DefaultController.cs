@@ -73,7 +73,7 @@ public class DefaultController : Controller
 
         Quote quote2 = new() // Long, with notes, no EN audio
         {
-            Id = 0,
+            Id = 1,
             Source = Source.Kancolle,
             English = new()
             {
@@ -99,7 +99,7 @@ public class DefaultController : Controller
 
         Quote quote3 = new() // Short, no context, no speaker name (it's actually Solitude Guard but whatever)
         {
-            Id = 0,
+            Id = 2,
             Source = Source.Skyrim,
             English = new()
             {

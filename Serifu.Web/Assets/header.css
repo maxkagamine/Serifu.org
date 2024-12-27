@@ -83,7 +83,6 @@ body > header {
 #drawer {
   --duration: 0.5s;
 
-  display: none;
   top: 0;
   right: -100%;
   bottom: 0;
@@ -96,7 +95,6 @@ body > header {
   margin: 0;
   flex-direction: column;
   justify-content: space-between;
-  background: #1c1c1c;
   transition:
     right var(--duration),
     overlay var(--duration) allow-discrete,
@@ -132,7 +130,7 @@ body > header {
   }
 
   a:hover, a:focus {
-    background: rgba(0, 0, 0, 0.4);
+    background: var(--menu-hover-background);
     outline: none;
   }
 

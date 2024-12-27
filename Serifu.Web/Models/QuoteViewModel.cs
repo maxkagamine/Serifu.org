@@ -21,6 +21,7 @@ public class QuoteViewModel
 {
     public QuoteViewModel(Quote quote, bool englishFirst, string audioFileBaseUrl)
     {
+        Id = quote.Id;
         Source = quote.Source;
 
         TranslationViewModel english = new(quote.English, "en", audioFileBaseUrl);
@@ -31,6 +32,9 @@ public class QuoteViewModel
         Context = CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "en" ?
             quote.English.Context : quote.Japanese.Context;
     }
+
+    /// <inheritdoc cref="Quote.Id"/>
+    public long Id { get; }
 
     /// <inheritdoc cref="Quote.Source"/>
     public Source Source { get; }
