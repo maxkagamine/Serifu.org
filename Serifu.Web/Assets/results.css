@@ -63,7 +63,7 @@
       appear in the middle and larger, like a dialog rather than a context menu.
     */
     @supports (position-area: span-bottom left) {
-      margin: 0;
+      margin: 0 20px 0 0;
       position-area: span-bottom left;
       position-try: span-bottom right, span-top left, span-top right, bottom span-right, top span-right;
       min-width: 125px;
