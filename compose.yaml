@@ -43,7 +43,10 @@ services:
         -H 'Content-Type: application/json'
         -H 'kbn-xsrf: blah'
         -d '{"data_view":{"title":"quotes","name":"quotes"},"override":true}'
-        -o /dev/null
+        -o /dev/null &&
+      curl -fsS -X PUT 'elasticsearch:9200/.*/_settings'
+        -H 'Content-Type: application/json'
+        -d '{"index":{"number_of_replicas":0}}'
   sqlarserver:
     image: kagamine/sqlarserver
     command: Serifu.db
