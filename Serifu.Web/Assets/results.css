@@ -57,16 +57,13 @@
   }
 
   .source-links {
-    margin: 0;
     padding: 0;
-    inset: anchor(top) calc(anchor(left) + 0.5em) auto auto;
-    position-try: most-width --left-downward, --right-downward, --left-upward, --right-upward;
-    min-width: 125px;
+    min-width: 250px;
     text-align: left;
 
     a {
       display: block;
-      padding: 0.5em 1em;
+      padding: 1em 2em;
       color: inherit;
       text-decoration: none;
       line-height: 1;
@@ -75,6 +72,21 @@
     a:hover, a:focus {
       background: var(--menu-hover-background);
       outline: none;
+    }
+
+    /*
+      For browsers that don't support anchor positioning, the popover will
+      appear in the middle and larger, like a dialog rather than a context menu.
+    */
+    @supports (inset: anchor(top)) {
+      margin: 0;
+      inset: anchor(top) calc(anchor(left) + 0.5em) auto auto;
+      position-try: most-width --left-downward, --right-downward, --left-upward, --right-upward;
+      min-width: 125px;
+
+      a {
+        padding: 0.5em 1em;
+      }
     }
   }
 }
