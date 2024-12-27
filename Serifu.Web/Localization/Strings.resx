@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -131,5 +131,38 @@
   </data>
   <data name="SearchBoxPlaceholder" xml:space="preserve">
     <value>Search for English or Japanese words or phrases</value>
+  </data>
+  <data name="SourceTitleAndContext" xml:space="preserve">
+    <value>{title}, {context}</value>
+  </data>
+  <data name="SourceTitle_BaldursGate3" xml:space="preserve">
+    <value>Baldur's Gate 3</value>
+  </data>
+  <data name="SourceTitle_GSenjouNoMaou" xml:space="preserve">
+    <value>G-senjou no Maou</value>
+  </data>
+  <data name="SourceTitle_Kancolle" xml:space="preserve">
+    <value>Kantai Collection</value>
+  </data>
+  <data name="SourceTitle_Maitetsu" xml:space="preserve">
+    <value>Maitetsu</value>
+  </data>
+  <data name="SourceTitle_NekoparaVol1" xml:space="preserve">
+    <value>Nekopara Vol. 1</value>
+  </data>
+  <data name="SourceTitle_NekoparaVol2" xml:space="preserve">
+    <value>Nekopara Vol. 2</value>
+  </data>
+  <data name="SourceTitle_NewtonToRingoNoKi" xml:space="preserve">
+    <value>Newton to Ringo no Ki</value>
+  </data>
+  <data name="SourceTitle_SenrenBanka" xml:space="preserve">
+    <value>Senren＊Banka</value>
+  </data>
+  <data name="SourceTitle_Skyrim" xml:space="preserve">
+    <value>The Elder Scrolls V: Skyrim</value>
+  </data>
+  <data name="SourceTitle_Witcher3" xml:space="preserve">
+    <value>The Witcher 3: Wild Hunt</value>
   </data>
 </root>

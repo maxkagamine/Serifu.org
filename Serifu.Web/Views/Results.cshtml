@@ -1,1 +1,8 @@
-﻿Results page stuff
+@model ResultsViewModel
+
+<ul class="results">
+    @foreach (QuoteViewModel quote in Model.Quotes)
+    {
+        <partial name="Quote" model="quote" />
+    }
+</ul>

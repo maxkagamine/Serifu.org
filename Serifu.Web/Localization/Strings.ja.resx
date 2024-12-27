@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -131,5 +131,38 @@
   </data>
   <data name="SearchBoxPlaceholder" xml:space="preserve">
     <value>日本語か英語の言葉か表現を検索する</value>
+  </data>
+  <data name="SourceTitleAndContext" xml:space="preserve">
+    <value>{title}、{context}</value>
+  </data>
+  <data name="SourceTitle_BaldursGate3" xml:space="preserve">
+    <value>バルダーズ・ゲート3</value>
+  </data>
+  <data name="SourceTitle_GSenjouNoMaou" xml:space="preserve">
+    <value>G線上の魔王</value>
+  </data>
+  <data name="SourceTitle_Kancolle" xml:space="preserve">
+    <value>艦隊これくしょん</value>
+  </data>
+  <data name="SourceTitle_Maitetsu" xml:space="preserve">
+    <value>まいてつ</value>
+  </data>
+  <data name="SourceTitle_NekoparaVol1" xml:space="preserve">
+    <value>ネコぱら Vol.1</value>
+  </data>
+  <data name="SourceTitle_NekoparaVol2" xml:space="preserve">
+    <value>ネコぱら Vol.2</value>
+  </data>
+  <data name="SourceTitle_NewtonToRingoNoKi" xml:space="preserve">
+    <value>ニュートンと林檎の樹</value>
+  </data>
+  <data name="SourceTitle_SenrenBanka" xml:space="preserve">
+    <value>千恋＊万花</value>
+  </data>
+  <data name="SourceTitle_Skyrim" xml:space="preserve">
+    <value>The Elder Scrolls V: Skyrim</value>
+  </data>
+  <data name="SourceTitle_Witcher3" xml:space="preserve">
+    <value>ウィッチャー3 ワイルドハント</value>
   </data>
 </root>

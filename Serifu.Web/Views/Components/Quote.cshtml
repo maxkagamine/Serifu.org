@@ -1,0 +1,18 @@
+@model QuoteViewModel
+
+<li class="quote">
+    <div class="translations">
+        <partial name="Translation" model="Model.Left" />
+        <partial name="Translation" model="Model.Right" />
+    </div>
+    <div class="source">
+        @if (Model.HasContext)
+        {
+            @Strings.FormatSourceTitleAndContext(title: Model.Source.GetLocalizedTitle(), context: Model.Context)
+        }
+        else
+        {
+            @Model.Source.GetLocalizedTitle()
+        }
+    </div>
+</li>
