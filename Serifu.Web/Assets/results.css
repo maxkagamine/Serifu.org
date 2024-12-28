@@ -66,28 +66,22 @@
     blockquote {
       margin: 0;
 
-      &:lang(en)::before {
-        content: '“';
+      &:lang(en) {
+        quotes: '“' '”';
       }
 
-      &:lang(en)::after {
-        content: '”';
-      }
-
-      &:lang(ja)::before {
-        content: '｢'; /* Halfwidth */
-      }
-
-      &:lang(ja)::after {
-        content: '｣'; /* Halfwidth */
+      &:lang(ja) {
+        quotes: '｢' '｣'; /* Halfwidth */
       }
 
       &::before {
+        content: open-quote;
         position: absolute;
         left: 0;
       }
 
       &::after {
+        content: close-quote;
         padding-left: var(--quote-mark-spacing);
       }
     }
