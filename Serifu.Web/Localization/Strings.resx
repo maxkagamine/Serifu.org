@@ -177,4 +177,7 @@
   <data name="SourceTitle_Witcher3" xml:space="preserve">
     <value>The Witcher 3: Wild Hunt</value>
   </data>
+  <data name="MenuButtonLabel" xml:space="preserve">
+    <value>Menu</value>
+  </data>
 </root>

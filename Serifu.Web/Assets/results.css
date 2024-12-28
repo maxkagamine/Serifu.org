@@ -34,7 +34,7 @@
     flex-direction: column;
     padding-top: calc(var(--button-spacing) / 2);
 
-    button {
+    button, audio-button {
       border: none;
       background: none;
       font: inherit;
@@ -46,7 +46,7 @@
       margin: calc(var(--click-area-padding) * -1);
       opacity: 0.75;
 
-      & + & {
+      &:not(:first-child) {
         margin-top: calc(var(--click-area-padding) * -1 + var(--button-spacing));
       }
 
@@ -124,7 +124,7 @@
 
     width: var(--icon-size);
     height: var(--icon-size);
-    background-image: url(/game-icons.png);
+    background-image: url(./images/game-icons.png);
     background-repeat: no-repeat;
     background-size: var(--icon-size);
     background-position-y: calc(var(--sprite-index) * var(--icon-size) * -1);

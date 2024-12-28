@@ -1,3 +1,5 @@
+import { assertDefined } from './util';
+
 const keyframes = document.getElementById('searchBoxKeyframes') as HTMLStyleElement;
 const form = document.getElementById('searchBox') as HTMLFormElement;
 const svg = form.querySelector('svg') as SVGSVGElement;
@@ -32,7 +34,7 @@ form.addEventListener('submit', e => {
   if (!input.value) {
     return;
   }
-  const routeTemplate = form.dataset.routeTemplate!;
+  const routeTemplate = assertDefined(form.dataset.routeTemplate, 'routeTemplate');
   const url = routeTemplate.replace('__QUERY__', encodeURIComponent(input.value));
   document.body.classList.add('loading');
   input.disabled = true;

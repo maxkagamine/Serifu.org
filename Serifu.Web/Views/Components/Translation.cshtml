@@ -7,9 +7,13 @@
     <div class="translation-actions">
         @if (Model.HasAudioFile)
         {
-            <button title="@Strings.AudioButtonLabel" aria-label="@Strings.AudioButtonLabel">
-                <span class="material-symbols-outlined" aria-hidden="true">volume_up</span>
-            </button>
+            <audio-button
+                title="@Strings.AudioButtonLabel"
+                aria-label="@Strings.AudioButtonLabel"
+            >
+                <i class="icon icon-play"></i>
+                <audio src="@Model.AudioFileUrl" preload="none" hidden />
+            </audio-button>
         }
         @if (Model.HasNotes)
         {
@@ -19,7 +23,7 @@
                 popovertarget="@notesId"
                 style="anchor-name: --@notesId"
             >
-                <span class="material-symbols-outlined" aria-hidden="true">description</span>
+                <i class="icon icon-notes"></i>
             </button>
 
             <div

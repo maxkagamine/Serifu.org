@@ -177,4 +177,7 @@
   <data name="SourceTitle_Witcher3" xml:space="preserve">
     <value>ウィッチャー3 ワイルドハント</value>
   </data>
+  <data name="MenuButtonLabel" xml:space="preserve">
+    <value>メニュー</value>
+  </data>
 </root>
