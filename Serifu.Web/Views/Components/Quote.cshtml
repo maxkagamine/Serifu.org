@@ -2,10 +2,8 @@
 @inject IOptions<SerifuOptions> Options
 
 <li class="quote">
-    <div class="translations">
-        <partial name="Translation" model="Model.Left" />
-        <partial name="Translation" model="Model.Right" />
-    </div>
+    <partial name="Translation" model="Model.Left" />
+    <partial name="Translation" model="Model.Right" />
     <div class="source">
         <div class="source-icon" style="--sprite-index: @((int)Model.Source)"></div>
         <button
@@ -33,7 +31,7 @@
                 continue;
             }
 
-            <a href="@link.Url" target="_blank" rel="external noreferrer">@link.Label</a>
+            <a href="@link.Url" target="_blank" rel="external noreferrer nofollow">@link.Label</a>
         }
     </div>
 </li>
