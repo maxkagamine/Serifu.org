@@ -7,11 +7,13 @@
 .quote {
   display: grid;
   grid-template: 'left-actions left-quote .      right-actions right-quote' auto
-                 'source       source     source source        source     ' auto / auto 1fr 0.73em auto 1fr;
-  gap: 1.25em 0.8em;
+                 'source       source     source source        source     ' auto
+                 / auto minmax(0, 1fr) 1em auto minmax(0, 1fr);
+  gap: 0.8em;
+  overflow-wrap: break-word;
 
   & + & {
-    margin-top: 1.5em;
+    margin-top: 2em;
   }
 
   > :nth-child(1) .translation-actions { grid-area: left-actions; }
@@ -51,6 +53,53 @@
       span {
         display: block;
         font-size: inherit;
+      }
+    }
+  }
+
+  .translation-quote {
+    --quote-mark-spacing: 0.18ch;
+
+    position: relative;
+    padding-left: calc(1ch + var(--quote-mark-spacing));
+
+    blockquote {
+      margin: 0;
+
+      &:lang(en)::before {
+        content: '“';
+      }
+
+      &:lang(en)::after {
+        content: '”';
+      }
+
+      &:lang(ja)::before {
+        content: '｢'; /* Halfwidth */
+      }
+
+      &:lang(ja)::after {
+        content: '｣'; /* Halfwidth */
+      }
+
+      &::before {
+        position: absolute;
+        left: 0;
+      }
+
+      &::after {
+        padding-left: var(--quote-mark-spacing);
+      }
+    }
+
+    cite {
+      display: block;
+      font-style: normal;
+      margin-top: 0.5em;
+
+      &::before {
+        content: '～ ';
+        font-family: 'Noto Serif JP';
       }
     }
   }
