@@ -66,6 +66,14 @@ internal class ShipService
         htmlSanitizer.AllowedAttributes.Clear();
         htmlSanitizer.AllowedAttributes.Add("href");
         htmlSanitizer.KeepChildNodes = true;
+        htmlSanitizer.PostProcessNode += (object? sender, PostProcessNodeEventArgs e) =>
+        {
+            if (e.Node is IHtmlAnchorElement a)
+            {
+                a.Target = "_blank";
+                a.Relation = "external noreferrer nofollow";
+            }
+        };
     }
 
     /// <summary>
