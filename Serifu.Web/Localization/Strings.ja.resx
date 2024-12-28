@@ -171,4 +171,7 @@
   <data name="SourceTitle_Witcher3" xml:space="preserve">
     <value>ウィッチャー3 ワイルドハント</value>
   </data>
+  <data name="UnknownSpeakerName" xml:space="preserve">
+    <value>不明</value>
+  </data>
 </root>

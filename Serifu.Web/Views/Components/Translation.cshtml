@@ -15,8 +15,8 @@
             </button>
         }
     </div>
-
-    <div class="translation-quote">
-        @Model.Text
+    <div class="translation-quote" lang="@Model.Language">
+        <blockquote>@Model.Text</blockquote>
+        <cite>@(Model.HasSpeakerName ? Model.SpeakerName : Strings.UnknownSpeakerName)</cite>
     </div>
 </div>
