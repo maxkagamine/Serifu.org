@@ -14,7 +14,6 @@
 
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc.Razor;
-using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.WebEncoders;
 using Serifu.Web;
 using Serifu.Web.Localization;
@@ -61,9 +60,6 @@ var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
-    app.Environment.WebRootPath = Path.Combine(app.Environment.ContentRootPath, "Assets", "public");
-    app.Environment.WebRootFileProvider = new PhysicalFileProvider(app.Environment.WebRootPath);
-
     app.UseDeveloperExceptionPage();
 }
 
