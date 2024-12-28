@@ -1,4 +1,7 @@
 @model TranslationViewModel
+@{
+    string notesId = $"translation-notes-{Model.Quote.Id}-{Model.Language}";
+}
 
 <div class="translation" aria-label="@(Model.Language == "en" ? Strings.English : Strings.Japanese)">
     <div class="translation-actions">
@@ -10,9 +13,24 @@
         }
         @if (Model.HasNotes)
         {
-            <button title="@Strings.NotesButtonLabel" aria-label="@Strings.NotesButtonLabel">
+            <button
+                title="@Strings.NotesButtonLabel"
+                aria-label="@Strings.NotesButtonLabel"
+                popovertarget="@notesId"
+                style="anchor-name: --@notesId"
+            >
                 <span class="material-symbols-outlined" aria-hidden="true">description</span>
             </button>
+
+            <div
+                popover
+                id="@notesId"
+                class="translation-notes popover"
+                style="position-anchor: --@notesId"
+            >
+                @* Notes contains sanitized html *@
+                @Html.Raw(Model.Notes)
+            </div>
         }
     </div>
     <div class="translation-quote" lang="@Model.Language">

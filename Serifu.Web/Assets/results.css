@@ -93,7 +93,18 @@
 
       &::before {
         content: '～ ';
-        font-family: 'Noto Serif JP';
+        font-family: 'Noto Serif JP', serif;
+      }
+    }
+  }
+
+  .translation-notes {
+    padding: calc(1.5em - 0.5lh) 1em;
+
+    @supports (position-area: span-bottom right) {
+      @media (min-width: 500px) {
+        margin: 0 0.5em;
+        max-width: min(600px, 85vw);
       }
     }
   }
@@ -133,12 +144,10 @@
     }
   }
 
-  /* This could be broken out and reused if other popover menus are needed */
   .source-links {
-    padding: 0;
+    padding: 0.5em 0;
     min-width: 250px;
     text-align: left;
-    box-shadow: 0 20px 50px #111, 0 10px 25px #111;
 
     a {
       display: block;
@@ -153,17 +162,12 @@
       outline: none;
     }
 
-    /*
-      For mobile and browsers that don't support anchor positioning, the popover
-      will appear in the middle and larger, like a dialog rather than a context menu.
-    */
     @supports (position-area: span-bottom left) {
       @media (min-width: 500px) {
         margin: 0 20px 0 0;
-        position-area: span-bottom left;
-        position-try: span-bottom right, span-top left, span-top right, bottom span-right, top span-right;
+        padding: 0.25em 0;
         min-width: 125px;
-        box-shadow: 0 10px 25px #111;
+        position-area: span-bottom left;
 
         a {
           padding: 0.5em 1em;

@@ -1,0 +1,45 @@
+/*
+  Fallback styles in case unsupported
+*/
+[popover] {
+  display: none;
+
+  &:popover-open {
+    display: block;
+  }
+}
+
+/*
+  Default styles applied to class to avoid having to undo styles for other types
+  of popovers (namely the drawer)
+*/
+.popover {
+  border: 1px solid #414141;
+  background: #1c1c1c;
+  box-shadow: 0 20px 50px #111, 0 10px 25px #111;
+  box-sizing: border-box;
+  max-width: 85vw;
+  max-height: 50vh;
+  overflow-y: auto;
+  font-size: var(--font-size-smallish);
+
+  /*
+    For mobile and browsers that don't support anchor positioning, the popover
+    will appear in the middle and larger, like a dialog rather than a tooltip or
+    context menu.
+  */
+  @supports (position-area: span-bottom right) {
+    @media (min-width: 500px) {
+      margin: 0;
+      position-area: span-bottom right;
+      position-try:
+        span-bottom left,
+        span-bottom right,
+        span-top left,
+        span-top right,
+        bottom span-right,
+        top span-right;
+      box-shadow: 0 10px 25px #111;
+    }
+  }
+}

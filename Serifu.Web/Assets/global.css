@@ -47,16 +47,6 @@ rt {
   text-align: justify;
 }
 
-[popover] {
-  display: none;
-  border: 1px solid #414141;
-  background: #1c1c1c;
-
-  &:popover-open {
-    display: block;
-  }
-}
-
 .material-symbols-outlined {
   font-size-adjust: none;
 }

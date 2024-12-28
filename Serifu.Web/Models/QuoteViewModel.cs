@@ -24,8 +24,8 @@ public class QuoteViewModel
         Id = quote.Id;
         Source = quote.Source;
 
-        TranslationViewModel english = new(quote.English, "en", audioFileBaseUrl);
-        TranslationViewModel japanese = new(quote.Japanese, "ja", audioFileBaseUrl);
+        TranslationViewModel english = new(this, quote.English, "en", audioFileBaseUrl);
+        TranslationViewModel japanese = new(this, quote.Japanese, "ja", audioFileBaseUrl);
 
         (Left, Right) = englishFirst ? (english, japanese) : (japanese, english);
 

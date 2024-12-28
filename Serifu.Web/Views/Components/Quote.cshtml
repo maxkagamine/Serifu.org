@@ -1,5 +1,8 @@
 @model QuoteViewModel
 @inject IOptions<SerifuOptions> Options
+@{
+    string linksId = $"source-links-{Model.Id}";
+}
 
 <li class="quote">
     <partial name="Translation" model="Model.Left" />
@@ -7,9 +10,9 @@
     <div class="source">
         <div class="source-icon" style="--sprite-index: @((int)Model.Source)"></div>
         <button
-            popovertarget="source-links-@Model.Id"
+            popovertarget="@linksId"
             class="source-title"
-            style="anchor-name: --source-links-@Model.Id"
+            style="anchor-name: --@linksId"
         >
             @Strings.GetResourceString($"SourceTitle_{Model.Source}")
         </button>
@@ -20,9 +23,9 @@
     </div>
     <div
         popover
-        id="source-links-@Model.Id"
-        class="source-links"
-        style="position-anchor: --source-links-@Model.Id"
+        id="@linksId"
+        class="source-links popover"
+        style="position-anchor: --@linksId"
     >
         @foreach (ExternalLink link in Options.Value.SourceLinks[Model.Source])
         {

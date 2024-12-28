@@ -19,13 +19,18 @@ namespace Serifu.Web.Models;
 
 public class TranslationViewModel
 {
-    public TranslationViewModel(Translation translation, string language, string audioFileBaseUrl)
+    public TranslationViewModel(
+        QuoteViewModel quoteViewModel,
+        Translation translation,
+        string language,
+        string audioFileBaseUrl)
     {
         Language = language;
         SpeakerName = translation.SpeakerName;
         Text = translation.Text;
         Notes = translation.Notes;
         AudioFileUrl = translation.AudioFile is null ? null : $"{audioFileBaseUrl}/{translation.AudioFile}";
+        Quote = quoteViewModel;
     }
 
     /// <summary>
@@ -62,4 +67,6 @@ public class TranslationViewModel
     /// </summary>
     [MemberNotNullWhen(true, nameof(AudioFileUrl))]
     public bool HasAudioFile => AudioFileUrl is not null;
+
+    public QuoteViewModel Quote { get; }
 }
