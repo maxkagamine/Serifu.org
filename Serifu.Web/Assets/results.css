@@ -14,10 +14,46 @@
     margin-top: 1.5em;
   }
 
-  > :nth-child(1) { grid-area: left-actions; }
-  > :nth-child(2) { grid-area: left-quote; }
-  > :nth-child(3) { grid-area: right-actions; }
-  > :nth-child(4) { grid-area: right-quote; }
+  > :nth-child(1) .translation-actions { grid-area: left-actions; }
+  > :nth-child(1) .translation-quote { grid-area: left-quote; }
+  > :nth-child(2) .translation-actions { grid-area: right-actions; }
+  > :nth-child(2) .translation-quote { grid-area: right-quote; }
+
+  .translation {
+    /* The wrapping div exists to apply an aria-label to the group for screen readers */
+    display: contents;
+  }
+
+  .translation-actions {
+    --click-area-padding: 0.18em;
+    --button-spacing: calc(1lh - 1em);
+
+    display: flex;
+    flex-direction: column;
+    padding-top: calc(var(--button-spacing) / 2);
+
+    button {
+      border: none;
+      background: none;
+      font: inherit;
+      color: inherit;
+      cursor: pointer;
+      padding: 0;
+      width: calc(1em + (var(--click-area-padding) * 2));
+      height: calc(1em + (var(--click-area-padding) * 2));
+      margin: calc(var(--click-area-padding) * -1);
+      opacity: 0.75;
+
+      & + & {
+        margin-top: calc(var(--click-area-padding) * -1 + var(--button-spacing));
+      }
+
+      span {
+        display: block;
+        font-size: inherit;
+      }
+    }
+  }
 
   .source {
     grid-area: source;

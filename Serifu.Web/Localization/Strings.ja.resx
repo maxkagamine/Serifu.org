@@ -117,8 +117,14 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="English" xml:space="preserve">
+    <value>英語</value>
+  </data>
   <data name="FooterText" xml:space="preserve">
     <value>教育目的の利用専用です。セリフの著作権は各社に帰属します。詳しくは&lt;a href="{aboutUrl}"&gt;について&lt;/a&gt;ページをご確認ください。</value>
+  </data>
+  <data name="Japanese" xml:space="preserve">
+    <value>日本語</value>
   </data>
   <data name="NavLinkAbout" xml:space="preserve">
     <value>について</value>

@@ -1,9 +1,22 @@
 @model TranslationViewModel
 
-<div class="translation-actions">
-    
-</div>
+<div class="translation" aria-label="@(Model.Language == "en" ? Strings.English : Strings.Japanese)">
+    <div class="translation-actions">
+        @if (Model.HasAudioFile)
+        {
+            <button title="Listen" aria-label="Listen">
+                <span class="material-symbols-outlined" aria-hidden="true">volume_up</span>
+            </button>
+        }
+        @if (Model.HasNotes)
+        {
+            <button title="Notes" aria-label="Notes">
+                <span class="material-symbols-outlined" aria-hidden="true">description</span>
+            </button>
+        }
+    </div>
 
-<div class="translation">
-    @Model.Text
+    <div class="translation-quote">
+        @Model.Text
+    </div>
 </div>
