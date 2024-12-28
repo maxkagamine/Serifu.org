@@ -4,13 +4,13 @@
     <div class="translation-actions">
         @if (Model.HasAudioFile)
         {
-            <button title="Listen" aria-label="Listen">
+            <button title="@Strings.AudioButtonLabel" aria-label="@Strings.AudioButtonLabel">
                 <span class="material-symbols-outlined" aria-hidden="true">volume_up</span>
             </button>
         }
         @if (Model.HasNotes)
         {
-            <button title="Notes" aria-label="Notes">
+            <button title="@Strings.NotesButtonLabel" aria-label="@Strings.NotesButtonLabel">
                 <span class="material-symbols-outlined" aria-hidden="true">description</span>
             </button>
         }
