@@ -177,7 +177,4 @@
   <data name="SourceTitle_Witcher3" xml:space="preserve">
     <value>The Witcher 3: Wild Hunt</value>
   </data>
-  <data name="UnknownSpeakerName" xml:space="preserve">
-    <value>Unknown</value>
-  </data>
 </root>

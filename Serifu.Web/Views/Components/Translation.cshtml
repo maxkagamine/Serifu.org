@@ -17,6 +17,13 @@
     </div>
     <div class="translation-quote" lang="@Model.Language">
         <blockquote>@Model.Text</blockquote>
-        <cite>@(Model.HasSpeakerName ? Model.SpeakerName : Strings.UnknownSpeakerName)</cite>
+        @if (Model.HasSpeakerName)
+        {
+            <cite>@Model.SpeakerName</cite>
+        }
+        else
+        {
+            <cite>@(Model.Language == "en" ? "Unknown" : "不明")</cite>
+        }
     </div>
 </div>
