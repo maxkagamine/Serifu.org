@@ -1,7 +1,8 @@
-import type { UserConfig } from 'vite';
+import { defineConfig } from 'vite';
 import biomePlugin from 'vite-plugin-biome';
+import checker from 'vite-plugin-checker';
 
-export default {
+export default defineConfig(({ mode }) => ({
   appType: 'custom',
   root: 'Assets',
   build: {
@@ -26,7 +27,10 @@ export default {
   plugins: [
     biomePlugin({
       mode: 'check',
-      applyFixes: true,
+      applyFixes: mode === 'serve',
+    }),
+    checker({
+      typescript: true,
     }),
   ],
-} satisfies UserConfig;
+}));
