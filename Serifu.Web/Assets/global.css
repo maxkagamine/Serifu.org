@@ -56,3 +56,7 @@ rt {
     display: block;
   }
 }
+
+.material-symbols-outlined {
+  font-size-adjust: none;
+}
