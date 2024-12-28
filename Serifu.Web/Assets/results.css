@@ -177,4 +177,11 @@
       }
     }
   }
+
+  @media (max-width: 750px) {
+    grid-template: 'left-quote  left-actions ' auto
+                   'right-quote right-actions' auto
+                   'source      source       ' auto
+                   / 1fr auto;
+  }
 }
