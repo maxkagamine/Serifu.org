@@ -121,17 +121,9 @@
     color: rgb(from currentcolor r g b / 75%); /* Keeps active color fully opaque, as opposed to setting opacity */
   }
 
-  .source-icon {
-    --icon-size: 14px;
-
-    width: var(--icon-size);
-    height: var(--icon-size);
-    background-image: url(./images/game-icons.png);
-    background-repeat: no-repeat;
-    background-size: var(--icon-size);
-    background-position-y: calc(var(--sprite-index) * var(--icon-size) * -1);
+  .game-icon {
+    font-size: 14px;
     opacity: 0.75;
-    margin-right: 0.4em;
     margin-top: 1px;
   }
 
@@ -140,6 +132,7 @@
     cursor: pointer;
     text-decoration: underline;
     text-underline-offset: 2px;
+    margin-left: 0.4em;
 
     &:active {
       color: var(--active-link-color);

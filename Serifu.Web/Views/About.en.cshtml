@@ -1,3 +1,4 @@
+@model AboutPageViewModel
 @{
     ViewBag.SuppressFooter = true;
 }
@@ -16,7 +17,7 @@
     The following games are currently indexed:
 </p>
 
-<partial name="GameList" />
+<partial name="GameList" model="Model.GameListRows" />
 
 <p>
     <i>English translations and notes for Kantai Collection come courtesy of the <a href="https://en.kancollewiki.net/Kancolle_Wiki" target="_blank" rel="external noreferrer">Kancolle Wiki</a>.</i>

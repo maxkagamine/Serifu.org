@@ -32,3 +32,12 @@
     transform: rotate(360deg);
   }
 }
+
+.game-icon {
+  width: 1em;
+  height: 1em;
+  background-image: url(./images/game-icons.png);
+  background-repeat: no-repeat;
+  background-size: 1em;
+  background-position-y: calc(var(--sprite-index) * 1em * -1);
+}

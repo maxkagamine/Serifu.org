@@ -13,7 +13,9 @@
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using Serifu.Data;
+using Serifu.Web.Localization;
 using Serifu.Web.Models;
 using System.Globalization;
 
@@ -21,6 +23,13 @@ namespace Serifu.Web.Controllers;
 
 public class DefaultController : Controller
 {
+    private readonly IOptions<SerifuOptions> options;
+
+    public DefaultController(IOptions<SerifuOptions> options)
+    {
+        this.options = options;
+    }
+
     [HttpGet("/")]
     public ActionResult Index()
     {
@@ -139,6 +148,24 @@ public class DefaultController : Controller
     [HttpGet("/について")]
     public ActionResult About()
     {
-        return View();
+        AboutPageViewModel model = new()
+        {
+            GameListRows = Enum.GetValues<Source>()
+                .Select(s => new GameListRow()
+                {
+                    Source = s,
+                    Game = Strings.GetResourceString($"SourceTitle_{s}") ?? throw new Exception($"No source title for {s}."),
+                    Copyright = Strings.GetResourceString($"SourceCopyright_{s}") ?? throw new Exception($"No source copyright for {s}."),
+                    Links = options.Value.SourceLinks[s]
+                        .Where(link =>
+                            link.Language is null ||
+                            link.Language == CultureInfo.CurrentCulture.TwoLetterISOLanguageName)
+                        .ToList()
+                })
+                .OrderBy(r => r.Game, StringComparer.CurrentCultureIgnoreCase)
+                .ToList()
+        };
+
+        return View(model);
     }
 }
