@@ -38,7 +38,8 @@ builder.Services.Configure<WebEncoderOptions>(options =>
 });
 
 builder.Services.AddControllersWithViews()
-    .AddMvcLocalization();
+    .AddMvcLocalization()
+    .AddLocalizedViews();
 
 builder.Services.AddViteServices();
 
