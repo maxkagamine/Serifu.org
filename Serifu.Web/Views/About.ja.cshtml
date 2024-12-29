@@ -1,0 +1,49 @@
+@{
+    ViewBag.SuppressFooter = true;
+}
+
+<p>
+    Serifu.orgは、30万以上のゲームのセリフを検索して、日本語の単語や表現が英語でどのように翻訳されているか、またはその逆を調べることができるオープンソースの語学学習ツールです。それに機械学習（つまり、AI）による単語アラインメントを使って、検索した言葉に対応する翻訳部分がハイライトされます。<a href="https://tatoeba.org/ja" target="_blank" rel="external noreferrer nofollow">Tatoeba</a>と<a href="https://context.reverso.net/%E7%BF%BB%E8%A8%B3/" target="_blank" rel="external noreferrer nofollow">Reverso Context</a>に触発されました。
+</p>
+
+<p>
+    私は1ヶ月間ほぼ毎日ゲーセンに行って艦これをプレイしてから、「<a asp-action="Results" asp-route-query="concentrated power of the sun" data-search="concentrated power of the sun">sun</a>」を日本語で何と言うか知らないのに「<a asp-action="Results" asp-route-query="魚雷" data-search="魚雷">魚雷</a>」とか「<a asp-action="Results" asp-route-query="軽空母" data-search="軽空母">軽空母</a>」とかを覚えたことに気づいたら、このプロジェクトを始めました。どうやら瑞鳳がどの教科書よりも良い先生です！
+</p>
+
+<h2>クレジット</h2>
+
+<p>
+    現在インデックスされているゲームは以上のとおりです：
+</p>
+
+<partial name="GameList" />
+
+<p>
+    艦隊これくしょんの英語翻訳と注釈は<a href="https://en.kancollewiki.net/Kancolle_Wiki" target="_blank" rel="external noreferrer">Kancolle Wiki</a>から提供されています。
+</p>
+
+<h2>オープンソースへの貢献</h2>
+
+<p>
+    Serifu.orgのコードベースは完全に<a href="https://github.com/maxkagamine/Serifu" target="_blank" rel="external noreferrer">オーペンソース</a>で<a href="https://www.gnu.org/licenses/agpl-3.0.ja.html" target="_blank" rel="external noreferrer nofollow">AGPL 3.0</a>によるライセンスされています。これには、ウェブサイト自体、機械学習コード、それに様々なゲームのインポータと<a href="https://github.com/maxkagamine/Serifu/blob/master/Serifu.Importer.Skyrim/README.md" target="_blank" rel="external noreferrer">豊富なメモ</a>も含まれます。
+</p>
+
+<p>
+    それに加えて、このプロジェクトはいくつかの他のオーペンソースのプロジェクトを発生しました：
+</p>
+
+<ul>
+    <li>
+        <a href="https://github.com/maxkagamine/word-alignment-demo/blob/master/README.ja.md" target="_blank" rel="external noreferrer">word-alignment-demo</a> &mdash; <i>日本語と英語の文に対してmBERTベースの機械学習モデルを使用したAI・ニューラル単語アラインメントのデモ。</i>
+
+        <p>
+            これがSerifu.orgの「対応する言葉のハイライト」機能の概念実証として使われました。自分のPCで実行して、色々の文ペアを使ってどう動くかを見ることができます。私は結局WSPAlignのモデルを<a href="https://github.com/maxkagamine/Serifu/tree/master/Serifu.ML" target="_blank" rel="external noreferrer">自分の推論ロジック</a>と一緒に使用して、日本語のトークン化のためにMeCab+Veを使いました。
+        </p>
+    </li>
+    <li>
+        <a href="https://github.com/maxkagamine/sqlarserver/blob/master/README.ja.md" target="_blank" rel="external noreferrer">SQLiteアーカイブサーバー (通称 sqlarserver)</a> &mdash; <i>SQLiteデータベースをサーバーで利用可能なストレージバケットに変換して、ディレクトリリスト機能とHTTPおよびFTPサーバーモードを提供します。</i>
+    </li>
+    <li>
+        <a href="https://github.com/maxkagamine/Kagamine.Extensions" target="_blank" rel="external noreferrer">Kagamine.Extensions</a> &mdash; <i>.NET開発向けの便利なユーティリティと、現代的なコンソールアプリケーションの基礎。</i> 🍊
+    </li>
+</ul>

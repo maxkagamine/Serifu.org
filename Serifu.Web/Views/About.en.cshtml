@@ -1,0 +1,49 @@
+@{
+    ViewBag.SuppressFooter = true;
+}
+
+<p>
+    Serifu.org is an open source language learning tool that lets you search over 300,000 quotes from video games to see how an English word or idiom appears in its Japanese translation or vice versa, using machine learning (AI) to highlight the relevant part of the translation. Inspired by <a href="https://tatoeba.org/en" target="_blank" rel="external noreferrer nofollow">Tatoeba</a> and <a href="https://context.reverso.net/translation/" target="_blank" rel="external noreferrer nofollow">Reverso Context</a>.
+</p>
+
+<p>
+    I started this project after realizing that, after going to the arcade nearly every day for a month to play Kancolle, I’d learned words like <a asp-action="Results" asp-route-query="魚雷" data-search="魚雷"><ruby lang="ja">魚雷<rp>（</rp><rt>ぎょらい</rt><rp>）</rp></ruby></a> and <a asp-action="Results" asp-route-query="軽空母" data-search="軽空母"><ruby lang="ja">軽空母<rp>（</rp><rt>けいくうぼ</rt><rp>）</rp></ruby></a> before I even knew the word for “<a asp-action="Results" asp-route-query="concentrated power of the sun" data-search="concentrated power of the sun">sun</a>.” Turns out, Zuihou is a better language teacher than any textbook!
+</p>
+
+<h2>Credits</h2>
+
+<p>
+    The following games are currently indexed:
+</p>
+
+<partial name="GameList" />
+
+<p>
+    <i>English translations and notes for Kantai Collection come courtesy of the <a href="https://en.kancollewiki.net/Kancolle_Wiki" target="_blank" rel="external noreferrer">Kancolle Wiki</a>.</i>
+</p>
+
+<h2>Open source contributions</h2>
+
+<p>
+    The entire Serifu.org codebase is <a href="https://github.com/maxkagamine/Serifu" target="_blank" rel="external noreferrer">open source</a> and licensed under <a href="https://www.gnu.org/licenses/agpl-3.0.en.html" target="_blank" rel="external noreferrer nofollow">AGPL 3.0</a>. This includes the website, machine learning code, and importers for various games along with <a href="https://github.com/maxkagamine/Serifu/blob/master/Serifu.Importer.Skyrim/README.md" target="_blank" rel="external noreferrer">extensive notes</a>.
+</p>
+
+<p>
+    In addition, this project has spawned a few other open source projects:
+</p>
+
+<ul>
+    <li>
+        <a href="https://github.com/maxkagamine/word-alignment-demo" target="_blank" rel="external noreferrer">word-alignment-demo</a> &mdash; <i>Demonstration of AI/neural word alignment of English & Japanese text using mBERT-based machine learning models.</i>
+
+        <p>
+            This was used as a proof-of-concept for the “matching word highlighting” aspect of Serifu.org; you can run it yourself locally and experiment with different sentence pairs to see how it works. I ended up using the WSPAlign model together with <a href="https://github.com/maxkagamine/Serifu/tree/master/Serifu.ML" target="_blank" rel="external noreferrer">my own inference logic</a>, leveraging MeCab+Ve for Japanese tokenization.
+        </p>
+    </li>
+    <li>
+        <a href="https://github.com/maxkagamine/sqlarserver" target="_blank" rel="external noreferrer">SQLite Archive Server (AKA sqlarserver)</a> &mdash; <i>Turn an SQLite database into a servable storage bucket, with directory listing and both HTTP and FTP server modes.</i>
+    </li>
+    <li>
+        <a href="https://github.com/maxkagamine/Kagamine.Extensions" target="_blank" rel="external noreferrer">Kagamine.Extensions</a> &mdash; <i>Useful utilities for .NET development and a foundation for modern console applications.</i> 🍊
+    </li>
+</ul>
