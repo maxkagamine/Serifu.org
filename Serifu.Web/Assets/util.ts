@@ -1,6 +1,6 @@
-export function assertDefined<T>(value: T, name?: string): NonNullable<T> {
+export function assertDefined<T>(value: T, name: string): NonNullable<T> {
   if (value == null) {
-    throw new Error(`Assertion failed: expected ${name ?? 'value'} to be defined`);
+    throw new Error(`Assertion failed: ${name} should be defined`);
   }
   return value;
 }
