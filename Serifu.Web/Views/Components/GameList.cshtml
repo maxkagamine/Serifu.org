@@ -1,25 +1,30 @@
 @model IEnumerable<GameListRow>
 
-<table>
+@*
+    This is structured as a <table> for semantics/accessibility purposes, but the default UA styles are overridden with
+    a CSS grid to allow for responsive layout (moving the links to a second row to avoid horizontal scrolling).
+*@
+
+<table class="game-list">
     <thead>
         <tr>
-            <th>Game</th>
-            <th>Copyright</th>
-            <th>Links</th>
+            <th>@Strings.GameListHeaderGame</th>
+            <th>@Strings.GameListHeaderCopyright</th>
+            <th>@Strings.GameListHeaderLinks</th>
         </tr>
     </thead>
     <tbody>
         @foreach (GameListRow row in Model)
         {
             <tr>
-                <td>
+                <td class="game-title">
                     <div class="game-icon" style="--sprite-index: @((int)row.Source)"></div>
                     <span>@row.Game</span>
                 </td>
-                <td>
-                    <span class="copy">©</span> @row.Copyright
+                <td class="game-copyright">
+                    <span>©</span> @row.Copyright
                 </td>
-                <td>
+                <td class="game-links">
                     @for (int i = 0; i < row.Links.Count; i++)
                     {
                         ExternalLink link = row.Links[i];

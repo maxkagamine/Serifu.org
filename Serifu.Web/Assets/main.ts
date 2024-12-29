@@ -5,6 +5,7 @@ import './header.css';
 import './search-box.css';
 import './footer.css';
 import './results.css';
+import './about-page.css';
 
 import './images/serifu.svg';
 
