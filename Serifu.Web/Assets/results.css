@@ -1,6 +1,6 @@
 .results {
   list-style: none;
-  margin: 0;
+  margin: 2em 0;
   padding: 0;
 }
 
@@ -9,7 +9,7 @@
   grid-template: 'left-actions left-quote .      right-actions right-quote' auto
                  'source       source     source source        source     ' auto
                  / auto minmax(0, 1fr) 1em auto minmax(0, 1fr);
-  gap: 0.8em;
+  gap: 0.6em 0.8em;
   overflow-wrap: break-word;
 
   & + & {
@@ -94,6 +94,7 @@
       &::before {
         content: '～ ';
         font-family: 'Noto Serif JP', serif;
+        font-size-adjust: none;
       }
     }
   }
@@ -114,8 +115,9 @@
     display: flex;
     justify-content: flex-end;
     align-items: center;
+    font-family: sans-serif;
     font-size: 0.75em;
-    font-family: system-ui, sans-serif;
+    font-size-adjust: none;
     color: rgb(from currentcolor r g b / 75%); /* Keeps active color fully opaque, as opposed to setting opacity */
   }
 
@@ -137,10 +139,10 @@
     all: unset;
     cursor: pointer;
     text-decoration: underline;
+    text-underline-offset: 2px;
 
     &:active {
-      color: ActiveText;
-      color: -webkit-activelink; /* ActiveText is blue in Chrome for some reason */
+      color: var(--active-link-color);
     }
   }
 
