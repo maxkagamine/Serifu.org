@@ -26,6 +26,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Serifu.Data.Elasticsearch\Serifu.Data.Elasticsearch.csproj" />
     <ProjectReference Include="..\Serifu.Data\Serifu.Data.csproj" />
   </ItemGroup>
 

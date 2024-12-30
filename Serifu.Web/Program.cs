@@ -15,6 +15,7 @@
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.Extensions.WebEncoders;
+using Serifu.Data.Elasticsearch;
 using Serifu.Web;
 using Serifu.Web.Localization;
 using System.Text.Unicode;
@@ -22,7 +23,7 @@ using Vite.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddOptions<SerifuOptions>().BindConfiguration("");
+builder.Services.AddOptions<SerifuOptions>().BindConfiguration("").ValidateDataAnnotations();
 
 builder.Services.Configure<RazorViewEngineOptions>(options =>
 {
@@ -56,6 +57,8 @@ builder.Services.AddRequestLocalization(options =>
         new AcceptLanguageHeaderRequestCultureProvider()
     ];
 });
+
+builder.Services.AddSerifuElasticsearch();
 
 var app = builder.Build();
 

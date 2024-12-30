@@ -13,6 +13,8 @@ services:
       memlock:
         soft: -1
         hard: -1
+    ports:
+      - '9200:9200'
     environment:
       ES_JAVA_OPTS: '-Xms512m -Xmx512m -Des.enforce.bootstrap.checks=true -Xlog:disable'
       bootstrap.memory_lock: 'true'

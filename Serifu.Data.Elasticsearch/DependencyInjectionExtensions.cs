@@ -14,17 +14,26 @@
 
 using Elastic.Clients.Elasticsearch;
 using Elastic.Transport;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Serifu.Data.Elasticsearch;
 
 public static class DependencyInjectionExtensions
 {
-    public static IServiceCollection AddSerifuElasticsearch(this IServiceCollection services, string serverUrl)
+    public static IServiceCollection AddSerifuElasticsearch(this IServiceCollection services, string? serverUrl = null)
     {
-        // TODO: Get ES server url from configuration
-        services.AddSingleton<IElasticsearchClientSettings>(CreateElasticsearchSettings(serverUrl));
+        services.AddSingleton<IElasticsearchClientSettings>(provider =>
+        {
+            string url = serverUrl ??
+                provider.GetRequiredService<IConfiguration>()["ElasticsearchUrl"] ??
+                throw new Exception("Elasticsearch server URL not configured.");
+
+            return CreateElasticsearchSettings(url);
+        });
+
         services.AddSingleton<ElasticsearchClient>();
+        services.AddSingleton<IElasticsearchService, ElasticsearchService>();
 
         return services;
     }

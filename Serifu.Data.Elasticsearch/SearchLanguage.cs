@@ -12,30 +12,10 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
-using Serifu.Data;
-using System.ComponentModel.DataAnnotations;
-using System.Diagnostics.CodeAnalysis;
+namespace Serifu.Data.Elasticsearch;
 
-namespace Serifu.Web;
-
-public class SerifuOptions
+public enum SearchLanguage
 {
-    [Required]
-    public string AudioFileBaseUrl { get; set; } = "";
-
-    public Dictionary<Source, List<ExternalLink>> SourceLinks { get; set; } = [];
-}
-
-public class ExternalLink
-{
-    public string? Language { get; set; }
-
-    [field: MaybeNull]
-    public string Label
-    {
-        get => field ?? Url.Host;
-        set;
-    }
-
-    public required Uri Url { get; set; }
+    English,
+    Japanese
 }
