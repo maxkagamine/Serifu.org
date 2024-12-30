@@ -13,7 +13,8 @@
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
 using Kagamine.Extensions.Collections;
-using Kagamine.Extensions.EntityFramework;
+using Kagamine.Extensions.Logging;
+using Kagamine.Extensions.Utilities;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using System.Runtime.CompilerServices;
@@ -127,7 +128,7 @@ public class SqliteService : ISqliteService
 
             db.AudioFiles.Add(audioFile);
         }
-        
+
         // Update the cache if we were given a URI
         if (originalUri is not null)
         {
@@ -200,12 +201,28 @@ public class SqliteService : ISqliteService
         {
             if (!referencedAudioFiles.Contains(audioFile))
             {
-                logger.Information("Deleting orphaned audio file {ObjectName}", audioFile);
+                logger.Information("Found orphaned audio file {ObjectName}", audioFile);
                 audioFilesToDelete.Add(audioFile);
             }
         }
 
-        await db.AudioFiles.Where(a => audioFilesToDelete.Contains(a.ObjectName)).ExecuteDeleteAsync(cancellationToken);
+        var batchesOfAudioFilesToDelete = audioFilesToDelete.Chunk(100);
+        int deletedCount = 0;
+
+        using var _ = logger.BeginTimedOperation("Executing delete of {Count} orphaned audio files", audioFilesToDelete.Count);
+        using var progress = new TerminalProgressBar();
+
+        await db.Database.ExecuteSqlRawAsync("PRAGMA secure_delete = 0;", cancellationToken);
+
+        foreach (string[] batchOfAudioFilesToDelete in batchesOfAudioFilesToDelete)
+        {
+            await db.AudioFiles.Where(a => Enumerable.Contains(batchOfAudioFilesToDelete, a.ObjectName)) // https://github.com/dotnet/runtime/issues/109757
+                .ExecuteDeleteAsync(cancellationToken);
+
+            deletedCount += batchOfAudioFilesToDelete.Length;
+            logger.Information("Deleted {Count} of {TotalCount}", deletedCount, audioFilesToDelete.Count);
+            progress.SetProgress(deletedCount, audioFilesToDelete.Count);
+        }
     }
 
     /// <summary>
