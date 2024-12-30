@@ -12,11 +12,27 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
+using System.Collections;
+
 namespace Serifu.Data.Elasticsearch;
 
-public sealed class SearchResults
+public sealed class SearchResults : IReadOnlyList<SearchResult>
 {
-    public required SearchLanguage SearchLanguage { get; init; }
+    private readonly IReadOnlyList<SearchResult> results;
 
-    public required IReadOnlyList<Quote> Quotes { get; init; }
+    internal SearchResults(SearchLanguage searchLanguage, IReadOnlyList<SearchResult> results)
+    {
+        this.results = results;
+
+        SearchLanguage = searchLanguage;
+    }
+
+    public SearchLanguage SearchLanguage { get; }
+
+    public SearchResult this[int index] => results[index];
+    public int Count => results.Count;
+    public IEnumerator<SearchResult> GetEnumerator() => results.GetEnumerator();
+    IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable)results).GetEnumerator();
 }
+
+public sealed record SearchResult(Quote Quote); // TODO: Highlights

@@ -13,14 +13,17 @@
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
 using Serifu.Data;
+using Serifu.Data.Elasticsearch;
 using System.Globalization;
 
 namespace Serifu.Web.Models;
 
 public class QuoteViewModel
 {
-    public QuoteViewModel(Quote quote, bool englishFirst, string audioFileBaseUrl)
+    public QuoteViewModel(SearchResult result, bool englishFirst, string audioFileBaseUrl)
     {
+        var quote = result.Quote;
+
         Id = quote.Id;
         Source = quote.Source;
 

@@ -12,16 +12,12 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
-using Serifu.Data.Elasticsearch;
+using System.Text.RegularExpressions;
 
-namespace Serifu.Web.Models;
+namespace Serifu.Data.Elasticsearch;
 
-public class ResultsViewModel
+internal static partial class Regexes
 {
-    public ResultsViewModel(SearchResults results, bool englishFirst, string audioFileBaseUrl)
-    {
-        Quotes = results.Select(r => new QuoteViewModel(r, englishFirst, audioFileBaseUrl)).ToList();
-    }
-
-    public IReadOnlyList<QuoteViewModel> Quotes { get; }
+    [GeneratedRegex(@"[一-龠ぁ-ゔァ-ヴー々〆〤ヶ]")]
+    public static partial Regex JapaneseCharacters { get; }
 }

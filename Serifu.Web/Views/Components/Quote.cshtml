@@ -4,7 +4,7 @@
     string linksId = $"source-links-{Model.Id}";
 }
 
-<li class="quote">
+<li id="quote-@Model.Id" class="quote">
     <partial name="Translation" model="Model.Left" />
     <partial name="Translation" model="Model.Right" />
     <div class="source">

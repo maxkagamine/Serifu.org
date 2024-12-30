@@ -61,14 +61,10 @@ public class DefaultController : Controller
     public async Task<ActionResult> Results(string query, CancellationToken cancellationToken)
     {
         SearchResults results = await elasticsearch.Search(query, cancellationToken);
-
         bool englishFirst = results.SearchLanguage == SearchLanguage.English;
         string audioFileBaseUrl = options.Value.AudioFileBaseUrl;
 
-        ResultsViewModel model = new()
-        {
-            Quotes = results.Quotes.Select(q => new QuoteViewModel(q, englishFirst, audioFileBaseUrl)).ToList()
-        };
+        ResultsViewModel model = new(results, englishFirst, audioFileBaseUrl);
 
         return View(model);
     }
