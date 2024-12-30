@@ -479,15 +479,18 @@ internal sealed partial class SkyrimImporter : IDisposable
 
         if (combinedOverride.Length > 0)
         {
-            logger.Debug("Eligible speakers filtered by faction overrides: {@Speakers}", combinedOverride);
+            logger.Debug("Eligible speakers filtered by faction and/or faction voice type overrides: {@Speakers}",
+                combinedOverride);
+
             result = combinedOverride;
         }
-        else
+
+        if (factionOverride.Length == 0)
         {
             // If the majority of the speakers are generic NPCs, rather than have quotes attributed to Bandit Marauder,
             // Bandit Outlaw, and so on, find the name that appears most often ("Bandit") and filter to NPCs with that
-            // name. Note that we skip this when a faction override is in effect so that generic guard dialogue doesn't
-            // all get attributed to Whiterun Guard.
+            // name. We skip this when a faction override (but not faction *voice type* override, since that's set for
+            // BanditFaction) is in effect so that generic guard dialogue doesn't all get attributed to Whiterun Guard.
             int uniqueCount = result.Count(s => speakerFactory.GetNpcProperty(s, npc =>
                 npc.Configuration.Flags.HasFlag(NpcConfiguration.Flag.Unique)));
             float percentGeneric = 1 - ((float)uniqueCount / result.Count());
