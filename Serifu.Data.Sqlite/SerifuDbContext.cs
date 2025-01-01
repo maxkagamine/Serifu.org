@@ -57,6 +57,8 @@ public class SerifuDbContext : DbContext
                 .HasConversion(
                     model => model.AsBytes().ToArray(),
                     column => ValueArray.FromBytes<Alignment>(column));
+
+            entity.Ignore(q => q.Weight);
         });
 
         modelBuilder.Entity<AudioFile>(entity =>

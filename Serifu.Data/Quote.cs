@@ -47,4 +47,13 @@ public record Quote
     /// The date this quote was imported. May be used to determine if quotes need to be updated.
     /// </summary>
     public DateTime DateImported { get; init; } = DateTime.Now;
+
+    /// <summary>
+    /// A weight applied to the quote when building the Elasticsearch index to ensure that sources with a large number
+    /// of quotes don't dominate the search results.
+    /// </summary>
+    /// <remarks>
+    /// This property will be set automatically and is not stored in sqlite.
+    /// </remarks>
+    public double Weight { get; init; }
 }

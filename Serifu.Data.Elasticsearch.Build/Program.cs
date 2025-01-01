@@ -53,8 +53,11 @@ builder.Run(async (
         cancellationToken);
 
     logger.Information("Loading quotes from sqlite db");
-    var quotes = sqlite.GetQuotesForExport(cancellationToken);
-    var batches = await quotes.Buffer(BatchSize).ToArrayAsync(cancellationToken);
+    var quotes = await sqlite.GetQuotesForExport(cancellationToken).ToArrayAsync(cancellationToken);
+
+    logger.Information("Calculating weights");
+    var weights = quotes.CountBy(q => q.Source).ToDictionary(x => x.Key, x => 1 - ((double)x.Value / quotes.Length));
+    var batches = quotes.Select(q => q with { Weight = weights[q.Source] }).Chunk(BatchSize).ToArray();
 
     for (int i = 0; i < batches.Length; i++)
     {

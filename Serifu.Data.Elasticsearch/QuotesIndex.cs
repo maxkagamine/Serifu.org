@@ -40,14 +40,15 @@ public static class QuotesIndex
             ["source"] = new KeywordProperty(),
             ["english"] = CreateTranslationMappings(EnglishConjugationsAnalyzer),
             ["japanese"] = CreateTranslationMappings(JapaneseConjugationsAnalyzer),
+            ["alignmentData"] = new KeywordProperty()
+            {
+                Index = false
+            },
             ["dateImported"] = new DateProperty()
             {
                 Index = false
             },
-            ["alignmentData"] = new KeywordProperty()
-            {
-                Index = false
-            }
+            ["weight"] = new DoubleNumberProperty()
         }
     };
 
