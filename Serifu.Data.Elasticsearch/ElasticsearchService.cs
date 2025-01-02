@@ -15,19 +15,33 @@
 using Elastic.Clients.Elasticsearch;
 using Elastic.Clients.Elasticsearch.QueryDsl;
 using Elastic.Transport;
+using Elastic.Transport.Extensions;
+using Serilog;
 
 namespace Serifu.Data.Elasticsearch;
 
 public class ElasticsearchService : IElasticsearchService
 {
     private const int PageSize = 39;
+    private const string WeightedRandomScriptId = "weighted_random";
 
     private readonly ElasticsearchClient client;
+    private readonly ILogger logger;
 
-    public ElasticsearchService(ElasticsearchClient client)
+    public ElasticsearchService(ElasticsearchClient client, ILogger logger)
     {
         this.client = client;
+        this.logger = logger.ForContext<ElasticsearchService>();
     }
+
+    public static PutScriptRequest WeightedRandomScript { get; } = new(WeightedRandomScriptId, "number_sort")
+    {
+        Script = new()
+        {
+            Language = ScriptLanguage.Painless,
+            Source = "Math.pow(Math.random(), 1 / doc['weight'].value)"
+        }
+    };
 
     public async Task<SearchResults> Search(string query, CancellationToken cancellationToken)
     {
@@ -38,43 +52,48 @@ public class ElasticsearchService : IElasticsearchService
             Field searchField = new($"{searchTranslation}.text");
             Field conjugationsField = new($"{searchTranslation}.text.conjugations");
 
-            SearchResponse<Quote> response = await client.SearchAsync<Quote>(
-                new SearchRequest()
+            SearchRequest request = new()
+            {
+                Query = new BoolQuery()
                 {
-                    Query = new BoolQuery()
-                    {
-                        Should = [
-                            new MatchPhraseQuery(searchField)
-                            {
-                                Query = query
-                            },
-                            new MatchQuery(searchField)
-                            {
-                                Query = query,
-                                MinimumShouldMatch = "75%"
-                            },
-                            new MatchQuery(conjugationsField)
-                            {
-                                Query = query,
-                                MinimumShouldMatch = "75%"
-                            }
-                        ]
-                    },
-                    Sort = [
-                        SortOptions.Score(new ScoreSort()
+                    Should = [
+                        new MatchPhraseQuery(searchField)
                         {
-                            Order = SortOrder.Desc
-                        }),
-                        SortOptions.Script(new ScriptSort()
+                            Query = query
+                        },
+                        new MatchQuery(searchField)
                         {
-                            Script = new Script(new InlineScript("Math.pow(Math.random(), 1 / doc['weight'].value)")),
-                            Type = ScriptSortType.Number,
-                            Order = SortOrder.Desc
-                        })
-                    ],
-                    Size = PageSize
+                            Query = query,
+                            MinimumShouldMatch = "75%"
+                        },
+                        new MatchQuery(conjugationsField)
+                        {
+                            Query = query,
+                            MinimumShouldMatch = "75%"
+                        }
+                    ]
                 },
-                cancellationToken);
+                Sort = [
+                    SortOptions.Score(new ScoreSort()
+                    {
+                        Order = SortOrder.Desc
+                    }),
+                    SortOptions.Script(new ScriptSort()
+                    {
+                        Script = new Script(new StoredScriptId(WeightedRandomScriptId)),
+                        Type = ScriptSortType.Number,
+                        Order = SortOrder.Desc
+                    })
+                ],
+                Size = PageSize
+            };
+
+#if DEBUG
+            logger.Debug("Search request:\n{Request}",
+                client.RequestResponseSerializer.SerializeToString(request, SerializationFormatting.Indented));
+#endif
+
+            SearchResponse<Quote> response = await client.SearchAsync<Quote>(request, cancellationToken);
 
             return new SearchResults(searchLanguage, response.Hits.Select(x => new SearchResult(x.Source!)).ToArray());
         }

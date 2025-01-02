@@ -52,6 +52,9 @@ builder.Run(async (
         x => x.Mappings(QuotesIndex.Mappings).Settings(QuotesIndex.Settings),
         cancellationToken);
 
+    logger.Information("Creating stored script");
+    await elasticsearch.PutScriptAsync(ElasticsearchService.WeightedRandomScript, cancellationToken);
+
     logger.Information("Loading quotes from sqlite db");
     var quotes = await sqlite.GetQuotesForExport(cancellationToken)
         .OrderBy(_ => Guid.NewGuid()) // Pre-shuffle the index, since ES seems to favor earlier documents even when
