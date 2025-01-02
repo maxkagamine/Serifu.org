@@ -12,9 +12,9 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
-using Elastic.Transport;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using Serifu.Data.Elasticsearch;
 using Serifu.Web.Models;
 
 namespace Serifu.Web.Controllers;
@@ -33,8 +33,7 @@ public class ErrorController : Controller
             Response.StatusCode = statusCode = StatusCodes.Status404NotFound;
         }
 
-        if (exceptionHandler?.Error is TransportException ex &&
-            ex.InnerException is HttpRequestException { HttpRequestError: > HttpRequestError.Unknown })
+        if (exceptionHandler?.Error is ElasticsearchException { IsConnectionError: true })
         {
             // Elasticsearch is down
             Response.StatusCode = statusCode = StatusCodes.Status503ServiceUnavailable;

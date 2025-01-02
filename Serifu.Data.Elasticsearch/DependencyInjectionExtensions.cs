@@ -48,7 +48,7 @@ public static class DependencyInjectionExtensions
         settings.ThrowExceptions();
 
 #if DEBUG
-        settings.EnableDebugMode();
+        settings.PrettyJson();
 #endif
 
         return settings;

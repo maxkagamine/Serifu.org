@@ -14,6 +14,7 @@
 
 using Elastic.Clients.Elasticsearch;
 using Elastic.Clients.Elasticsearch.QueryDsl;
+using Elastic.Transport;
 
 namespace Serifu.Data.Elasticsearch;
 
@@ -30,50 +31,57 @@ public class ElasticsearchService : IElasticsearchService
 
     public async Task<SearchResults> Search(string query, CancellationToken cancellationToken)
     {
-        SearchLanguage searchLanguage = DetectLanguage(query);
-        string searchTranslation = searchLanguage == SearchLanguage.English ? "english" : "japanese";
-        Field searchField = new($"{searchTranslation}.text");
-        Field conjugationsField = new($"{searchTranslation}.text.conjugations");
+        try
+        {
+            SearchLanguage searchLanguage = DetectLanguage(query);
+            string searchTranslation = searchLanguage == SearchLanguage.English ? "english" : "japanese";
+            Field searchField = new($"{searchTranslation}.text");
+            Field conjugationsField = new($"{searchTranslation}.text.conjugations");
 
-        SearchResponse<Quote> response = await client.SearchAsync<Quote>(
-            new SearchRequest()
-            {
-                Query = new BoolQuery()
+            SearchResponse<Quote> response = await client.SearchAsync<Quote>(
+                new SearchRequest()
                 {
-                    Should = [
-                        new MatchPhraseQuery(searchField)
+                    Query = new BoolQuery()
+                    {
+                        Should = [
+                            new MatchPhraseQuery(searchField)
+                            {
+                                Query = query
+                            },
+                            new MatchQuery(searchField)
+                            {
+                                Query = query,
+                                MinimumShouldMatch = "75%"
+                            },
+                            new MatchQuery(conjugationsField)
+                            {
+                                Query = query,
+                                MinimumShouldMatch = "75%"
+                            }
+                        ]
+                    },
+                    Sort = [
+                        SortOptions.Score(new ScoreSort()
                         {
-                            Query = query
-                        },
-                        new MatchQuery(searchField)
+                            Order = SortOrder.Desc
+                        }),
+                        SortOptions.Script(new ScriptSort()
                         {
-                            Query = query,
-                            MinimumShouldMatch = "75%"
-                        },
-                        new MatchQuery(conjugationsField)
-                        {
-                            Query = query,
-                            MinimumShouldMatch = "75%"
-                        }
-                    ]
+                            Script = new Script(new InlineScript("Math.pow(Math.random(), 1 / doc['weight'].value)")),
+                            Type = ScriptSortType.Number,
+                            Order = SortOrder.Desc
+                        })
+                    ],
+                    Size = PageSize
                 },
-                Sort = [
-                    SortOptions.Score(new ScoreSort()
-                    {
-                        Order = SortOrder.Desc
-                    }),
-                    SortOptions.Script(new ScriptSort()
-                    {
-                        Script = new Script(new InlineScript("Math.pow(Math.random(), 1 / doc['weight'].value)")),
-                        Type = ScriptSortType.Number,
-                        Order = SortOrder.Desc
-                    })
-                ],
-                Size = PageSize
-            },
-            cancellationToken);
+                cancellationToken);
 
-        return new SearchResults(searchLanguage, response.Hits.Select(x => new SearchResult(x.Source!)).ToArray());
+            return new SearchResults(searchLanguage, response.Hits.Select(x => new SearchResult(x.Source!)).ToArray());
+        }
+        catch (TransportException ex)
+        {
+            throw new ElasticsearchException(ex);
+        }
     }
 
     private static SearchLanguage DetectLanguage(string query) =>
