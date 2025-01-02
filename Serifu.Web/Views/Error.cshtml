@@ -1,0 +1,45 @@
+@using System.Text.Json
+@using Elastic.Transport
+@model ErrorViewModel
+@{
+    Layout = "BaseLayout";
+    ViewBag.Title = Strings.ErrorPageTitle;
+}
+
+<main class="error-page">
+    <img vite-src="/images/serifu.svg" aria-hidden="true" />
+
+    @switch (Model.StatusCode)
+    {
+        case StatusCodes.Status404NotFound:
+            <p>@Strings.ErrorPage404</p>
+            break;
+        case StatusCodes.Status503ServiceUnavailable:
+            <p>@Strings.ErrorPage503</p>
+            break;
+        default:
+            <p>@Strings.FormatErrorPageXXX(Model.StatusCode)</p>
+            break;
+    }
+
+    @if (Model.StatusCode != StatusCodes.Status503ServiceUnavailable)
+    {
+        <p>
+            <a asp-controller="Default" asp-action="Home" asp-route-lang="@CultureInfo.CurrentCulture.TwoLetterISOLanguageName">@Strings.ErrorPageBackToHome</a>
+        </p>
+    }
+
+    <p class="request-id" lang="en">
+        Request ID: @Context.TraceIdentifier
+    </p>
+
+    <environment names="Development">
+        @if (Model.Exception is not null)
+        {
+            <script>
+                console.error(@Html.Raw(JsonSerializer.Serialize(
+                    Model.Exception is TransportException ex ? ex.DebugInformation : Model.Exception.ToString())));
+            </script>
+        }
+    </environment>
+</main>

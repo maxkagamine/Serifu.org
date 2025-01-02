@@ -6,6 +6,7 @@ import './search-box.css';
 import './footer.css';
 import './results.css';
 import './about-page.css';
+import './error-page.css';
 
 import './images/serifu.svg';
 
@@ -29,4 +30,4 @@ import './audio-button';
 // [0]: https://developer.chrome.com/blog/cookie-max-age-expires
 //
 const lang = document.documentElement.lang;
-document.cookie = `.AspNetCore.Culture=c=${lang}|uic=${lang}; Max-Age=34560000`;
+document.cookie = `.AspNetCore.Culture=c=${lang}|uic=${lang}; path=/; max-age=34560000`;

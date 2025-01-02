@@ -62,10 +62,8 @@ builder.Services.AddSerifuElasticsearch();
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseDeveloperExceptionPage();
-}
+app.UseExceptionHandler("/Error/500");
+app.UseStatusCodePagesWithReExecute("/Error/{0}");
 
 app.UseStaticFiles();
 app.UseRouting();

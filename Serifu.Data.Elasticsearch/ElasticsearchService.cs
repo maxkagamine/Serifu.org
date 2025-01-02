@@ -14,8 +14,6 @@
 
 using Elastic.Clients.Elasticsearch;
 using Elastic.Clients.Elasticsearch.QueryDsl;
-using Elastic.Transport;
-using System.Text;
 
 namespace Serifu.Data.Elasticsearch;
 
@@ -32,51 +30,43 @@ public class ElasticsearchService : IElasticsearchService
 
     public async Task<SearchResults> Search(string query, CancellationToken cancellationToken)
     {
-        try
-        {
-            SearchLanguage searchLanguage = DetectLanguage(query);
-            Field searchField = new(searchLanguage == SearchLanguage.English ? "english.text" : "japanese.text");
+        SearchLanguage searchLanguage = DetectLanguage(query);
+        Field searchField = new(searchLanguage == SearchLanguage.English ? "english.text" : "japanese.text");
 
-            SearchResponse<Quote> response = await client.SearchAsync<Quote>(
-                new SearchRequest()
+        SearchResponse<Quote> response = await client.SearchAsync<Quote>(
+            new SearchRequest()
+            {
+                Query = new BoolQuery()
                 {
-                    Query = new BoolQuery()
-                    {
-                        Should = [
-                            new MatchQuery(searchField)
-                            {
-                                Query = query,
-                                MinimumShouldMatch = "75%"
-                            },
-                            new MatchPhraseQuery(searchField)
-                            {
-                                Query = query
-                            }
-                        ]
-                    },
-                    Sort = [
-                        SortOptions.Score(new ScoreSort()
+                    Should = [
+                        new MatchQuery(searchField)
                         {
-                            Order = SortOrder.Desc
-                        }),
-                        SortOptions.Script(new ScriptSort()
+                            Query = query,
+                            MinimumShouldMatch = "75%"
+                        },
+                        new MatchPhraseQuery(searchField)
                         {
-                            Script = new Script(new InlineScript("Math.pow(Math.random(), 1 / doc['weight'].value)")),
-                            Type = ScriptSortType.Number,
-                            Order = SortOrder.Desc
-                        })
-                    ],
-                    Size = PageSize
+                            Query = query
+                        }
+                    ]
                 },
-                cancellationToken);
+                Sort = [
+                    SortOptions.Score(new ScoreSort()
+                    {
+                        Order = SortOrder.Desc
+                    }),
+                    SortOptions.Script(new ScriptSort()
+                    {
+                        Script = new Script(new InlineScript("Math.pow(Math.random(), 1 / doc['weight'].value)")),
+                        Type = ScriptSortType.Number,
+                        Order = SortOrder.Desc
+                    })
+                ],
+                Size = PageSize
+            },
+            cancellationToken);
 
-            return new SearchResults(searchLanguage, response.Hits.Select(x => new SearchResult(x.Source!)).ToArray());
-        }
-        catch (TransportException ex) when (ex.ApiCallDetails.HttpStatusCode is not null)
-        {
-            string body = Encoding.UTF8.GetString(ex.ApiCallDetails.ResponseBodyInBytes);
-            throw new Exception($"Elasticsearch failed ({ex.ApiCallDetails.HttpStatusCode}): {body}", ex);
-        }
+        return new SearchResults(searchLanguage, response.Hits.Select(x => new SearchResult(x.Source!)).ToArray());
     }
 
     private static SearchLanguage DetectLanguage(string query) =>

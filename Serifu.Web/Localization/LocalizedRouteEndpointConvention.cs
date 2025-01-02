@@ -12,6 +12,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
+using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Routing.Patterns;
 using System.Text.RegularExpressions;
 
@@ -48,6 +49,13 @@ public static partial class LocalizedRouteEndpointConvention
         // We don't set a language for the index so that the culture provider falls back to cookie or Accept-Language,
         // which the index action can use to redirect to the appropriate homepage for the user.
         if (!routePattern.PathSegments.Any())
+        {
+            return;
+        }
+
+        // Similarly, we won't set a language for the error page. However, this means any links on the error page will
+        // need to explicitly set asp-route-lang (unless we hook into the link generator).
+        if (route.Metadata.Any(m => m is ControllerActionDescriptor { ControllerName: "Error" }))
         {
             return;
         }

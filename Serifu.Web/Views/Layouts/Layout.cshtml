@@ -1,74 +1,13 @@
-<!--
-                 ,RNNRRgg,
-                ]RC     "*%Rmg,
-               )$C           "*%Rg                             ,,,,,,
-              ,RF                "%Rg                  ,ggRRNM**""""**MN%Rw
-              ]R                    *$g           ,gRRM*'                $R
-              ]$                      %Rg      ,gRM"                     RR
-              ]$                       '%R   ,RR'                       ]RF
-              ]RC                        %R gR"                         RR
-               $$                        'RRR'                        ,RR
-                $R                        RR'                        gRF
-                 %R                       $R                       ,RR"
-                  ]Rg                    jRF                      gRF
-                  ,]RRg                  $R                    ,RRP
-              ,gRM"' '%RR,,             g$Ngg,             ,gRRM'
-           ,RM"         '"*MMNBBBBBB%BRRP" 'j$Rg,,,,,,,ggRRN*"*Rg
-         gR"                          "%RRRRRP"**MMMM**"'       "Rg
-       gN'                                                        *Rg
-     ,R"                                                            1Rw
-    /R      ,gRg,,                ,R                                 "%g
-   ]R      gR$C ""*MBRRggg,     gRF]R                      4m,         %R
-  ]$     ,RF]R*MNRgg,   '""*NRmRF   $g                  ,,,gg$Rg        %R
- ,RC    ;R' $F     "*MNRRgg,gRF      $g   ,,,gggRRNNNM**""'' ,,$R        $R
- $R    ,R' jRNgg,,        ]RF         %RR*"'       ,,,ggmRNM*"""$R       ]Rr
-,RF   ,RC  $R   '"*MNRRggRN            "%RRMMM****""''          "$g       $R
-]$   ,RF   $$"MNBRRmggggR'               "$g              ,,ggRRNNRL      ]Rr
-$$   $R    ]$        ,RR                   *RR,    ,ggRNM*"'',ggRM$R       $R
-$$  jR'     $L      1R"                      '*%RR$,,,ggRRM*"'    ]$F      $$
-]R  $$      $R     #R                            '"M%RRggg,,      ]RP      $$
- %R $R      '$L   )$'      gRR                     gRR, '""*MNRRRRRRF  ,,  $$
- '$g$R      jRR  ,RR      ]RRRP                    $RRR       ]RF      ]$ ,RK
-  '%RR      ]$$R $$P      $R$R                     ]RRR       jRP      RF ]$
-          ,RN$ %RR$F      '""                        ''       ]$F     $R  RR
-       ,gRM' $W "'$K                 '._____.'                $R     j$C jRL
-  ;RRRM*'    ]R   ]R,                                        ]RF    ,RF  'RR
-    "%RRg,,   $R   "%Rg,                                   ,gRF    gRF    "$R
-        "*NBRRR$g    $$*%RRNgg,,,                ,,,gggRRRRP'    ,RR'      '%RR
-          ,RR" "$g    $W    '""*MMR$RRNBBRRR%RRRMM*""''- $R    ,gRQgggRRRRRRRRN"
-          *NNNNNNNRg  "$g     ,gRM$ljRk     ]Rl%%R,     gR'  ,RRF $R"'
-                  '%RRg,%g  gRMMlllll%RRNNNR$M$lll%Rg,,R$ggRR$,,  $R
-                      "%RRRR$$$W, *&ll$R   RRl$l&M*']NRRP"$RM*MNNNBM
-                        ,g$RRRRRglR,'"Y$R $R*"',wg$$RRRMMM&R,
-                       R"]g ,"%RR%RRgRgl$R$W$$RRRRR$F $  g '$g
--->
-<!DOCTYPE html>
-<html lang="@CultureInfo.CurrentCulture.TwoLetterISOLanguageName">
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewBag.Title</title>
-    <style>
-        :root {
-            color-scheme: dark;
-            background: #111;
-            visibility: hidden;
-        }
-    </style>
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Merriweather:ital@0;1&family=Noto+Serif+JP&display=swap" />
-    <link rel="stylesheet" vite-href="~/main.ts" />
-</head>
-<body>
-    <partial name="Header" />
-    <partial name="SearchBox" />
-    <main>
-        @RenderBody()
-    </main>
-    @if ((bool?)ViewBag.SuppressFooter != true)
-    {
-        <partial name="Footer" />
-    }
-    <script type="module" vite-src="~/main.ts"></script>
-</body>
-</html>
+@{
+    Layout = "BaseLayout";
+}
+
+<partial name="Header" />
+<partial name="SearchBox" />
+<main>
+    @RenderBody()
+</main>
+@if ((bool?)ViewBag.SuppressFooter != true)
+{
+    <partial name="Footer" />
+}

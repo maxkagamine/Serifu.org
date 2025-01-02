@@ -1,0 +1,23 @@
+.error-page {
+  width: 500px;
+  max-height: 100%;
+
+  body:has(&) {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    box-sizing: border-box;
+  }
+
+  img {
+    height: 2.5em;
+  }
+
+  .request-id {
+    font-family: monospace;
+    font-size: 12px;
+    opacity: 0.75;
+    margin-top: 2rem;
+  }
+}
