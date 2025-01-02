@@ -18,10 +18,14 @@ using Microsoft.Extensions.WebEncoders;
 using Serifu.Data.Elasticsearch;
 using Serifu.Web;
 using Serifu.Web.Localization;
+using Serilog;
 using System.Text.Unicode;
 using Vite.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddSerilog(config => config
+    .ReadFrom.Configuration(builder.Configuration));
 
 builder.Services.AddOptions<SerifuOptions>().BindConfiguration("").ValidateDataAnnotations();
 
@@ -61,6 +65,8 @@ builder.Services.AddRequestLocalization(options =>
 builder.Services.AddSerifuElasticsearch();
 
 var app = builder.Build();
+
+app.UseSerilogRequestLogging();
 
 app.UseExceptionHandler("/Error/500");
 app.UseStatusCodePagesWithReExecute("/Error/{0}");
