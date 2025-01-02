@@ -31,7 +31,9 @@ public class ElasticsearchService : IElasticsearchService
     public async Task<SearchResults> Search(string query, CancellationToken cancellationToken)
     {
         SearchLanguage searchLanguage = DetectLanguage(query);
-        Field searchField = new(searchLanguage == SearchLanguage.English ? "english.text" : "japanese.text");
+        string searchTranslation = searchLanguage == SearchLanguage.English ? "english" : "japanese";
+        Field searchField = new($"{searchTranslation}.text");
+        Field conjugationsField = new($"{searchTranslation}.text.conjugations");
 
         SearchResponse<Quote> response = await client.SearchAsync<Quote>(
             new SearchRequest()
@@ -39,14 +41,19 @@ public class ElasticsearchService : IElasticsearchService
                 Query = new BoolQuery()
                 {
                     Should = [
+                        new MatchPhraseQuery(searchField)
+                        {
+                            Query = query
+                        },
                         new MatchQuery(searchField)
                         {
                             Query = query,
                             MinimumShouldMatch = "75%"
                         },
-                        new MatchPhraseQuery(searchField)
+                        new MatchQuery(conjugationsField)
                         {
-                            Query = query
+                            Query = query,
+                            MinimumShouldMatch = "75%"
                         }
                     ]
                 },
