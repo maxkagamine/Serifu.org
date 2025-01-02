@@ -15,6 +15,7 @@ class AudioButton extends HTMLElement {
     this.audio = assertDefined(this.querySelector('audio'), 'audio');
 
     this.addEventListener('click', this.onClick);
+    this.addEventListener('keydown', this.onKeyDown);
     this.audio.addEventListener('waiting', this.onLoading);
     this.audio.addEventListener('playing', this.onPlaying);
     this.audio.addEventListener('pause', this.onStopped);
@@ -23,6 +24,7 @@ class AudioButton extends HTMLElement {
   disconnectedCallback() {
     this.stop();
     this.removeEventListener('click', this.onClick);
+    this.removeEventListener('keydown', this.onKeyDown);
     this.audio.removeEventListener('waiting', this.onLoading);
     this.audio.removeEventListener('playing', this.onPlaying);
     this.audio.removeEventListener('pause', this.onStopped);
@@ -37,6 +39,13 @@ class AudioButton extends HTMLElement {
       this.play();
     } else {
       this.stop();
+    }
+  };
+
+  onKeyDown = (e: KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      this.onClick();
     }
   };
 

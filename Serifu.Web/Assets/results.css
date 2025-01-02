@@ -133,6 +133,7 @@
 
   .source-title {
     all: unset;
+    outline: revert; /* Keyboard focus */
     cursor: pointer;
     text-decoration: underline;
     text-underline-offset: 2px;
