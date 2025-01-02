@@ -14,7 +14,6 @@
 
 using Serifu.Data;
 using Serifu.Data.Elasticsearch;
-using System.Globalization;
 
 namespace Serifu.Web.Models;
 
@@ -31,9 +30,6 @@ public class QuoteViewModel
         TranslationViewModel japanese = new(this, quote.Japanese, "ja", audioFileBaseUrl);
 
         (Left, Right) = englishFirst ? (english, japanese) : (japanese, english);
-
-        Context = CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "en" ?
-            quote.English.Context : quote.Japanese.Context;
     }
 
     /// <inheritdoc cref="Quote.Id"/>
@@ -51,12 +47,4 @@ public class QuoteViewModel
     /// The translation appearing on the right, opposite of the search language.
     /// </summary>
     public TranslationViewModel Right { get; }
-
-    /// <inheritdoc cref="Translation.Context"/>
-    public string Context { get; }
-
-    /// <summary>
-    /// Whether this quote has a context.
-    /// </summary>
-    public bool HasContext => !string.IsNullOrWhiteSpace(Context);
 }

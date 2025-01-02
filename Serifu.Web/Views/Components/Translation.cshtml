@@ -1,6 +1,9 @@
 @model TranslationViewModel
 @{
     string notesId = $"translation-notes-{Model.Quote.Id}-{Model.Language}";
+
+    string speakerName = Model.HasSpeakerName ? Model.SpeakerName : Model.Language == "en" ? "Unknown" : "不明";
+    string? context = Model.HasContext ? Model.Context : null;
 }
 
 <div class="translation" aria-label="@(Model.Language == "en" ? Strings.English : Strings.Japanese)">
@@ -39,13 +42,6 @@
     </div>
     <div class="translation-quote" lang="@Model.Language">
         <blockquote>@Model.Text</blockquote>
-        @if (Model.HasSpeakerName)
-        {
-            <cite>@Model.SpeakerName</cite>
-        }
-        else
-        {
-            <cite>@(Model.Language == "en" ? "Unknown" : "不明")</cite>
-        }
+        <cite title="@context">@speakerName</cite>
     </div>
 </div>

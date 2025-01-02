@@ -144,9 +144,6 @@
   <data name="SearchBoxPlaceholder" xml:space="preserve">
     <value>Search for English or Japanese words or phrases</value>
   </data>
-  <data name="SourceTitleContextSeparator" xml:space="preserve">
-    <value>, </value>
-  </data>
   <data name="SourceTitle_BaldursGate3" xml:space="preserve">
     <value>Baldur's Gate 3</value>
   </data>

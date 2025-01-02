@@ -16,10 +16,9 @@
         >
             @Strings.GetResourceString($"SourceTitle_{Model.Source}")
         </button>
-        @if (Model.HasContext)
-        {
-            <span>@Strings.SourceTitleContextSeparator@Model.Context</span>
-        }
+        <div class="source-copyright">
+            <span>©</span> @Strings.GetResourceString($"SourceCopyright_{Model.Source}")
+        </div>
     </div>
     <div
         popover

@@ -27,6 +27,7 @@ public class TranslationViewModel
     {
         Language = language;
         SpeakerName = translation.SpeakerName;
+        Context = translation.Context;
         Text = translation.Text;
         Notes = translation.Notes;
         AudioFileUrl = translation.AudioFile is null ? null : $"{audioFileBaseUrl}/{translation.AudioFile}";
@@ -44,7 +45,15 @@ public class TranslationViewModel
     /// <summary>
     /// Whether the quote has a speaker name; <see langword="false"/> for generic lines or if the speaker is unknown.
     /// </summary>
-    public bool HasSpeakerName => !string.IsNullOrEmpty(SpeakerName);
+    public bool HasSpeakerName => !string.IsNullOrWhiteSpace(SpeakerName);
+
+    /// <inheritdoc cref="Translation.Context"/>
+    public string Context { get; }
+
+    /// <summary>
+    /// Whether this quote has a context.
+    /// </summary>
+    public bool HasContext => !string.IsNullOrWhiteSpace(Context);
 
     /// <inheritdoc cref="Translation.Text"/>
     public string Text { get; }
