@@ -223,13 +223,13 @@
     <value>By order of the Jarl, stop right there!</value>
   </data>
   <data name="ErrorPage404" xml:space="preserve">
-    <value>Page not found.</value>
+    <value>&lt;p&gt;Page not found.&lt;/p&gt;</value>
   </data>
   <data name="ErrorPage503" xml:space="preserve">
-    <value>The server is under heavy load. Serifu.org is a hobby project hosted on relatively small servers which unfortunately can't keep up with high demand. Please try again later.</value>
+    <value>&lt;p&gt;Error 503: Server Is On Fire&lt;/p&gt;&lt;p&gt;The server is under heavy load. Serifu.org is a hobby project hosted on relatively small servers which unfortunately can't keep up with high demand. Please check back later.&lt;/p&gt;</value>
   </data>
   <data name="ErrorPageXXX" xml:space="preserve">
-    <value>Error {statusCode}: Server Exploded. A team of Rin-chans has been dispatched to diagnose the problem.</value>
+    <value>&lt;p&gt;Error {statusCode}: Server Exploded&lt;/p&gt;&lt;p&gt;A team of Rin-chans has been dispatched to diagnose the problem. If you encounter a Rin-chan, please give her headpats and the request ID shown below.&lt;/p&gt;</value>
   </data>
   <data name="ErrorPageBackToHome" xml:space="preserve">
     <value>Back to homepage</value>

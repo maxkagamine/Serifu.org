@@ -223,15 +223,15 @@
     <value>首長の命令により、止まれ！</value>
   </data>
   <data name="ErrorPage404" xml:space="preserve">
-    <value>ページを見つけられませんでした。</value>
+    <value>&lt;p&gt;ページを見つけられませんでした。&lt;/p&gt;</value>
   </data>
   <data name="ErrorPage503" xml:space="preserve">
-    <value>サーバーが高負荷の状態です。Serifu.orgは趣味のプロジェクトで、比較的小規模なサーバー上でホストされているため、残念ながら高い需要に対応できません。後でやり直してください。</value>
+    <value>&lt;p&gt;エラー503：サーバーが炎上しています&lt;/p&gt;&lt;p&gt;サーバーが高負荷の状態です。Serifu.orgは趣味のプロジェクトで、比較的小規模なサーバー上でホストされているため、残念ながら高い需要に対応できません。また後で来てください。&lt;/p&gt;</value>
   </data>
   <data name="ErrorPageXXX" xml:space="preserve">
-    <value>エラー{statusCode}：サーバーが爆発しました。リンちゃん部隊が問題を診断するために派遣されています。</value>
+    <value>&lt;p&gt;エラー{statusCode}：サーバーが爆発しました&lt;/p&gt;&lt;p&gt;リンちゃん部隊が問題を診断するために派遣されています。リンちゃんを見かけたら、頭を撫でて下のRequest IDを伝えてください。&lt;/p&gt;</value>
   </data>
   <data name="ErrorPageBackToHome" xml:space="preserve">
-    <value>トップに戻る</value>
+    <value>トップへ戻る</value>
   </data>
 </root>

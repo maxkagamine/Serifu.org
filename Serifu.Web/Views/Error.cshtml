@@ -9,18 +9,12 @@
 <main class="error-page">
     <img vite-src="/images/serifu.svg" aria-hidden="true" />
 
-    @switch (Model.StatusCode)
+    @Html.Raw(Model.StatusCode switch
     {
-        case StatusCodes.Status404NotFound:
-            <p>@Strings.ErrorPage404</p>
-            break;
-        case StatusCodes.Status503ServiceUnavailable:
-            <p>@Strings.ErrorPage503</p>
-            break;
-        default:
-            <p>@Strings.FormatErrorPageXXX(Model.StatusCode)</p>
-            break;
-    }
+        StatusCodes.Status404NotFound => Strings.ErrorPage404,
+        StatusCodes.Status503ServiceUnavailable => Strings.ErrorPage503,
+        _ => Strings.FormatErrorPageXXX(Model.StatusCode)
+    })
 
     @if (Model.StatusCode != StatusCodes.Status503ServiceUnavailable)
     {
