@@ -55,27 +55,15 @@ public class ElasticsearchService : IElasticsearchService
                         ]
                     },
                     Sort = [
-                        // TODO: Find a way to shuffle sources evenly to prevent those with more quotes from dominating
-                        // the search results
                         SortOptions.Score(new ScoreSort()
                         {
                             Order = SortOrder.Desc
                         }),
                         SortOptions.Script(new ScriptSort()
                         {
-                            Script = new Script(new InlineScript()
-                            {
-                                Source = "Math.random()"
-
-                                // Below could work if we need pagination
-                                //
-                                //Source = "new Random(Long.parseLong(doc['id'].value) + params.seed).nextDouble()",
-                                //Params = new Dictionary<string, object>()
-                                //{
-                                //    ["seed"] = query.GetHashCode()
-                                //}
-                            }),
-                            Type = ScriptSortType.Number
+                            Script = new Script(new InlineScript("Math.pow(Math.random(), 1 / doc['weight'].value)")),
+                            Type = ScriptSortType.Number,
+                            Order = SortOrder.Desc
                         })
                     ],
                     Size = PageSize
