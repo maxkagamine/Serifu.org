@@ -53,7 +53,10 @@ builder.Run(async (
         cancellationToken);
 
     logger.Information("Loading quotes from sqlite db");
-    var quotes = await sqlite.GetQuotesForExport(cancellationToken).ToArrayAsync(cancellationToken);
+    var quotes = await sqlite.GetQuotesForExport(cancellationToken)
+        .OrderBy(_ => Guid.NewGuid()) // Pre-shuffle the index, since ES seems to favor earlier documents even when
+                                      // asked to sort randomly (see SearchRankingAnalysis)
+        .ToArrayAsync(cancellationToken);
 
     logger.Information("Calculating weights");
     var countsBySource = quotes.CountBy(q => q.Source).ToDictionary();
