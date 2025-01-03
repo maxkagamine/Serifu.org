@@ -465,6 +465,10 @@ From all scn files:
 
 `fd '\.json$' *scene\ files* -x fx {} 'x => x.scenes?.flatMap(x => x.texts?.flatMap(x => x[2].slice(0, 2).flatMap(x => x[x.length - 1])) ?? []) ?? []' | jq -s add`
 
+**Grouped by scene (filename\*label), for identifying H scenes to set in ExcludedScenes:**
+
+`fd '\.json$' -x fx {} 'x => x.scenes?.map(x => ({{ label: "{.}" + x.label, texts: x.texts?.flatMap(x => x[2].slice(0, 2).flatMap(x => x[x.length - 1])) ?? [] }})).filter(x => x.texts.length) ?? []' | tee /dev/tty | jq -s 'add | sort_by(.label)' > ../extracted_text_by_scene.json`
+
 Extracting all of the text arrays for all scn files, limiting to the first four elements, and only the first two languages of the third element:
 
 `fd '\.json$' *scene\ files* -x fx {} 'x => x.scenes?.flatMap(x => x.texts?.map(x => [x[0],x[1],x[2].slice(0,2),x[3]]) ?? []) ?? []' | jq -s add > All\ text\ arrays.json`
