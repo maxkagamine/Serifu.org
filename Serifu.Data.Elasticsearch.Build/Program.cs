@@ -61,6 +61,12 @@ builder.Run(async (
                                       // asked to sort randomly (see SearchRankingAnalysis)
         .ToArrayAsync(cancellationToken);
 
+    if (quotes.Any(q => q.English.Text.Contains(ElasticsearchService.HighlightMarker) ||
+                        q.Japanese.Text.Contains(ElasticsearchService.HighlightMarker)))
+    {
+        throw new Exception("Highlight marker found within quotes!");
+    }
+
     logger.Information("Calculating weights");
     var countsBySource = quotes.CountBy(q => q.Source).ToDictionary();
     //var weights = countsBySource.ToDictionary(x => x.Key, x => 1 - ((double)x.Value / quotes.Length));

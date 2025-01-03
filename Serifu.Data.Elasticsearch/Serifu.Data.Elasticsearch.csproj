@@ -8,4 +8,8 @@
     <ProjectReference Include="..\Serifu.Data\Serifu.Data.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Serifu.Data.Elasticsearch.Tests" />
+  </ItemGroup>
+
 </Project>
