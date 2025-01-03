@@ -26,11 +26,19 @@ namespace Serifu.Data.Elasticsearch.Tests;
 public sealed class XlsxFixture : IDisposable
 {
     private const string ResultsXlsx = @"..\..\..\SearchRankingAnalysisResults.xlsx";
+    private readonly Lazy<XLWorkbook> xlsx = new(() => new(ResultsXlsx));
 
-    public XLWorkbook Xlsx { get; } = new(ResultsXlsx);
+    public XLWorkbook Xlsx => xlsx.Value;
 
     public void Dispose()
     {
+        if (!xlsx.IsValueCreated)
+        {
+            // Running all tests will instantiate the fixture even though the analysis tests (marked as Explicit) won't
+            // be run, so we want to avoid modifying the xlsx file and launching Excel if it hasn't been accessed.
+            return;
+        }
+
         Xlsx.Save();
         Xlsx.Dispose();
 
@@ -43,16 +51,17 @@ public record SourceOnlyQuote([property: JsonPropertyName("source")] Source Sour
 
 public sealed class SearchRankingAnalysis : IClassFixture<XlsxFixture>
 {
+    private readonly XlsxFixture fixture;
     private readonly ElasticsearchClient client;
-    private readonly XLWorkbook xlsx;
 
     public SearchRankingAnalysis(XlsxFixture fixture)
     {
+        this.fixture = fixture;
+
         var settings = new ElasticsearchClientSettings();
         settings.DefaultIndex(QuotesIndex.Name);
         settings.ThrowExceptions();
         client = new ElasticsearchClient(settings);
-        xlsx = fixture.Xlsx;
     }
 
     [Theory(Explicit = true)]
@@ -72,7 +81,7 @@ public sealed class SearchRankingAnalysis : IClassFixture<XlsxFixture>
     public async Task PercentOfTopNResultsBySource(double weightPower, string sheetName)
     {
         const int NumberOfQueries = 1000;
-        var sheet = xlsx.Worksheet(sheetName);
+        var sheet = fixture.Xlsx.Worksheet(sheetName);
 
         // My original hypothesis was that the proportions would become less even as the result count increased; however
         // since even 10,000 is still far away from the total count, the number of results ended up not being a factor.
