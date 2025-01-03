@@ -74,13 +74,13 @@ public class ElasticsearchService : IElasticsearchService
                     ]
                 },
                 Sort = [
-                    SortOptions.Score(new ScoreSort()
+                    SortOptions.Score(new()
                     {
                         Order = SortOrder.Desc
                     }),
-                    SortOptions.Script(new ScriptSort()
+                    SortOptions.Script(new()
                     {
-                        Script = new Script(new StoredScriptId(WeightedRandomScriptId)),
+                        Script = new() { Id = WeightedRandomScriptId },
                         Type = ScriptSortType.Number,
                         Order = SortOrder.Desc
                     })

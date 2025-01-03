@@ -12,8 +12,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
-using Elastic.Clients.Elasticsearch;
-using Elastic.Clients.Elasticsearch.Serialization;
+using Elastic.Transport;
 using Kagamine.Extensions.Collections;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -38,12 +37,17 @@ internal partial class JsonSourceGenerationContext : JsonSerializerContext
 
 internal class SourceSerializer : SystemTextJsonSerializer
 {
-    public SourceSerializer(IElasticsearchClientSettings settings) : base(settings)
-    {
-        Initialize();
-    }
+    public static readonly SourceSerializer Instance = new();
 
-    protected override JsonSerializerOptions? CreateJsonSerializerOptions()
+    public SourceSerializer() : base(SourceSerializerOptionsProvider.Instance)
+    { }
+}
+
+internal class SourceSerializerOptionsProvider : IJsonSerializerOptionsProvider
+{
+    public static readonly SourceSerializerOptionsProvider Instance = new();
+
+    JsonSerializerOptions IJsonSerializerOptionsProvider.CreateJsonSerializerOptions()
     {
         return JsonSourceGenerationContext.Default.Options;
     }

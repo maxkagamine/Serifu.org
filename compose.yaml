@@ -4,7 +4,7 @@ services:
       context: '.'
       dockerfile: 'Dockerfile.elasticsearch'
       args:
-        ES_VERSION: '8.13.0'
+        ES_VERSION: '8.17.0'
       secrets:
         - nugetconfig
     cpus: 1
@@ -21,7 +21,7 @@ services:
       discovery.type: 'single-node'
       xpack.security.enabled: 'false'
   kibana:
-    image: 'kibana:8.13.0'
+    image: 'kibana:8.17.0'
     depends_on:
       elasticsearch:
         condition: 'service_healthy'
@@ -34,7 +34,7 @@ services:
       start_period: '60s'
       start_interval: '1s'
   kibana-init:
-    image: 'kibana:8.13.0'
+    image: 'kibana:8.17.0'
     restart: 'no'
     depends_on:
       kibana:

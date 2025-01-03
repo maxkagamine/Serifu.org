@@ -41,8 +41,8 @@ public static class DependencyInjectionExtensions
     private static ElasticsearchClientSettings CreateElasticsearchSettings(string serverUrl)
     {
         var settings = new ElasticsearchClientSettings(
-            new SingleNodePool(new Uri(serverUrl)),
-            (_, settings) => new SourceSerializer(settings));
+            nodePool: new SingleNodePool(new Uri(serverUrl)),
+            sourceSerializer: (_, _) => SourceSerializer.Instance);
 
         settings.DefaultIndex(QuotesIndex.Name);
         settings.ThrowExceptions();

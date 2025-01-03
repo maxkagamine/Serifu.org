@@ -109,12 +109,15 @@ public sealed class SearchRankingAnalysis : IClassFixture<XlsxFixture>
                     Query = new MatchAllQuery(),
                     Sort = [new ScriptSort()
                     {
-                        Script = new Script(new InlineScript(weightPower switch
+                        Script = new()
                         {
-                            0 => "Math.random()",
-                            1 => "Math.pow(Math.random(), 1 / doc['weight'].value)",
-                            double exponent => $"Math.pow(Math.random(), 1 / Math.pow(doc['weight'].value, {exponent}))"
-                        })),
+                            Source = weightPower switch
+                            {
+                                0 => "Math.random()",
+                                1 => "Math.pow(Math.random(), 1 / doc['weight'].value)",
+                                double exponent => $"Math.pow(Math.random(), 1 / Math.pow(doc['weight'].value, {exponent}))"
+                            }
+                        },
                         Type = ScriptSortType.Number,
                         Order = SortOrder.Desc
                     }],
