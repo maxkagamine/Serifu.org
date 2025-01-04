@@ -13,6 +13,7 @@
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
 using Elastic.Clients.Elasticsearch;
+using Elastic.Transport.Extensions;
 using FluentAssertions;
 using Kagamine.Extensions.Collections;
 using Moq;
@@ -76,6 +77,124 @@ public class ElasticsearchServiceTests
         actualEnglishHighlights.Should().Equal(expectedEnglishHighlights);
     }
 
-    private ValueArray<Alignment> DecodeAlignmentData(string base64) =>
+    [Theory]
+    [InlineData("能代", "japanese")]
+    [InlineData("light　cruiser", "english")] // Full-width space in English query
+    public async Task QueriesCorrectFields(string query, string expectedSearchTranslation)
+    {
+        client.Setup(x => x.SearchAsync<Quote>(It.IsAny<SearchRequest>(), It.IsAny<CancellationToken>()))
+            .Throws<NotImplementedException>();
+
+        try
+        {
+            await service.Search(query, CancellationToken.None);
+        }
+        catch (NotImplementedException) { }
+
+        // There's no way to actually inspect the query without reflection or serializing
+        var request = (SearchRequest)client.Invocations.Single().Arguments[0];
+        var json = client.Object.RequestResponseSerializer.SerializeToString(request);
+        json.Should().ContainAll([
+            $"{expectedSearchTranslation}.text",
+            $"{expectedSearchTranslation}.text.conjugations",
+        ]);
+    }
+
+    [Fact]
+    public async Task ReturnsExpectedSearchResults()
+    {
+        Quote[] quotes = [
+            new()
+            {
+                Id = 1069446856704,
+                Source = Source.Kancolle,
+                English = new()
+                {
+                    SpeakerName = "Pola",
+                    Context = "Introduction",
+                    Text = "Good morning~. I'm the 3rd ship of the Zara-class heavy cruisers, Pola~. I dare any venture. I'll do my best.",
+                    WordCount = 22,
+                    Notes = "The ship's motto was \"Ardisco ad Ogni Impresa\" or \"I dare any venture\"."
+                },
+                Japanese = new Translation()
+                {
+                    SpeakerName = "Pola",
+                    Context = "入手/ログイン",
+                    Text = "Buon Giorno～。ザラ級重巡の三番艦～、ポーラです～。何にでも挑戦したいお年頃。頑張ります～。",
+                    WordCount = 16,
+                    AudioFile = "e6/c3/f44719cc2562d4d0fe77eeaa4643eaf98a23.mp3"
+                },
+                AlignmentData = DecodeAlignmentData("AAAMAAAACwAXAB8AEwAWACAAIgASABMAJwArAA0AEAAsADEADQAQADIAQAAQABIAQgBGABgAHQBLAE8AIwApAFAAUwAfACMAVABbACMAKQBdAGwALAAxAGIAZAAjACkAaABsACMAKQA="),
+                DateImported = DateTime.Parse("2024-12-28T22:30:47.6133659")
+            },
+            new()
+            {
+                Id = 1065151889420,
+                Source = Source.Kancolle,
+                English = new()
+                {
+                    SpeakerName = "Zara",
+                    Context = "Joining the Fleet",
+                    Text = "Zara-class heavy cruiser, Zara! Setting sail! Fleet, ahead full!",
+                    WordCount = 10
+                },
+                Japanese = new()
+                {
+                    SpeakerName = "Zara",
+                    Context = "編成",
+                    Text = "ザラ級重巡、ザラ！ 抜錨します！ 艦隊前に、行きます！",
+                    WordCount = 9,
+                    AudioFile = "ad/f0/e29d56d4a16d33f194e9576e958c3bbc18f9.mp3"
+                },
+                AlignmentData = DecodeAlignmentData("AAAEAAAAAwAFAAoAAAADAAsAGAADAAUAGgAeAAYACAAgACwACgAPAC4AMwARABMANQA/ABMAFQA1AD8AFgAaAA=="),
+                DateImported = DateTime.Parse("2024-12-28T22:30:43.4581241")
+            }
+        ];
+
+        const char H = ElasticsearchService.HighlightMarker;
+        
+        client.Setup(x => x.SearchAsync<Quote>(It.IsAny<SearchRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SearchResponse<Quote>()
+            {
+                HitsMetadata = new()
+                {
+                    Hits = [
+                        new()
+                        {
+                            Source = quotes[0],
+                            Highlight = new Dictionary<string, IReadOnlyCollection<string>>()
+                            {
+                                // "ザラ級" maps to "Zara" and "class"; "重巡" to "heavy cruisers"; and "年頃" to nothing.
+                                ["japanese.text"] = [$"Buon Giorno～。{H}ザラ{H}級{H}重巡{H}の三番艦～、ポーラです～。何にでも挑戦したいお{H}年頃{H}。頑張ります～。"]
+                            }
+                        },
+                        new()
+                        {
+                            // Testing without highlights
+                            Source = quotes[1],
+                        }
+                    ]
+                }
+            });
+
+        SearchResults results = await service.Search("重巡", CancellationToken.None);
+
+        results.Should().HaveCount(2);
+        results.SearchLanguage.Should().Be(SearchLanguage.Japanese);
+        
+        results[0].Quote.Should().Be(quotes[0]);
+        results[0].JapaneseHighlights.Should().Equal([new Range(13, 15), new Range(16, 18), new Range(41, 43)],
+            "ザラ, 重巡, and 年頃 should be highlighted");
+        results[0].EnglishHighlights.Should().Equal([new Range(39, 64)], """
+            ザラ should hit the ザラ級 -> {Zara, class} alignment, and 重巡 should align to "heavy cruisers", all of which
+            should combine into one highlight as they're adjacent
+            """);
+
+        results[1].Quote.Should().Be(quotes[1]);
+        results[1].JapaneseHighlights.Should().BeEmpty();
+        results[1].EnglishHighlights.Should().BeEmpty();
+    }
+
+    private static ValueArray<Alignment> DecodeAlignmentData(string base64) =>
         ValueArray.FromBytes<Alignment>(Convert.FromBase64String(base64));
 }
