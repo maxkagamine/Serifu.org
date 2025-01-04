@@ -106,7 +106,7 @@ public sealed class TransformersContext : ITransformersContext
     {
         ObjectDisposedException.ThrowIf(disposed, this);
 
-        ulong? pythonThreadId = new();
+        ulong? pythonThreadId = null;
 
         try
         {
