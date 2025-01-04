@@ -35,4 +35,11 @@ public sealed class SearchResults : IReadOnlyList<SearchResult>
     IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable)results).GetEnumerator();
 }
 
-public sealed record SearchResult(Quote Quote); // TODO: Highlights
+public sealed class SearchResult
+{
+    public required Quote Quote { get; init; }
+
+    public required IReadOnlyList<Range> EnglishHighlights { get; init; }
+
+    public required IReadOnlyList<Range> JapaneseHighlights { get; init; }
+}
