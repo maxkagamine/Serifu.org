@@ -126,7 +126,7 @@ internal class ShipService
                 continue;
             }
 
-            if (JapaneseCharacters.Count(textEnglish) / textEnglish.Length > 0.5) // May contain kaomoji
+            if ((double)JapaneseCharacters.Count(textEnglish) / textEnglish.Length > 0.5) // May contain kaomoji
             {
                 logger.Warning("{Ship}'s {Context} quote has Japanese on the English side.", ship, scenario);
                 continue;
