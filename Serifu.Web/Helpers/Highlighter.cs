@@ -18,8 +18,8 @@ namespace Serifu.Web.Helpers;
 
 public static class Highlighter
 {
-    private const string OpenTag = "<mark>";
-    private const string CloseTag = "</mark>";
+    private static readonly IHtmlContent OpenTag = new HtmlString("<mark>");
+    private static readonly IHtmlContent CloseTag = new HtmlString("</mark>");
 
     /// <summary>
     /// HTML-encodes <paramref name="text"/> while wrapping the highlight ranges in tags.
