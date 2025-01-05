@@ -12,7 +12,9 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
+using Microsoft.AspNetCore.Html;
 using Serifu.Data;
+using Serifu.Web.Helpers;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Serifu.Web.Models;
@@ -22,14 +24,15 @@ public class TranslationViewModel
     public TranslationViewModel(
         QuoteViewModel quoteViewModel,
         Translation translation,
+        IReadOnlyList<Range> highlights,
         string language,
         string audioFileBaseUrl)
     {
         Language = language;
         SpeakerName = translation.SpeakerName;
         Context = translation.Context;
-        Text = translation.Text;
-        Notes = translation.Notes;
+        Text = Highlighter.ApplyHighlights(translation.Text, highlights);
+        Notes = string.IsNullOrWhiteSpace(translation.Notes) ? null : new HtmlString(translation.Notes);
         AudioFileUrl = translation.AudioFile is null ? null : $"{audioFileBaseUrl}/{translation.AudioFile}";
         Quote = quoteViewModel;
     }
@@ -55,16 +58,20 @@ public class TranslationViewModel
     /// </summary>
     public bool HasContext => !string.IsNullOrWhiteSpace(Context);
 
-    /// <inheritdoc cref="Translation.Text"/>
-    public string Text { get; }
+    /// <summary>
+    /// The translated quote, HTML-encoded with highlights.
+    /// </summary>
+    public IHtmlContent Text { get; }
 
-    /// <inheritdoc cref="Translation.Notes"/>
-    public string Notes { get; }
+    /// <summary>
+    /// Translation notes, if any.
+    /// </summary>
+    public IHtmlContent? Notes { get; }
 
     /// <summary>
     /// Whether there are notes for this translation.
     /// </summary>
-    public bool HasNotes => !string.IsNullOrWhiteSpace(Notes);
+    public bool HasNotes => Notes is not null;
 
     /// <summary>
     /// The audio file URL, or <see langword="null"/> if audio is not available for this quote or language.

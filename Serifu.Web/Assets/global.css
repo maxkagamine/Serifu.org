@@ -71,6 +71,17 @@ h2 {
   margin-block-end: -0.25em;
 }
 
+mark {
+  --highlight-color: #806f18a8;
+
+  background: var(--highlight-color);
+  color: inherit;
+
+  &:lang(en) {
+    box-shadow: 0 -0.1em 0 var(--highlight-color), 0 0.1em 0 var(--highlight-color);
+  }
+}
+
 .narrow {
   max-width: 520px;
   margin: 0 auto;

@@ -15,7 +15,7 @@
 using Microsoft.AspNetCore.Razor.TagHelpers;
 using Vite.AspNetCore;
 
-namespace Serifu.Web;
+namespace Serifu.Web.Helpers;
 
 [HtmlTargetElement("img", Attributes = "vite-src")]
 public class ViteImageTagHelper : TagHelper
