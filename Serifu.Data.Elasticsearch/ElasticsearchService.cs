@@ -32,6 +32,12 @@ public class ElasticsearchService : IElasticsearchService
     // Using a single char lets us optimize the code a bit; form feed specifically has the shortest json representation
     public const char HighlightMarker = '\f';
 
+    private static readonly Field EnglishTextField = new("english.text");
+    private static readonly Field EnglishConjugationsField = new("english.text.conjugations");
+    private static readonly Field JapaneseTextField = new("japanese.text");
+    private static readonly Field JapaneseConjugationsField = new("japanese.text.conjugations");
+    private static readonly Field JapaneseKanjiField = new("japanese.text.kanji");
+
     private readonly ElasticsearchClient client;
     private readonly ILogger logger;
 
@@ -50,18 +56,38 @@ public class ElasticsearchService : IElasticsearchService
         }
     };
 
+    // TODO: Add tags so we can look up the translation for a quote from a specific character (e.g. "top number #Hachiroku")
     public async Task<SearchResults> Search(string query, CancellationToken cancellationToken)
     {
         try
         {
-            SearchLanguage searchLanguage = DetectLanguage(query);
-            string searchTranslation = searchLanguage == SearchLanguage.English ? "english" : "japanese";
-            Field searchField = new($"{searchTranslation}.text");
-            Field conjugationsField = new($"{searchTranslation}.text.conjugations");
+            SearchLanguage searchLanguage = UnicodeHelper.IsJapanese(query) ?
+                SearchLanguage.Japanese : SearchLanguage.English;
 
-            SearchRequest request = new()
+            Field searchField;
+            Fields? additionalFields = null;
+            Query requestQuery;
+
+            // To avoid a slew of irrelevant results that merely happen to have one of the same kanji or kana in it, the
+            // default analyzer is configured to break Japanese into bigrams -- units of two characters -- rather than
+            // unigrams (a dictionary-based tokenizer is not useful in this particular case, although one is used for
+            // conjugations). However, it would still be helpful to be able to search for a single kanji, so for that
+            // reason the index contains a dedicated subfield exclusively indexing kanji characters. This should also
+            // help to speed up typical searches containing multiple characters.
+            if (searchLanguage is SearchLanguage.Japanese && UnicodeHelper.IsSingleKanji(query))
             {
-                Query = new BoolQuery()
+                searchField = JapaneseKanjiField;
+                requestQuery = new MatchQuery(JapaneseKanjiField) { Query = query };
+            }
+            else
+            {
+                (searchField, Field conjugationsField) = searchLanguage is SearchLanguage.English ?
+                    (EnglishTextField, EnglishConjugationsField) :
+                    (JapaneseTextField, JapaneseConjugationsField);
+
+                additionalFields = Fields.FromField(conjugationsField);
+
+                requestQuery = new BoolQuery()
                 {
                     Should = [
                         new MatchPhraseQuery(searchField)
@@ -79,7 +105,12 @@ public class ElasticsearchService : IElasticsearchService
                             MinimumShouldMatch = "75%"
                         }
                     ]
-                },
+                };
+            }
+
+            SearchRequest request = new()
+            {
+                Query = requestQuery,
                 Sort = [
                     SortOptions.Score(new()
                     {
@@ -98,7 +129,7 @@ public class ElasticsearchService : IElasticsearchService
                     {
                         [searchField] = new()
                         {
-                            MatchedFields = Fields.FromField(conjugationsField),
+                            MatchedFields = additionalFields,
                             NumberOfFragments = 0,
                             PreTags = [HighlightMarker.ToString()],
                             PostTags = [HighlightMarker.ToString()]
@@ -284,7 +315,4 @@ public class ElasticsearchService : IElasticsearchService
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool IsCharBridgeable(char c) => char.IsWhiteSpace(c) || c is '-';
-
-    private static SearchLanguage DetectLanguage(string query) =>
-        Regexes.JapaneseCharacters.IsMatch(query) ? SearchLanguage.Japanese : SearchLanguage.English;
 }

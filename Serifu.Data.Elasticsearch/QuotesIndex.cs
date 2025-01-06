@@ -25,9 +25,11 @@ public static class QuotesIndex
 
     private const string EnglishConjugationsAnalyzer = "english"; // Built-in
     private const string JapaneseConjugationsAnalyzer = "serifu_japanese_conjugations";
+    private const string JapaneseKanjiAnalyzer = "serifu_japanese_kanji";
 
     private const string NormalizeUnicodeCharFilter = "serifu_normalize_unicode_char_filter";
     private const string JapaneseKuromojiTokenizer = "serifu_japanese_kuromoji_tokenizer";
+    private const string KanjiTokenizer = "serifu_kanji_tokenizer";
     private const string CjkFilter = "serifu_cjk_filter";
     private const string DesDivFilter = "serifu_desdiv_filter";
 
@@ -38,8 +40,8 @@ public static class QuotesIndex
         {
             ["id"] = new KeywordProperty(),
             ["source"] = new KeywordProperty(),
-            ["english"] = CreateTranslationMappings(EnglishConjugationsAnalyzer),
-            ["japanese"] = CreateTranslationMappings(JapaneseConjugationsAnalyzer),
+            ["english"] = CreateTranslationMappings(EnglishConjugationsAnalyzer, includeKanjiField: false),
+            ["japanese"] = CreateTranslationMappings(JapaneseConjugationsAnalyzer, includeKanjiField: true),
             ["alignmentData"] = new KeywordProperty()
             {
                 Index = false
@@ -69,42 +71,56 @@ public static class QuotesIndex
         }
     };
 
-    private static ObjectProperty CreateTranslationMappings(string conjugationsAnalyzer) => new()
+    private static ObjectProperty CreateTranslationMappings(string conjugationsAnalyzer, bool includeKanjiField)
     {
-        Properties = new()
+        TextProperty text = new()
         {
-            ["speakerName"] = new TextProperty()
+            Fields = new()
             {
-                Fields = new()
+                ["conjugations"] = new TextProperty()
                 {
-                    ["keyword"] = new KeywordProperty()
+                    // Unclear if search_analyzer will default to the field's analyzer or the
+                    // "default_search" analyzer when both are set; documentation is conflicting.
+                    Analyzer = conjugationsAnalyzer,
+                    SearchAnalyzer = conjugationsAnalyzer
                 }
-            },
-            ["context"] = new TextProperty(),
-            ["text"] = new TextProperty()
-            {
-                Fields = new()
-                {
-                    ["conjugations"] = new TextProperty()
-                    {
-                        // Unclear if search_analyzer will default to the field's analyzer or the
-                        // "default_search" analyzer when both are set; documentation is conflicting.
-                        Analyzer = conjugationsAnalyzer,
-                        SearchAnalyzer = conjugationsAnalyzer
-                    }
-                }
-            },
-            ["wordCount"] = new IntegerNumberProperty(),
-            ["notes"] = new KeywordProperty()
-            {
-                Index = false
-            },
-            ["audioFile"] = new KeywordProperty()
-            {
-                Index = false
             }
+        };
+
+        if (includeKanjiField)
+        {
+            text.Fields.Add("kanji", new TextProperty()
+            {
+                Analyzer = JapaneseKanjiAnalyzer,
+                SearchAnalyzer = JapaneseKanjiAnalyzer
+            });
         }
-    };
+
+        return new ObjectProperty()
+        {
+            Properties = new()
+            {
+                ["speakerName"] = new TextProperty()
+                {
+                    Fields = new()
+                    {
+                        ["keyword"] = new KeywordProperty()
+                    }
+                },
+                ["context"] = new TextProperty(),
+                ["text"] = text,
+                ["wordCount"] = new IntegerNumberProperty(),
+                ["notes"] = new KeywordProperty()
+                {
+                    Index = false
+                },
+                ["audioFile"] = new KeywordProperty()
+                {
+                    Index = false
+                }
+            }
+        };
+    }
 
     private static IndexSettingsAnalysis CreateAnalysisSettings() => new()
     {
@@ -127,6 +143,10 @@ public static class QuotesIndex
                     "kuromoji_stemmer",
                     "lowercase"
                 ]
+            },
+            [JapaneseKanjiAnalyzer] = new CustomAnalyzer()
+            {
+                Tokenizer = KanjiTokenizer
             }
         },
         CharFilters = new()
@@ -143,6 +163,11 @@ public static class QuotesIndex
             {
                 Mode = KuromojiTokenizationMode.Search,
                 DiscardCompoundToken = true
+            },
+            [KanjiTokenizer] = new PatternTokenizer()
+            {
+                Pattern = @"\p{IsHan}",
+                Group = 0
             }
         },
         TokenFilters = new()
@@ -158,7 +183,7 @@ public static class QuotesIndex
             },
             [CjkFilter] = new CjkBigramTokenFilter()
             {
-                OutputUnigrams = true
+                OutputUnigrams = false
             }
         }
     };

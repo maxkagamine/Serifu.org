@@ -18,6 +18,7 @@ using FluentAssertions;
 using Kagamine.Extensions.Collections;
 using Moq;
 using Serilog;
+using System.Diagnostics.CodeAnalysis;
 using Range = System.Range;
 
 namespace Serifu.Data.Elasticsearch.Tests;
@@ -78,10 +79,28 @@ public class ElasticsearchServiceTests
     }
 
     [Theory]
-    [InlineData("能代", "japanese")]
-    [InlineData("light　cruiser", "english")] // Full-width space in English query
-    public async Task QueriesCorrectFields(string query, string expectedSearchTranslation)
+    [InlineData(
+        "能代", new[] { "japanese.text", "japanese.text.conjugations" },
+        "a query in Japanese should search the Japanese translation")]
+    [InlineData(
+        "light　cruiser", new[] { "english.text", "english.text.conjugations" },
+        "a query in English should search the English translation, even if it contains full-width spaces")]
+    [InlineData(
+        "𪚲", new[] { "japanese.text.kanji" },
+        "a query containing a single kanji should search the dedicated kanji subfield (since the regular field is restricted to bigrams)")]
+        // ↑ This is also an example of a four-byte kanji (which, since .NET uses UTF-16, means the string has a length of 2)
+    [SuppressMessage("Performance", "CA1861:Avoid constant arrays as arguments", Justification = "Simpler for tests")]
+    public async Task QueriesCorrectFields(string query, string[] expectedFields, string because)
     {
+        var unexpectedFields = new[]
+        {
+            "english.text",
+            "english.text.conjugations",
+            "japanese.text",
+            "japanese.text.conjugations",
+            "japanese.text.kanji",
+        }.Except(expectedFields);
+
         client.Setup(x => x.SearchAsync<Quote>(It.IsAny<SearchRequest>(), It.IsAny<CancellationToken>()))
             .Throws<NotImplementedException>();
 
@@ -93,11 +112,9 @@ public class ElasticsearchServiceTests
 
         // There's no way to actually inspect the query without reflection or serializing
         var request = (SearchRequest)client.Invocations.Single().Arguments[0];
-        var json = client.Object.RequestResponseSerializer.SerializeToString(request);
-        json.Should().ContainAll([
-            $"{expectedSearchTranslation}.text",
-            $"{expectedSearchTranslation}.text.conjugations",
-        ]);
+        var json = client.Object.RequestResponseSerializer.SerializeToString(request.Query);
+        json.Should().ContainAll(expectedFields.Select(f => $"\"{f}\""), because)
+            .And.NotContainAny(unexpectedFields.Select(f => $"\"{f}\""), because);
     }
 
     [Fact]
@@ -152,7 +169,7 @@ public class ElasticsearchServiceTests
         ];
 
         const char H = ElasticsearchService.HighlightMarker;
-        
+
         client.Setup(x => x.SearchAsync<Quote>(It.IsAny<SearchRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new SearchResponse<Quote>()
             {
@@ -181,7 +198,7 @@ public class ElasticsearchServiceTests
 
         results.Should().HaveCount(2);
         results.SearchLanguage.Should().Be(SearchLanguage.Japanese);
-        
+
         results[0].Quote.Should().Be(quotes[0]);
         results[0].JapaneseHighlights.Should().Equal([new Range(13, 15), new Range(16, 18), new Range(41, 43)],
             "ザラ, 重巡, and 年頃 should be highlighted");
