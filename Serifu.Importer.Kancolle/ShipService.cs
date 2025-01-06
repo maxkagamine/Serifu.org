@@ -162,6 +162,13 @@ internal class ShipService
             (string contextEnglish, string contextJapanese) = translationService.TranslateContext(ship, scenario);
             string sanitizedNotes = htmlSanitizer.Sanitize(unsafeNotes, document.BaseUri).Trim();
 
+            if (ContextInSeasonalQuoteNotes.IsMatch(sanitizedNotes))
+            {
+                // Seasonal quotes sometimes have "Secretary 1" etc. in the notes since the first column is occupied by
+                // the event name; this should eliminate most of those while leaving the more useful translation notes.
+                sanitizedNotes = "";
+            }
+
             var quote = new Quote()
             {
                 Id = QuoteId.CreateKancolleId(ship.ShipNumber, index: quotes.Count),

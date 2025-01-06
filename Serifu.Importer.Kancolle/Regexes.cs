@@ -56,4 +56,7 @@ internal static partial class Regexes
 
     [GeneratedRegex(@"(?<!\(.*)\s\d\b")]
     public static partial Regex SingleDigitNumberAfterContext { get; }
+
+    [GeneratedRegex(@"^(Kai( Ni( C)?)?)?\s*(Secretary|Friend Fleet|(Special )?Attack|Joining the Fleet|(Minor|Major) Damage|Night (Attack|Battle|Battle Attack)|Equipment|Introduction|Docking( \((Minor|Major)\))?|Starting a (Sortie|Battle)|Battle Start|(Secretary )?Idle|Supply|World|Construction)?((\s*\d*\. )?Zuiun Festival|Halloween)?\s*(Line)?\s*\d*\.?$", RegexOptions.IgnoreCase)]
+    public static partial Regex ContextInSeasonalQuoteNotes { get; }
 }
