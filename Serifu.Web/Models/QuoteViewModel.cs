@@ -25,6 +25,7 @@ public class QuoteViewModel
 
         Id = quote.Id;
         Source = quote.Source;
+        EnglishSpeakerName = quote.English.SpeakerName;
 
         TranslationViewModel english = new(this, quote.English, result.EnglishHighlights, "en", audioFileBaseUrl);
         TranslationViewModel japanese = new(this, quote.Japanese, result.JapaneseHighlights, "ja", audioFileBaseUrl);
@@ -47,4 +48,9 @@ public class QuoteViewModel
     /// The translation appearing on the right, opposite of the search language.
     /// </summary>
     public TranslationViewModel Right { get; }
+
+    /// <summary>
+    /// Speaker name from the English translation. Used for Kancolle Wiki links.
+    /// </summary>
+    public string EnglishSpeakerName { get; }
 }

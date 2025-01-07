@@ -1,3 +1,4 @@
+@using Serifu.Data
 @model TranslationViewModel
 @{
     string notesId = $"translation-notes-{Model.Quote.Id}-{Model.Language}";
@@ -38,6 +39,11 @@
                 style="position-anchor: --@notesId"
             >
                 @Model.Notes
+                @if (Model.Quote.Source == Source.Kancolle)
+                {
+                    <br />
+                    <text>Source: <a href="https://en.kancollewiki.net/@Model.Quote.EnglishSpeakerName" target="_blank" rel="external noreferrer">Kancolle Wiki</a></text>
+                }
             </div>
         }
     </div>
