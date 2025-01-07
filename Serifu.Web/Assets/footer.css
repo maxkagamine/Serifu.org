@@ -11,7 +11,7 @@ body > footer.narrow {
 
     &::before {
       content: '*\2002*\2002*'; /* en space */
-      font-family: 'Merriweather', Georgia, serif;
+      font-family: 'override', 'Merriweather', 'Georgia', serif;
       font-size-adjust: 0.555;
     }
   }

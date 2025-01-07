@@ -33,7 +33,7 @@
     search box is essentially both languages, so it makes sense to combine them
     here. Unfortunately font-size-adjust doesn't support multiple fallbacks.
   */
-  font-family: 'Merriweather', 'Noto Serif JP', Georgia, serif;
+  font-family: 'override', 'Merriweather', 'Noto Serif JP', 'Georgia', serif;
   font-size-adjust: none;
 
   input {

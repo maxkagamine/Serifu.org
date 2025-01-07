@@ -1,3 +1,10 @@
+/* I don't like Merriweather's hyphens */
+@font-face {
+  font-family: 'override';
+  src: local('Georgia'), local('Times New Roman');
+  unicode-range: U+2D;
+}
+
 :root {
   --page-width: 920px;
   --body-padding: 1em;
@@ -18,7 +25,7 @@
 }
 
 [lang='en'] {
-  font-family: 'Merriweather', Georgia, serif;
+  font-family: 'override', 'Merriweather', 'Georgia', serif;
   font-size-adjust: 0.555;
 }
 
