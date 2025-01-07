@@ -47,7 +47,24 @@ $$  jR'     $L      1R"                      '*%RR$,,,ggRRM*"'    ]$F      $$
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewBag.Title</title>
+    <title>@(ViewBag.Title ?? "Serifu.org")</title>
+    <meta name="description" content="@(ViewBag.MetaDescription ?? Strings.MetaDescription)" />
+    <meta property="og:description" content="@(ViewBag.MetaDescription ?? Strings.MetaDescription)" />
+    @if (Context.Response.StatusCode is >= 200 and <= 299)
+    {
+        var routeValues = Context.GetRouteData().Values;
+        var urlRouteContext = new UrlRouteContext() { Values = routeValues, Protocol = "https", Host = "serifu.org" };
+
+        <link rel="canonical" href="@Url.RouteUrl(urlRouteContext)" />
+
+        if (routeValues.TryGetValue("lang", out var langValue) && langValue is string lang)
+        {
+            var altLang = lang == "en" ? "ja" : "en";
+            routeValues["lang"] = altLang;
+
+            <link rel="alternate" hreflang="@altLang" href="@Url.RouteUrl(urlRouteContext)"/>
+        }
+    }
     <link rel="icon" href="/favicon.svg" />
     <style>
         :root {

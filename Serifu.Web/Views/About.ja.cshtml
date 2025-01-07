@@ -1,10 +1,11 @@
 @model AboutPageViewModel
 @{
+    ViewBag.Title = Strings.AboutPageTitle;
     ViewBag.SuppressFooter = true;
 }
 
 <p>
-    Serifu.orgは、30万以上のゲームのセリフを検索して、日本語の単語や表現が英語でどのように翻訳されているか、またはその逆を調べることができるオープンソースの語学学習ツールです。それに機械学習（つまり、AI）による単語アラインメントを使って、検索した言葉に対応する翻訳部分がハイライトされます。<a href="https://tatoeba.org/ja" target="_blank" rel="external noreferrer nofollow">Tatoeba</a>と<a href="https://context.reverso.net/%E7%BF%BB%E8%A8%B3/" target="_blank" rel="external noreferrer nofollow">Reverso Context</a>に触発されました。
+    Serifu.orgは、30万以上のゲームのセリフを検索して、日本語の単語や表現が英語でどのように翻訳されているか、またはその逆を調べることができるオープンソースの語学学習ツールです。それに機械学習（つまり、AI）による単語アラインメントを使って、検索した言葉に対応する翻訳部分がハイライトされます。<a href="https://tatoeba.org/ja" target="_blank" rel="external noreferrer">Tatoeba</a>と<a href="https://context.reverso.net/%E7%BF%BB%E8%A8%B3/" target="_blank" rel="external noreferrer">Reverso Context</a>に触発されました。
 </p>
 
 <p>
@@ -20,7 +21,7 @@
 <partial name="GameList" model="Model.GameListRows" />
 
 <p>
-    ※ 艦隊これくしょんの英語翻訳と注釈は<a href="https://en.kancollewiki.net/Kancolle_Wiki" target="_blank" rel="external noreferrer">Kancolle Wiki</a>から提供されています。
+    ※ 艦隊これくしょんの英語翻訳と注釈はファンによる<a href="https://en.kancollewiki.net/Kancolle_Wiki" target="_blank" rel="external noreferrer">Kancolle Wiki</a>から提供されています。
 </p>
 
 <h2>オープンソースへの貢献</h2>

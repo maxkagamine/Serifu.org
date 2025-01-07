@@ -16,7 +16,7 @@
         >
             @Strings.GetResourceString($"SourceTitle_{Model.Source}")
         </button>
-        <div class="source-copyright">
+        <div class="source-copyright" data-nosnippet>
             <span>©</span> @Strings.GetResourceString($"SourceCopyright_{Model.Source}")
         </div>
     </div>
@@ -33,7 +33,7 @@
                 continue;
             }
 
-            <a href="@link.Url" target="_blank" rel="external noreferrer nofollow">@link.Label</a>
+            <a href="@link.Url" target="_blank" rel="external noreferrer">@link.Label</a>
         }
     </div>
 </li>

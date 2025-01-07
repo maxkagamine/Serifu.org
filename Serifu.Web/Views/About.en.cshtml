@@ -1,10 +1,11 @@
 @model AboutPageViewModel
 @{
+    ViewBag.Title = Strings.AboutPageTitle;
     ViewBag.SuppressFooter = true;
 }
 
 <p>
-    Serifu.org is an open source language learning tool that lets you search over 300,000 quotes from video games to see how an English word or idiom appears in its Japanese translation or vice versa, using machine learning (AI) to highlight the relevant part of the translation. Inspired by <a href="https://tatoeba.org/en" target="_blank" rel="external noreferrer nofollow">Tatoeba</a> and <a href="https://context.reverso.net/translation/" target="_blank" rel="external noreferrer nofollow">Reverso Context</a>.
+    Serifu.org is an open source language learning tool that lets you search over 300,000 quotes from video games to see how an English word or idiom appears in its Japanese translation or vice versa, using machine learning (AI) to highlight the relevant part of the translation. Inspired by <a href="https://tatoeba.org/en" target="_blank" rel="external noreferrer">Tatoeba</a> and <a href="https://context.reverso.net/translation/" target="_blank" rel="external noreferrer">Reverso Context</a>.
 </p>
 
 <p>
@@ -20,7 +21,7 @@
 <partial name="GameList" model="Model.GameListRows" />
 
 <p>
-    <i>English translations and notes for Kantai Collection come courtesy of the <a href="https://en.kancollewiki.net/Kancolle_Wiki" target="_blank" rel="external noreferrer">Kancolle Wiki</a>.</i>
+    <i>English translations and notes for Kantai Collection come courtesy of the fan-made <a href="https://en.kancollewiki.net/Kancolle_Wiki" target="_blank" rel="external noreferrer">Kancolle Wiki</a>.</i>
 </p>
 
 <h2>Open source contributions</h2>

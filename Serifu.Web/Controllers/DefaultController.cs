@@ -89,6 +89,14 @@ public class DefaultController : Controller
                 Response.StatusCode = StatusCodes.Status404NotFound;
             }
 
+            ViewBag.Title = englishFirst ?
+                Strings.FormatSearchPageTitle_English(query) :
+                Strings.FormatSearchPageTitle_Japanese(query);
+
+            ViewBag.MetaDescription = englishFirst ?
+                Strings.FormatMetaDescription_Search_English(query) :
+                Strings.FormatMetaDescription_Search_Japanese(query);
+
             return View(model);
         }
         catch (ElasticsearchValidationException ex)
@@ -104,6 +112,7 @@ public class DefaultController : Controller
             };
 
             Response.StatusCode = StatusCodes.Status400BadRequest;
+            ViewBag.Title = Strings.ErrorPageTitle;
             return View(model);
         }
     }

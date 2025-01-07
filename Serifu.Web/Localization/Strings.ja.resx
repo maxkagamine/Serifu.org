@@ -117,14 +117,8 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="English" xml:space="preserve">
-    <value>英語</value>
-  </data>
   <data name="FooterText" xml:space="preserve">
     <value>教育目的の利用専用です。セリフの著作権は各社に帰属します。詳しくは&lt;a href="{aboutUrl}"&gt;について&lt;/a&gt;ページをご確認ください。</value>
-  </data>
-  <data name="Japanese" xml:space="preserve">
-    <value>日本語</value>
   </data>
   <data name="NavLinkAbout" xml:space="preserve">
     <value>について</value>
@@ -239,5 +233,26 @@
   </data>
   <data name="ValidationErrorTooLong" xml:space="preserve">
     <value>一言か短い語句だけを検索してみましょう。</value>
+  </data>
+  <data name="SearchPageTitle_English" xml:space="preserve">
+    <value>「{query}」はゲームでどう日本語訳される？ | Serifu.org</value>
+  </data>
+  <data name="SearchPageTitle_Japanese" xml:space="preserve">
+    <value>「{query}」はゲームでどう英語訳される？ | Serifu.org</value>
+  </data>
+  <data name="AboutPageTitle" xml:space="preserve">
+    <value>Serifu.orgについて</value>
+  </data>
+  <data name="HomePageTitle" xml:space="preserve">
+    <value>Serifu.org ～ゲームのセリフで英語を学ぶ～</value>
+  </data>
+  <data name="MetaDescription" xml:space="preserve">
+    <value>ゲームのセリフを検索して、日本語の単語や表現が英語でどう翻訳されているか、またはその逆を調べる</value>
+  </data>
+  <data name="MetaDescription_Search_English" xml:space="preserve">
+    <value>ゲームのセリフを検索して、「{query}」が日本語版でどのように翻訳されるのか調べる</value>
+  </data>
+  <data name="MetaDescription_Search_Japanese" xml:space="preserve">
+    <value>ゲームのセリフを検索して、「{query}」が英語版でどのように翻訳されるのか調べる</value>
   </data>
 </root>
