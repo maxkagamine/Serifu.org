@@ -29,7 +29,10 @@ public class ElasticsearchException : Exception
         ApiCallDetails = ex.ApiCallDetails;
     }
 
-    public ApiCallDetails ApiCallDetails { get; }
+    protected ElasticsearchException(string message, Exception? innerException = null) : base(message, innerException)
+    { }
+
+    public ApiCallDetails? ApiCallDetails { get; }
 
     public bool IsConnectionError =>
         InnerException is HttpRequestException { HttpRequestError: > HttpRequestError.Unknown };
@@ -37,8 +40,7 @@ public class ElasticsearchException : Exception
     private static (string Message, Exception? InnerException) UnwrapTransportException(TransportException ex)
     {
         // Regular error
-        if (!ex.ApiCallDetails.HasSuccessfulStatusCode &&
-            ex.ApiCallDetails.ResponseBodyInBytes is { Length: > 0 } bytes)
+        if (ex.ApiCallDetails is { HasSuccessfulStatusCode: false, ResponseBodyInBytes: { Length: > 0 } bytes })
         {
             string body = Encoding.UTF8.GetString(bytes);
 

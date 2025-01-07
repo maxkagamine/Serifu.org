@@ -1,8 +1,15 @@
 @model ResultsViewModel
 
-<ul class="results">
-    @foreach (QuoteViewModel quote in Model.Quotes)
-    {
-        <partial name="Quote" model="quote" />
-    }
-</ul>
+@if (Model.ErrorMessage is null)
+{
+    <ul class="results">
+        @foreach (QuoteViewModel quote in Model.Quotes)
+        {
+            <partial name="Quote" model="quote"/>
+        }
+    </ul>
+}
+else
+{
+    @Model.ErrorMessage
+}

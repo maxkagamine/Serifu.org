@@ -20,6 +20,7 @@ using Elastic.Transport.Extensions;
 using Kagamine.Extensions.Collections;
 using Serilog;
 using Serilog.Events;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 
 namespace Serifu.Data.Elasticsearch;
@@ -28,6 +29,10 @@ public class ElasticsearchService : IElasticsearchService
 {
     private const int PageSize = 39;
     private const string WeightedRandomScriptId = "weighted_random";
+
+    // Sync with constants in search-box.ts
+    private const int MaxLengthEnglish = 64;
+    private const int MaxLengthJapanese = 32;
 
     // Using a single char lets us optimize the code a bit; form feed specifically has the shortest json representation
     public const char HighlightMarker = '\f';
@@ -68,6 +73,15 @@ public class ElasticsearchService : IElasticsearchService
             Fields? additionalFields = null;
             Query requestQuery;
 
+            query = query.Trim();
+            int length = new StringInfo(query).LengthInTextElements;
+            int maxLength = searchLanguage is SearchLanguage.English ? MaxLengthEnglish : MaxLengthJapanese;
+
+            if (length > maxLength)
+            {
+                throw new ElasticsearchValidationException(ElasticsearchValidationError.TooLong);
+            }
+
             // To avoid a slew of irrelevant results that merely happen to have one of the same kanji or kana in it, the
             // default analyzer is configured to break Japanese into bigrams -- units of two characters -- rather than
             // unigrams (a dictionary-based tokenizer is not useful in this particular case, although one is used for
@@ -78,6 +92,10 @@ public class ElasticsearchService : IElasticsearchService
             {
                 searchField = JapaneseKanjiField;
                 requestQuery = new MatchQuery(JapaneseKanjiField) { Query = query };
+            }
+            else if (length < 2)
+            {
+                throw new ElasticsearchValidationException(ElasticsearchValidationError.TooShort);
             }
             else
             {

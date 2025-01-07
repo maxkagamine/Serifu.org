@@ -18,6 +18,7 @@ using Serifu.Data;
 using Serifu.Data.Elasticsearch;
 using Serifu.Web.Localization;
 using Serifu.Web.Models;
+using System.Diagnostics;
 using System.Globalization;
 
 namespace Serifu.Web.Controllers;
@@ -50,7 +51,7 @@ public class DefaultController : Controller
         {
             // Fallback in case user has JS disabled
             Response.Headers.Append("X-Robots-Tag", "noindex");
-            return RedirectToAction(nameof(Results), new { query });
+            return RedirectToAction(nameof(Results), new { query = query.Trim() });
         }
 
         return View();
@@ -58,15 +59,53 @@ public class DefaultController : Controller
 
     [HttpGet("/translate/{query}")]
     [HttpGet("/翻訳/{query}")]
-    public async Task<ActionResult> Results(string query, CancellationToken cancellationToken)
+    public async Task<ActionResult> Results(string? query, CancellationToken cancellationToken)
     {
-        SearchResults results = await elasticsearch.Search(query, cancellationToken);
-        bool englishFirst = results.SearchLanguage == SearchLanguage.English;
-        string audioFileBaseUrl = options.Value.AudioFileBaseUrl;
+        try
+        {
+            query ??= "";
+            SearchResults results = await elasticsearch.Search(query, cancellationToken);
+            bool englishFirst = results.SearchLanguage == SearchLanguage.English;
+            string audioFileBaseUrl = options.Value.AudioFileBaseUrl;
 
-        ResultsViewModel model = new(results, englishFirst, audioFileBaseUrl);
+            ResultsViewModel model;
 
-        return View(model);
+            if (results.Count > 0)
+            {
+                model = new()
+                {
+                    Quotes = results.Select(r => new QuoteViewModel(r, englishFirst, audioFileBaseUrl)).ToArray()
+                };
+            }
+            else
+            {
+                model = new()
+                {
+                    ErrorMessage = Strings.FormatNoResults(query.Trim())
+                };
+
+                // Since each search results page is technically its own resource (using route instead of query param),
+                // we can get away with returning 404 to prevent "no results" from appearing in Google.
+                Response.StatusCode = StatusCodes.Status404NotFound;
+            }
+
+            return View(model);
+        }
+        catch (ElasticsearchValidationException ex)
+        {
+            ResultsViewModel model = new()
+            {
+                ErrorMessage = ex.Error switch
+                {
+                    ElasticsearchValidationError.TooShort => Strings.ValidationErrorTooShort,
+                    ElasticsearchValidationError.TooLong => Strings.ValidationErrorTooLong,
+                    _ => throw new UnreachableException($"Unknown validation error: {ex.Error}")
+                }
+            };
+
+            Response.StatusCode = StatusCodes.Status400BadRequest;
+            return View(model);
+        }
     }
 
     [HttpGet("/about")]

@@ -12,16 +12,11 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
-using Serifu.Data.Elasticsearch;
-
 namespace Serifu.Web.Models;
 
 public class ResultsViewModel
 {
-    public ResultsViewModel(SearchResults results, bool englishFirst, string audioFileBaseUrl)
-    {
-        Quotes = results.Select(r => new QuoteViewModel(r, englishFirst, audioFileBaseUrl)).ToList();
-    }
+    public IReadOnlyList<QuoteViewModel> Quotes { get; init; } = [];
 
-    public IReadOnlyList<QuoteViewModel> Quotes { get; }
+    public string? ErrorMessage { get; init; }
 }

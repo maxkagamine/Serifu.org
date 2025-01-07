@@ -1,5 +1,9 @@
 import { assertDefined } from './util';
 
+// Sync with constants in ElasticsearchService
+const MAX_LENGTH_ENGLISH = 64;
+const MAX_LENGTH_JAPANESE = 32;
+
 (() => {
   const form = document.getElementById('searchBox') as HTMLFormElement;
   if (!form) {
@@ -37,11 +41,12 @@ import { assertDefined } from './util';
 
   form.addEventListener('submit', e => {
     e.preventDefault();
-    if (!input.value) {
+    const query = input.value.trim();
+    if (!query) {
       return;
     }
     const routeTemplate = assertDefined(form.dataset.routeTemplate, 'routeTemplate');
-    const url = routeTemplate.replace('__QUERY__', encodeURIComponent(input.value));
+    const url = routeTemplate.replace('__QUERY__', encodeURIComponent(query));
     document.body.classList.add('loading');
     input.disabled = true;
     document.location = url;
@@ -56,4 +61,40 @@ import { assertDefined } from './util';
       input.disabled = true;
     }
   });
+
+  input.addEventListener('input', () => {
+    const query = input.value.trim();
+
+    // If the input is empty, there's no need to display a validation warning; the form just won't submit (unless JS is
+    // disabled, but we handle that server-side)
+    if (!query) {
+      input.setCustomValidity('');
+      return;
+    }
+
+    // Unlike .NET, regexes in JS have full Unicode support, so we can match the server-side validation easily.
+    // Normalizing the string first so someone can't pull a fast one on us using combining characters.
+    if (!/\S\S|^\p{Script=Han}$/u.test(query.normalize())) {
+      input.setCustomValidity(assertDefined(form.dataset.tooShort, 'tooShort'));
+      return;
+    }
+
+    const isJapanese = /\p{Script=Hiragana}|\p{Script=Katakana}|\p{Script=Han}/u.test(query);
+    const maxLength = isJapanese ? MAX_LENGTH_JAPANESE : MAX_LENGTH_ENGLISH;
+    if (getLength(query) > maxLength) {
+      input.setCustomValidity(assertDefined(form.dataset.tooLong, 'tooLong'));
+      return;
+    }
+
+    input.setCustomValidity('');
+  });
+
+  function getLength(str: string) {
+    // Kindof overkill, but at the same time it's weird that neither C# nor JS has a way to get the "actual" length
+    // directly from String. Globalization shouldn't be an afterthought. Compare '鏡'.length vs '𪚲'.length.
+    if ('Segmenter' in Intl) {
+      return Array.from(new Intl.Segmenter().segment(str)).length;
+    }
+    return str.length;
+  }
 })();

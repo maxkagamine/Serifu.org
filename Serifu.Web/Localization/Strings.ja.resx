@@ -231,4 +231,13 @@
   <data name="ErrorPageBackToHome" xml:space="preserve">
     <value>トップへ戻る</value>
   </data>
+  <data name="ValidationErrorTooShort" xml:space="preserve">
+    <value>検索クエリは2文字以上、または単一の漢字を含める必要があります。</value>
+  </data>
+  <data name="NoResults" xml:space="preserve">
+    <value>「{query}」の結果はありません。</value>
+  </data>
+  <data name="ValidationErrorTooLong" xml:space="preserve">
+    <value>一言か短い語句だけを検索してみましょう。</value>
+  </data>
 </root>

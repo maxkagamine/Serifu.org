@@ -231,4 +231,13 @@
   <data name="ErrorPageBackToHome" xml:space="preserve">
     <value>Back to homepage</value>
   </data>
+  <data name="ValidationErrorTooShort" xml:space="preserve">
+    <value>Search query must contain at least two characters or a single kanji.</value>
+  </data>
+  <data name="NoResults" xml:space="preserve">
+    <value>No results for “{query}.”</value>
+  </data>
+  <data name="ValidationErrorTooLong" xml:space="preserve">
+    <value>Try searching for only a few words or a short phrase.</value>
+  </data>
 </root>

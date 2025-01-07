@@ -1,4 +1,12 @@
-<form asp-action="Home" method="get" id="searchBox" role="search" data-route-template="@Url.Action("Results", new { query = "__QUERY__" })">
+<form
+    asp-action="Home"
+    method="get"
+    id="searchBox"
+    role="search"
+    data-route-template="@Url.Action("Results", new { query = "__QUERY__" })"
+    data-too-short="@Strings.ValidationErrorTooShort"
+    data-too-long="@Strings.ValidationErrorTooLong"
+>
     <input name="query" placeholder="@Strings.SearchBoxPlaceholder" value="@Context.GetRouteValue("query")" />
 
     <!--
