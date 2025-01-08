@@ -22,6 +22,18 @@
   line-height: 1.6;
   color: #f2f2f2;
   visibility: visible !important;
+
+  background-color: #111; /* Background color also set in layout <style> to prevent white flash */
+  background-image: url(./images/dragonsreach.avif);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-size: auto 1440px;
+  background-position-x: calc(50% + min(460px, 30vw));
+  background-position-y: calc(
+    clamp(0.25em, (100vw - var(--page-width)) / 2 - var(--body-padding), 96px) /* Header margin top */
+    - 300px
+  );
+  overflow-y: scroll; /* Prevents the background from shifting when navigating to a page with a scrollbar */
 }
 
 [lang='en'] {
