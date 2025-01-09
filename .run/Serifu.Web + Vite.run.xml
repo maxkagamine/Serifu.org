@@ -1,0 +1,35 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Serifu.Web + Vite" type="com.intellij.execution.configurations.multilaunch" factoryName="MultiLaunchConfiguration">
+    <rows>
+      <ExecutableRowSnapshot>
+        <option name="condition">
+          <ConditionSnapshot>
+            <option name="type" value="immediately" />
+          </ConditionSnapshot>
+        </option>
+        <option name="disableDebugging" value="true" />
+        <option name="executable">
+          <ExecutableSnapshot>
+            <option name="id" value="runConfig:npm.Vite" />
+          </ExecutableSnapshot>
+        </option>
+      </ExecutableRowSnapshot>
+      <ExecutableRowSnapshot>
+        <option name="condition">
+          <ConditionSnapshot>
+            <attributes>
+              <entry key="port" value="5173" />
+            </attributes>
+            <option name="type" value="waitPortOpened" />
+          </ConditionSnapshot>
+        </option>
+        <option name="executable">
+          <ExecutableSnapshot>
+            <option name="id" value="runConfig:.NET Launch Settings Profile.Serifu.Web" />
+          </ExecutableSnapshot>
+        </option>
+      </ExecutableRowSnapshot>
+    </rows>
+    <method v="2" />
+  </configuration>
+</component>
