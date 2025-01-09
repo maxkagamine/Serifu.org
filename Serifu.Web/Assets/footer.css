@@ -1,7 +1,7 @@
 body > footer.narrow {
   text-align: center;
   font-size: var(--font-size-smallish);
-  margin-bottom: 0.6em;
+  margin-bottom: var(--header-margin-top);
 
   /* Using an hr instead of footer::before ensures it has the proper ARIA role and doesn't get spoken as text */
   hr {
