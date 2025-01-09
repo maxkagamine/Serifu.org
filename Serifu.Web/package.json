@@ -3,9 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "vite",
-    "build": "vite build",
-    "clean": "rm -rf wwwroot"
+    "start": "node.exe node_modules/vite/bin/vite.js",
+    "build": "node.exe node_modules/vite/bin/vite.js build"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",

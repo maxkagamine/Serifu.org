@@ -20,9 +20,5 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": [ "Assets", "*.ts" ],
-  "watchOptions": {
-    "watchFile": "fixedPollingInterval",
-    "watchDirectory": "fixedPollingInterval"
-  }
+  "include": [ "Assets", "*.ts" ]
 }
