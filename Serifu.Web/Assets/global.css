@@ -10,6 +10,9 @@
   --body-padding: 1em;
   --menu-hover-background: #111;
 
+  /* Scale top margin to match space on left/right on smaller viewports (we need this for the background offset too) */
+  --header-margin-top: clamp(0.25em, (100vw - var(--page-width)) / 2 - var(--body-padding), 96px);
+
   /* Merriweather's lowercase 'g' renders weird in Chrome at 15px */
   --font-size-smallish: 15.1px;
 
@@ -27,11 +30,13 @@
   background-image: url(./images/dragonsreach.avif);
   background-repeat: no-repeat;
   background-attachment: fixed;
-  background-size: auto 1440px;
+  background-size: auto min(1440px, 144vh); /* Start scaling once bottom edge is just below Rin's feet (vh = 1000px) */
   background-position-x: calc(50% + min(460px, 30vw));
   background-position-y: calc(
-    clamp(0.25em, (100vw - var(--page-width)) / 2 - var(--body-padding), 96px) /* Header margin top */
-    - 300px
+    /* Keep background anchored below header (margin-top scales linearly with viewport width between two points) */
+    var(--header-margin-top)
+    /* Offset, scaling w/ viewport to keep Rin's full body in frame (between search box and bottom edge of window) */
+    + clamp(-300px, -40vh + 100px, 0px)
   );
   overflow-y: scroll; /* Prevents the background from shifting when navigating to a page with a scrollbar */
 }
