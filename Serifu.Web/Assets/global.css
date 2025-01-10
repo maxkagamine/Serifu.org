@@ -30,13 +30,14 @@
   background-image: url(./images/dragonsreach.avif);
   background-repeat: no-repeat;
   background-attachment: fixed;
-  background-size: auto min(1440px, 144vh); /* Start scaling once bottom edge is just below Rin's feet (vh = 1000px) */
+  /* Start scaling just below Rin's feet, keeping bottom edge anchored relative to viewport as header shrinks */
+  background-size: auto calc(min(1440px, 180vh - 360px) + ((96px - var(--header-margin-top)) * 2));
   background-position-x: calc(50% + min(460px, 30vw));
   background-position-y: calc(
-    /* Keep background anchored below header (margin-top scales linearly with viewport width between two points) */
-    var(--header-margin-top)
+    /* Keep top edge anchored relative to header (margin-top scales linearly with viewport width between two points) */
+    ((var(--header-margin-top) - 96px) * 1.6666)
     /* Offset, scaling w/ viewport to keep Rin's full body in frame (between search box and bottom edge of window) */
-    + clamp(-300px, -40vh + 100px, 0px)
+    + max(-204px, -51.3333vh + 309.3333px)
   );
   overflow-y: scroll; /* Prevents the background from shifting when navigating to a page with a scrollbar */
 }
