@@ -27,7 +27,10 @@
   visibility: visible !important;
 
   background-color: #111; /* Background color also set in layout <style> to prevent white flash */
-  background-image: url(./images/dragonsreach.avif);
+  background-image: url(./images/dragonsreach.png); /* Any browser that supports AVIF should also support image-set */
+  background-image: image-set(
+    url(./images/dragonsreach.avif) type('image/avif'),
+    url(./images/dragonsreach.png) type('image/png'));
   background-repeat: no-repeat;
   background-attachment: fixed;
   /* Start scaling just below Rin's feet, keeping bottom edge anchored relative to viewport as header shrinks */
@@ -42,6 +45,18 @@
   overflow-y: scroll; /* Prevents the background from shifting when navigating to a page with a scrollbar */
 }
 
+/* I spent two full days trying to get an AVIF to display correctly in Firefox. Four different encoders, every possible
+ * encoding parameter, hours spent tweaking the source image in different ways hoping to find something that worked...
+ * in the end I had to accept it: Firefox's image rendering is simply broken. So now I have to resort to the equivalent
+ * of IE conditional comments and serve Firefox users a different, much larger image instead. With all the Firefox bugs
+ * I've encountered throughout this project, supporting Firefox these days is really starting to feel like supporting IE
+ * did back in the early 2010s ("graceful degradation" and all that). */
+@-moz-document url-prefix('') {
+  :root {
+    background-image: url(./images/dragonsreach.png);
+  }
+}
+
 [lang='en'] {
   font-family: 'override', 'Merriweather', 'Georgia', serif;
   font-size-adjust: 0.555;
@@ -53,7 +68,7 @@
 }
 
 b, strong, h2, h3, th {
-  font-family:  sans-serif;
+  font-family: sans-serif;
   font-size-adjust: none;
 }
 
