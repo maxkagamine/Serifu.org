@@ -79,7 +79,7 @@ body {
 }
 
 main {
-  margin: 2.5em 0 3em;
+  margin: 2.5em 0 var(--header-margin-top); /* Match top margin (footer will override if present) */
 
   @media (max-width: 750px) {
     margin: 1.5em 0 2.5em;
