@@ -62,6 +62,12 @@ const MAX_LENGTH_JAPANESE = 32;
     }
   });
 
+  // Clear loading state when the page loads from the browser's bfcache (navigating via back button)
+  window.addEventListener('pageshow', () => {
+    document.body.classList.remove('loading');
+    input.disabled = false;
+  });
+
   input.addEventListener('input', () => {
     const query = input.value.trim();
 
