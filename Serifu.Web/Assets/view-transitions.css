@@ -1,0 +1,43 @@
+@view-transition {
+  navigation: auto;
+}
+
+#view-transition-group {
+  view-transition-name: main;
+}
+
+::view-transition-old(main) {
+  animation: 0.5s ease-in view-transition-old;
+}
+
+::view-transition-new(main) {
+  animation: 0.5s ease-out view-transition-new;
+}
+
+::view-transition-group(root),
+::view-transition-old(main):only-child,
+::view-transition-new(main):only-child {
+  animation: none;
+}
+
+@keyframes view-transition-old {
+  66%, to {
+    translate: -200px 0;
+    opacity: 0;
+  }
+}
+
+@keyframes view-transition-new {
+  from, 33% {
+    translate: 200px 0;
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}

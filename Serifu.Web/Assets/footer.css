@@ -1,4 +1,4 @@
-body > footer.narrow {
+.site-footer {
   text-align: center;
   font-size: var(--font-size-smallish);
   margin-top: calc(2.5em - var(--header-margin-top)); /* Replace <main>'s margin-bottom */

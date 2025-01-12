@@ -76,6 +76,7 @@ $$  jR'     $L      1R"                      '*%RR$,,,ggRRM*"'    ]$F      $$
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Merriweather:ital@0;1&family=Noto+Serif+JP&display=swap" />
     <link rel="stylesheet" vite-href="~/main.ts" />
+    @await RenderSectionAsync("head", required: false)
 </head>
 <body>
     @RenderBody()

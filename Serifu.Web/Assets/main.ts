@@ -1,4 +1,5 @@
 import './global.css';
+import './view-transitions.css';
 import './popovers.css';
 import './icons.css';
 import './header.css';

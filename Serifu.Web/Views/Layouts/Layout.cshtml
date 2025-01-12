@@ -2,12 +2,18 @@
     Layout = "BaseLayout";
 }
 
+@section head {
+    <link rel="expect" href="#view-transition-group" blocking="render" />
+}
+
 <partial name="Header" />
 <partial name="SearchBox" />
-<main>
-    @RenderBody()
-</main>
-@if ((bool?)ViewBag.SuppressFooter != true)
-{
-    <partial name="Footer" />
-}
+<div id="view-transition-group">
+    <main>
+        @RenderBody()
+    </main>
+    @if ((bool?)ViewBag.SuppressFooter != true)
+    {
+        <partial name="Footer" />
+    }
+</div>
