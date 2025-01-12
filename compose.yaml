@@ -6,7 +6,7 @@ services:
       args:
         ES_VERSION: '8.17.0'
       secrets:
-        - nugetconfig
+        - 'nugetconfig'
     cpus: 1
     mem_limit: '1G'
     ulimits:
@@ -39,7 +39,7 @@ services:
     depends_on:
       kibana:
         condition: 'service_healthy'
-    entrypoint:
+    entrypoint: ''
     command: >
       curl -fsS kibana:5601/api/data_views/data_view
         -H 'Content-Type: application/json'
@@ -50,12 +50,29 @@ services:
         -H 'Content-Type: application/json'
         -d '{"index":{"number_of_replicas":0}}'
   sqlarserver:
-    image: kagamine/sqlarserver
-    command: Serifu.db
+    image: 'kagamine/sqlarserver'
+    command: 'Serifu.db'
     ports:
-      - 3939:80
+      - '3939:80'
     volumes:
-      - .:/srv:ro
+      - '.:/srv:ro'
+  web:
+    profiles:
+      - 'prod'
+    build:
+      context: '.'
+      dockerfile: 'Dockerfile.web'
+      secrets:
+        - 'nugetconfig'
+    depends_on:
+      elasticsearch:
+        condition: 'service_healthy'
+      sqlarserver:
+        condition: 'service_healthy'
+    ports:
+      - '3900:3900'
+    environment:
+      AUDIOFILEBASEURL: 'http://localhost:3939'
 
 secrets:
   nugetconfig:

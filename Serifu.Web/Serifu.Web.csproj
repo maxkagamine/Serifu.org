@@ -28,15 +28,8 @@
     <ProjectReference Include="..\Serifu.Data\Serifu.Data.csproj" />
   </ItemGroup>
 
-  <Target Name="NpmInstall" BeforeTargets="Build; NpmRunBuild" Condition="!Exists('node_modules')">
+  <Target Name="NpmInstall" BeforeTargets="Build" Condition="'$(Configuration)' == 'Debug'">
     <Exec Command="npm install" />
-  </Target>
-
-  <Target Name="NpmRunBuild" BeforeTargets="Build" Condition="'$(Configuration)' == 'Release'">
-    <Exec Command="npm run build" />
-  </Target>
-
-  <Target Name="CreateWwwRoot" BeforeTargets="Build" Condition="'$(Configuration)' == 'Debug'">
     <MakeDir Directories="$(ProjectDir)/wwwroot" />
   </Target>
 

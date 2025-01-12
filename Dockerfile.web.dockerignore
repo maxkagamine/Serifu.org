@@ -1,11 +1,10 @@
 *
 !Serifu.Data
 !Serifu.Data.Elasticsearch
-!Serifu.Data.Elasticsearch.Build
-!Serifu.Data.Sqlite
-!Serifu.ML
+!Serifu.Web
 !Directory.Build.props
-!Serifu.db
 **/bin
 **/obj
 **/*.user
+Serifu.Web/node_modules
+Serifu.Web/wwwroot

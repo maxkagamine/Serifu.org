@@ -14,6 +14,7 @@
 
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc.Razor;
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.WebEncoders;
 using Serifu.Data.Elasticsearch;
 using Serifu.Web;
@@ -40,6 +41,17 @@ builder.Services.Configure<WebEncoderOptions>(options =>
 {
     // Don't need to html-encode every single Japanese character
     options.TextEncoderSettings = new(UnicodeRanges.All);
+});
+
+builder.Services.Configure<StaticFileOptions>(options =>
+{
+    options.ContentTypeProvider = new FileExtensionContentTypeProvider()
+    {
+        Mappings =
+        {
+            [".avif"] = "image/avif"
+        }
+    };
 });
 
 builder.Services.AddControllersWithViews()
