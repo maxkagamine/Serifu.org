@@ -2,7 +2,7 @@ services:
   elasticsearch:
     build:
       context: '.'
-      dockerfile: 'Dockerfile.elasticsearch'
+      dockerfile: 'docker/elasticsearch.Dockerfile'
       args:
         ES_VERSION: '8.17.0'
       secrets:
@@ -61,7 +61,7 @@ services:
       - 'prod'
     build:
       context: '.'
-      dockerfile: 'Dockerfile.web'
+      dockerfile: 'docker/web.Dockerfile'
       secrets:
         - 'nugetconfig'
     depends_on:
@@ -76,4 +76,4 @@ services:
 
 secrets:
   nugetconfig:
-    file: /mnt/c/Users/max/AppData/Roaming/NuGet/NuGet.Config
+    file: '/mnt/c/Users/max/AppData/Roaming/NuGet/NuGet.Config'
