@@ -1,7 +1,7 @@
 /* I don't like Merriweather's hyphens */
 @font-face {
   font-family: 'override';
-  src: local('Georgia'), local('Times New Roman');
+  src: local('Times New Roman'), local('Times'), local('Noto Serif'), local('Droid Serif'); /* Can't use 'serif' here */
   unicode-range: U+2D;
 }
 
@@ -22,6 +22,7 @@
   font-size: 16px;
   font-optical-sizing: auto;
   font-synthesis: none;
+  font-variant-numeric: oldstyle-nums; /* Default for Merriweather, specified for fallback */
   line-height: 1.6;
   color: #f2f2f2;
   visibility: visible !important;
@@ -58,7 +59,7 @@
 }
 
 [lang='en'] {
-  font-family: 'override', 'Merriweather', 'Georgia', serif;
+  font-family: 'override', 'Merriweather', serif;
   font-size-adjust: 0.555;
 }
 

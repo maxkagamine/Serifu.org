@@ -25,15 +25,11 @@
   height: var(--search-height);
   font-size: var(--font-size-smallish);
 
-  /*
-    The 400 weight Merriweather is a bit too strong to mix with Noto Serif in
-    the same body of text, but 500 weight Noto Serif JP is less readable and 300
-    weight Merriweather doesn't look as good, so in general I'm using Merri for
-    EN only and Noto for JA only, using Noto's Latin script for EN-in-JA. The
-    search box is essentially both languages, so it makes sense to combine them
-    here. Unfortunately font-size-adjust doesn't support multiple fallbacks.
-  */
-  font-family: 'override', 'Merriweather', 'Noto Serif JP', 'Georgia', serif;
+  /* The 400 weight Merriweather is a bit too strong to mix with Noto Serif in the same body of text, but 500 weight
+   * Noto Serif JP is less readable and 300 weight Merriweather doesn't look as good, so in general I'm using Merri for
+   * EN only and Noto for JA only, with Noto's Latin script for EN-in-JA. The search box may be either language, though,
+   * so it makes sense to combine them here. Unfortunately font-size-adjust doesn't support per-fallback adjustments. */
+  font-family: 'override', 'Merriweather', 'Noto Serif JP', serif;
   font-size-adjust: none;
 
   input {
@@ -64,17 +60,11 @@
     }
   }
 
-  /*
-    Chrome has a compositing bug[1] that causes the svg to become blurry when
-    the input is focused (putting position absolute on the input and nudging it
-    down, you can even see the point where it gets "far enough away" that the
-    svg no longer becomes blurry). For whatever reason, borders aren't affected,
-    so when not doing the loading animation we'll display these boxes instead
-    which look identical. Then when loading, we disable the input to make sure
-    it isn't focused.
-
-    [1] Possibly https://issues.chromium.org/issues/40897496
-  */
+  /* Chrome has a compositing bug (possibly https://issues.chromium.org/issues/40897496) that causes the svg to become
+   * blurry when the input is focused (putting position absolute on the input and nudging it down, you can even see the
+   * point where it gets "far enough away" that the svg no longer becomes blurry). For whatever reason, borders aren't
+   * affected, so when not doing the loading animation we'll display these boxes instead which look identical. Then when
+   * loading, we disable the input to make sure it isn't focused. */
   &::before, &::after {
     content: ' ';
     position: absolute;
