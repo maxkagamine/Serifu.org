@@ -26,5 +26,7 @@ RUN --mount=type=bind,from=dotnet,source=/builder,target=/builder \
     --mount=type=bind,source=Serifu.db,target=/Serifu.db \
     /builder/Serifu.Data.Elasticsearch.Build
 
+COPY docker/config /usr/share/elasticsearch/config
+
 HEALTHCHECK --start-period=60s --start-interval=1s \
   CMD curl -f localhost:9200/_cluster/health?wait_for_status=green || exit 1
