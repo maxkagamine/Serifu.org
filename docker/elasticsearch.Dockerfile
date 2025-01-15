@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1-labs
 
-ARG ES_VERSION
+ARG ES_VERSION=8.17.0
 
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS dotnet
 
@@ -16,7 +16,7 @@ RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
         -c Release -r $RUNTIME_IDENTIFIER -v normal -o /builder
 
 # Final image
-FROM elasticsearch:$ES_VERSION
+FROM docker.elastic.co/elasticsearch/elasticsearch-wolfi:$ES_VERSION
 
 RUN bin/elasticsearch-plugin install \
         analysis-icu \
