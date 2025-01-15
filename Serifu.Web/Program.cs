@@ -52,6 +52,16 @@ builder.Services.Configure<StaticFileOptions>(options =>
             [".avif"] = "image/avif"
         }
     };
+
+    options.OnPrepareResponse = ctx =>
+    {
+        string contentType = ctx.Context.Response.Headers.ContentType.ToString();
+
+        if (contentType.StartsWith("text/"))
+        {
+            ctx.Context.Response.Headers.ContentType = $"{contentType}; charset=utf-8";
+        }
+    };
 });
 
 builder.Services.AddControllersWithViews()
