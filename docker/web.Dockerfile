@@ -1,14 +1,16 @@
 # syntax=docker/dockerfile:1-labs
+# check=skip=FromPlatformFlagConstDisallowed
 
 ARG DOTNET_VERSION=9.0
 ARG NODE_VERSION=23.6.0
 
-FROM mcr.microsoft.com/dotnet/sdk:$DOTNET_VERSION AS build
+FROM --platform=linux/amd64 mcr.microsoft.com/dotnet/sdk:$DOTNET_VERSION AS build
 
 # Install node
 ARG NODE_VERSION
-RUN wget -qO- https://nodejs.org/download/release/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.gz | \
-    tar xfz - -C /usr/local --strip-components=1 node-v${NODE_VERSION}-linux-x64/bin node-v${NODE_VERSION}-linux-x64/lib
+RUN NODE_PACKAGE=node-v${NODE_VERSION}-linux-x64 && \
+    wget -qO- https://nodejs.org/download/release/v${NODE_VERSION}/${NODE_PACKAGE}.tar.gz | \
+    tar xfz - -C /usr/local --strip-components=1 ${NODE_PACKAGE}/bin ${NODE_PACKAGE}/lib
 
 # Build wwwroot
 WORKDIR /src/Serifu.Web

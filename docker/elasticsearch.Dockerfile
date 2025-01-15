@@ -1,19 +1,20 @@
 # syntax=docker/dockerfile:1-labs
+# check=skip=FromPlatformFlagConstDisallowed
 
 ARG ES_VERSION=8.17.0
 
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS dotnet
+FROM --platform=linux/amd64 mcr.microsoft.com/dotnet/sdk:9.0 AS dotnet
 
-ARG RUNTIME_IDENTIFIER=linux-x64
 WORKDIR /src
 
 COPY --exclude=Serifu.db . .
 
+ARG TARGETARCH
 RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
     --mount=type=secret,id=nugetconfig \
     dotnet publish Serifu.Data.Elasticsearch.Build \
         --configfile /run/secrets/nugetconfig \
-        -c Release -r $RUNTIME_IDENTIFIER -v normal -o /builder
+        -c Release -a $TARGETARCH -v normal -o /builder
 
 # Final image
 FROM docker.elastic.co/elasticsearch/elasticsearch-wolfi:$ES_VERSION
