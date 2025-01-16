@@ -15,6 +15,7 @@
 using Elastic.Clients.Elasticsearch;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace Serifu.Data.Elasticsearch.Build;
 
@@ -46,6 +47,9 @@ internal partial class ElasticsearchServer : IDisposable
         })!;
 
         // Need to consume stdout/stderr so execution on the server doesn't block once the buffer is full
+        StringBuilder output = new();
+        process.OutputDataReceived += (_, args) => output.AppendLine(args.Data);
+        process.ErrorDataReceived += (_, args) => output.AppendLine(args.Data);
         process.BeginOutputReadLine();
         process.BeginErrorReadLine();
 
@@ -54,6 +58,7 @@ internal partial class ElasticsearchServer : IDisposable
         {
             if (process.HasExited)
             {
+                Console.Write(output);
                 throw new Exception("Elasticsearch failed to start.");
             }
 
