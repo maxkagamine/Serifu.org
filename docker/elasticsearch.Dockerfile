@@ -1,23 +1,24 @@
 # syntax=docker/dockerfile:1-labs
-# check=skip=FromPlatformFlagConstDisallowed
+# check=skip=FromPlatformFlagConstDisallowed,InvalidDefaultArgInFrom
 
-ARG ES_VERSION=8.17.0
+ARG DOTNET_VERSION=9.0
+ARG ES_VERSION
 
-FROM --platform=linux/amd64 mcr.microsoft.com/dotnet/sdk:9.0 AS dotnet
+FROM --platform=linux/amd64 mcr.microsoft.com/dotnet/sdk:$DOTNET_VERSION AS dotnet
 
 WORKDIR /src
 
 COPY --exclude=Serifu.db . .
 
-ARG TARGETARCH
 RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
     --mount=type=secret,id=nugetconfig \
     dotnet publish Serifu.Data.Elasticsearch.Build \
         --configfile /run/secrets/nugetconfig \
-        -c Release -a $TARGETARCH -v normal -o /builder
+        -c Release -r linux-x64 -v normal -o /builder
 
-# Final image
-FROM docker.elastic.co/elasticsearch/elasticsearch-wolfi:$ES_VERSION
+# Build index under x64 since ES doesn't run under QEMU
+FROM --platform=linux/amd64 \
+    docker.elastic.co/elasticsearch/elasticsearch-wolfi:$ES_VERSION AS index
 
 RUN bin/elasticsearch-plugin install \
         analysis-icu \
@@ -26,6 +27,12 @@ RUN bin/elasticsearch-plugin install \
 RUN --mount=type=bind,from=dotnet,source=/builder,target=/builder \
     --mount=type=bind,source=Serifu.db,target=/Serifu.db \
     /builder/Serifu.Data.Elasticsearch.Build
+
+# Final image
+FROM docker.elastic.co/elasticsearch/elasticsearch-wolfi:$ES_VERSION
+
+COPY --from=index --parents \
+    /usr/share/elasticsearch/plugins /usr/share/elasticsearch/data /
 
 COPY docker/config /usr/share/elasticsearch/config
 

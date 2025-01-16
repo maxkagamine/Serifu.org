@@ -1,5 +1,5 @@
 *
-!docker
+!docker/config
 !Serifu.Data
 !Serifu.Data.Elasticsearch
 !Serifu.Data.Elasticsearch.Build
