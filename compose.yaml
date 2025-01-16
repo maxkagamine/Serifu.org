@@ -17,6 +17,15 @@ services:
       - '9200:9200'
     environment:
       ES_JAVA_OPTS: '-Xms512m -Xmx512m'
+  elasticsearch-arm64:
+    extends:
+      service: 'elasticsearch'
+    profiles:
+      - 'prod'
+    build:
+      platforms:
+        # Not building a multi-platform image so that the ARM image can be pushed separately due to its large size
+        - 'linux/arm64'
   kibana:
     image: 'kibana:8.17.0'
     depends_on:
@@ -55,7 +64,7 @@ services:
       - '.:/srv:ro'
   web:
     profiles:
-      - 'prod'
+      - 'preview'
     build:
       context: '.'
       dockerfile: 'docker/web.Dockerfile'
@@ -70,6 +79,14 @@ services:
       - '3900:3900'
     environment:
       AUDIOFILEBASEURL: 'http://localhost:3939'
+  web-arm64:
+    extends:
+      service: 'web'
+    profiles:
+      - 'prod'
+    build:
+      platforms:
+        - 'linux/arm64'
 
 secrets:
   nugetconfig:
