@@ -35,6 +35,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Serifu.Web", "Serifu.Web\Se
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Serifu.Data.Elasticsearch.Tests", "Serifu.Data.Elasticsearch.Tests\Serifu.Data.Elasticsearch.Tests.csproj", "{4E17BB0A-9D07-4C9C-ACB0-759C1C4A043C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Serifu.S3Uploader", "Serifu.S3Uploader\Serifu.S3Uploader.csproj", "{EBD45722-12E5-4A4C-B28A-7580E0DCA8D4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -93,6 +95,10 @@ Global
 		{4E17BB0A-9D07-4C9C-ACB0-759C1C4A043C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4E17BB0A-9D07-4C9C-ACB0-759C1C4A043C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4E17BB0A-9D07-4C9C-ACB0-759C1C4A043C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EBD45722-12E5-4A4C-B28A-7580E0DCA8D4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EBD45722-12E5-4A4C-B28A-7580E0DCA8D4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EBD45722-12E5-4A4C-B28A-7580E0DCA8D4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EBD45722-12E5-4A4C-B28A-7580E0DCA8D4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

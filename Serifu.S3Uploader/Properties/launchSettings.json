@@ -1,0 +1,37 @@
+{
+  "$schema": "http://json.schemastore.org/launchsettings.json",
+  "profiles": {
+    "Pre-deploy": {
+      "commandName": "Project",
+      "commandLineArgs": "predeploy",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    },
+    "Post-deploy": {
+      "commandName": "Project",
+      "commandLineArgs": "postdeploy",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    },
+    "Pre-deploy (Mock)": {
+      "commandName": "Project",
+      "commandLineArgs": "predeploy",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development",
+        "S3Uploader__EndpointUrl": "http://localhost:9090",
+        "S3Uploader__AudioBucket": "mock-audio-bucket"
+      }
+    },
+    "Post-deploy (Mock)": {
+      "commandName": "Project",
+      "commandLineArgs": "postdeploy",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development",
+        "S3Uploader__EndpointUrl": "http://localhost:9090",
+        "S3Uploader__AudioBucket": "mock-audio-bucket"
+      }
+    }
+  }
+}

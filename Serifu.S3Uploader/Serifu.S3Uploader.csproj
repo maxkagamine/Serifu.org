@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Serifu.Data.Sqlite\Serifu.Data.Sqlite.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="AWSSDK.S3" Version="3.7.412.2" />
+      <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="9.0.0" />
+    </ItemGroup>
+
+</Project>
