@@ -30,6 +30,8 @@ public class SerifuDbContext : DbContext
 
     public required DbSet<AudioFileCache> AudioFileCache { get; set; }
 
+    public required DbSet<S3ObjectCache> S3ObjectCache { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) => optionsBuilder
         .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTrackingWithIdentityResolution) // Immutable records
         .EnableSensitiveDataLogging()
@@ -95,6 +97,11 @@ public class SerifuDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(c => c.ObjectName)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<S3ObjectCache>(entity =>
+        {
+            entity.HasKey(c => new { c.Bucket, c.ObjectName });
         });
     }
 
