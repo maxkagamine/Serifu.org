@@ -25,6 +25,7 @@ using Serilog;
 var builder = ConsoleApplication.CreateBuilder();
 
 builder.Services.AddSerifuSerilog();
+builder.Services.AddSerifuSqlite();
 
 builder.Services.AddOptions<S3UploaderOptions>().BindConfiguration("S3Uploader").ValidateDataAnnotations();
 
@@ -40,6 +41,7 @@ builder.Services.AddSingleton<IAmazonS3>(provider =>
     {
         logger.Information("S3 endpoint: {EndpointUrl}", options.EndpointUrl);
         config.ServiceURL = options.EndpointUrl;
+        config.ForcePathStyle = true;
     }
     else
     {
@@ -59,9 +61,11 @@ builder.Run(async (S3Uploader uploader, CancellationToken cancellationToken) =>
     switch (args.FirstOrDefault())
     {
         case "predeploy":
+            Console.Title = "S3 Uploader: Pre-deploy";
             await uploader.PreDeploy(cancellationToken);
             break;
         case "postdeploy":
+            Console.Title = "S3 Uploader: Post-deploy";
             await uploader.PostDeploy(cancellationToken);
             break;
         default:

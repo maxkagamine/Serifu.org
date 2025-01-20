@@ -95,6 +95,7 @@ services:
     mem_limit: '512M'
     ports:
       - '9090:9090'
+      - '9191:9191' # HTTPS
     volumes:
       - './_stuff/s3mock-data:/data'
     environment:
