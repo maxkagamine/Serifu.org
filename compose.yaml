@@ -78,7 +78,7 @@ services:
     ports:
       - '3900:3900'
     environment:
-      AUDIOFILEBASEURL: 'http://localhost:3939'
+      AudioFileBaseUrl: 'http://localhost:3939'
   web-arm64:
     extends:
       service: 'web'
@@ -87,6 +87,20 @@ services:
     build:
       platforms:
         - 'linux/arm64'
+  s3mock:
+    profiles:
+      - 's3mock'
+    image: 'adobe/s3mock'
+    cpus: 1
+    mem_limit: '512M'
+    ports:
+      - '9090:9090'
+    volumes:
+      - './_stuff/s3mock-data:/data'
+    environment:
+      initialBuckets: 'mock-audio-bucket'
+      root: '/data'
+      retainFilesOnExit: 'true'
 
 secrets:
   nugetconfig:
