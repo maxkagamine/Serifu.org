@@ -28,7 +28,8 @@ namespace Serifu.S3Uploader;
 
 public sealed class S3Uploader : IAsyncDisposable
 {
-    private const int ConcurrentUploads = 10; // Arbitrary, but this is the default used by TransferUtility
+    // https://improve.dk/pushing-the-limits-of-amazon-s3-upload-performance/
+    private const int ConcurrentUploads = 64;
 
     private readonly IAmazonS3 s3;
     private readonly IDbContextFactory<SerifuDbContext> dbFactory;
@@ -75,6 +76,9 @@ public sealed class S3Uploader : IAsyncDisposable
             MaxDegreeOfParallelism = ConcurrentUploads,
             CancellationToken = cancellationToken
         };
+
+        await using var __ = cancellationToken.Register(() =>
+            logger.Information("Canceled, waiting for threads to complete"));
 
         await Parallel.ForEachAsync(audioFilesToUpload, parallelOptions, async (objectName, cancellationToken) =>
         {
