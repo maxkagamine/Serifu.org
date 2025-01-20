@@ -11,6 +11,9 @@
 
     <!-- Hard link MeCab dictionary instead of copying to every project that references Serifu.ML -->
     <CreateHardLinksForAdditionalFilesIfPossible>true</CreateHardLinksForAdditionalFilesIfPossible>
+
+    <ProjectDir Condition="$(ProjectDir) == '' Or $(ProjectDir) == '*Undefined*'">$(MSBuildProjectDirectory)\</ProjectDir>
+    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">$(ProjectDir)..\</SolutionDir>
   </PropertyGroup>
 
   <ItemGroup>
