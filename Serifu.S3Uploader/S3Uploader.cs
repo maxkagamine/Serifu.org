@@ -123,9 +123,42 @@ public sealed class S3Uploader : IAsyncDisposable
         });
     }
 
-    public Task PostDeploy(CancellationToken cancellationToken)
+    public async Task PostDeploy(CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
+
+        string[] audioFilesToDelete = await db.S3ObjectCache
+            .Where(c => c.Bucket == options.AudioBucket && !db.AudioFiles.Any(a => a.ObjectName == c.ObjectName))
+            .Select(c => c.ObjectName)
+            .ToArrayAsync(cancellationToken);
+
+        using var _ = logger.BeginTimedOperation("Deleting {Count} old audio files from {Bucket}",
+            audioFilesToDelete.Length, options.AudioBucket);
+
+        string[][] batches = audioFilesToDelete.Chunk(1000).ToArray();
+
+        for (int i = 0; i < batches.Length; i++)
+        {
+            string[] batch = batches[i];
+            logger.Information("Batch {Number} of {Count}", i + 1, batches.Length);
+
+            DeleteObjectsResponse response = await s3.DeleteObjectsAsync(
+                new DeleteObjectsRequest()
+                {
+                    BucketName = options.AudioBucket,
+                    Objects = batch.Select(x => new KeyVersion() { Key = x }).ToList()
+                },
+                cancellationToken);
+
+            if (response.HttpStatusCode != HttpStatusCode.OK) // Docs don't make it clear if it'll always throw or not
+            {
+                throw new AmazonS3Exception($"Delete failed with status code {response.HttpStatusCode}.");
+            }
+
+            await db.S3ObjectCache
+                .Where(c => c.Bucket == options.AudioBucket && Enumerable.Contains(batch, c.ObjectName)) // https://github.com/dotnet/runtime/issues/109757
+                .ExecuteDeleteAsync(cancellationToken);
+        }
     }
 
     public async ValueTask DisposeAsync()
