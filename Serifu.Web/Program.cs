@@ -18,6 +18,7 @@ using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.WebEncoders;
 using Serifu.Data.Elasticsearch;
 using Serifu.Web;
+using Serifu.Web.Helpers;
 using Serifu.Web.Localization;
 using Serilog;
 using System.Text.Unicode;
@@ -86,12 +87,30 @@ builder.Services.AddRequestLocalization(options =>
 
 builder.Services.AddSerifuElasticsearch();
 
+builder.Services.AddHsts(options =>
+{
+    options.MaxAge = TimeSpan.FromDays(730);
+    options.IncludeSubDomains = true;
+    options.Preload = true;
+});
+
+builder.Services.AddHeaders(headers =>
+{
+    headers.ContentSecurityPolicy = "frame-ancestors 'none'";
+    headers.XPoweredBy = "Rin-chan";
+});
+
+builder.WebHost.ConfigureKestrel(options => options.AddServerHeader = false);
+
 var app = builder.Build();
 
 app.UseSerilogRequestLogging();
 
 app.UseExceptionHandler("/Error/500");
 app.UseStatusCodePagesWithReExecute("/Error/{0}");
+
+app.UseHsts();
+app.UseHeaders();
 
 app.UseStaticFiles();
 app.UseRouting();
