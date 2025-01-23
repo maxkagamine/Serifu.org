@@ -26,14 +26,14 @@ public class TranslationViewModel
         Translation translation,
         IReadOnlyList<Range> highlights,
         string language,
-        string audioFileBaseUrl)
+        AudioFileUrlProvider audioFileUrlProvider)
     {
         Language = language;
         SpeakerName = translation.SpeakerName;
         Context = translation.Context;
         Text = Highlighter.ApplyHighlights(translation.Text, highlights);
         Notes = string.IsNullOrWhiteSpace(translation.Notes) ? null : new HtmlString(translation.Notes);
-        AudioFileUrl = translation.AudioFile is null ? null : $"{audioFileBaseUrl}/{translation.AudioFile}";
+        AudioFileUrl = audioFileUrlProvider.GetUrl(translation.AudioFile);
         Quote = quoteViewModel;
     }
 

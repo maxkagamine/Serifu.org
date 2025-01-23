@@ -14,12 +14,13 @@
 
 using Serifu.Data;
 using Serifu.Data.Elasticsearch;
+using Serifu.Web.Helpers;
 
 namespace Serifu.Web.Models;
 
 public class QuoteViewModel
 {
-    public QuoteViewModel(SearchResult result, bool englishFirst, string audioFileBaseUrl)
+    public QuoteViewModel(SearchResult result, bool englishFirst, AudioFileUrlProvider audioFileUrlProvider)
     {
         var quote = result.Quote;
 
@@ -27,8 +28,8 @@ public class QuoteViewModel
         Source = quote.Source;
         EnglishSpeakerName = quote.English.SpeakerName;
 
-        TranslationViewModel english = new(this, quote.English, result.EnglishHighlights, "en", audioFileBaseUrl);
-        TranslationViewModel japanese = new(this, quote.Japanese, result.JapaneseHighlights, "ja", audioFileBaseUrl);
+        TranslationViewModel english = new(this, quote.English, result.EnglishHighlights, "en", audioFileUrlProvider);
+        TranslationViewModel japanese = new(this, quote.Japanese, result.JapaneseHighlights, "ja", audioFileUrlProvider);
 
         (Left, Right) = englishFirst ? (english, japanese) : (japanese, english);
     }

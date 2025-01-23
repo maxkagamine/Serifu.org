@@ -16,6 +16,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Serifu.Data;
 using Serifu.Data.Elasticsearch;
+using Serifu.Web.Helpers;
 using Serifu.Web.Localization;
 using Serifu.Web.Models;
 using System.Diagnostics;
@@ -26,11 +27,16 @@ namespace Serifu.Web.Controllers;
 public class DefaultController : Controller
 {
     private readonly IElasticsearchService elasticsearch;
+    private readonly AudioFileUrlProvider audioFileUrlProvider;
     private readonly IOptions<SerifuOptions> options;
 
-    public DefaultController(IElasticsearchService elasticsearch, IOptions<SerifuOptions> options)
+    public DefaultController(
+        IElasticsearchService elasticsearch,
+        AudioFileUrlProvider audioFileUrlProvider,
+        IOptions<SerifuOptions> options)
     {
         this.elasticsearch = elasticsearch;
+        this.audioFileUrlProvider = audioFileUrlProvider;
         this.options = options;
     }
 
@@ -66,7 +72,6 @@ public class DefaultController : Controller
             query ??= "";
             SearchResults results = await elasticsearch.Search(query, cancellationToken);
             bool englishFirst = results.SearchLanguage == SearchLanguage.English;
-            string audioFileBaseUrl = options.Value.AudioFileBaseUrl;
 
             ResultsViewModel model;
 
@@ -74,8 +79,16 @@ public class DefaultController : Controller
             {
                 model = new()
                 {
-                    Quotes = results.Select(r => new QuoteViewModel(r, englishFirst, audioFileBaseUrl)).ToArray()
+                    Quotes = results.AsParallel().AsOrdered()
+                        .Select(r => new QuoteViewModel(r, englishFirst, audioFileUrlProvider))
+                        .ToArray()
                 };
+
+                // Ensure the page expires from cache well before its links become invalid
+                if (audioFileUrlProvider.Ttl != TimeSpan.Zero)
+                {
+                    Response.GetTypedHeaders().Expires = DateTime.UtcNow + (audioFileUrlProvider.Ttl / 2);
+                }
             }
             else
             {

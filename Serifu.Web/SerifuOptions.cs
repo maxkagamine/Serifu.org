@@ -20,8 +20,7 @@ namespace Serifu.Web;
 
 public class SerifuOptions
 {
-    [Required]
-    public string AudioFileBaseUrl { get; set; } = "";
+    public AudioFileOptions AudioFiles { get; set; } = new();
 
     public Dictionary<Source, List<ExternalLink>> SourceLinks { get; set; } = [];
 }
@@ -38,4 +37,20 @@ public class ExternalLink
     }
 
     public required Uri Url { get; set; }
+}
+
+public class AudioFileOptions
+{
+    [Required]
+    public string BaseUrl { get; set; } = "";
+
+    public string SigningKey { get; set; } = "";
+
+    public string KeyPairId { get; set; } = "";
+
+    /// <summary>
+    /// How long signed URLs should be valid. This should be longer than the cache duration of the page so that links
+    /// remain valid even if someone got the page just before it expired from the cache.
+    /// </summary>
+    public TimeSpan Ttl { get; set; }
 }

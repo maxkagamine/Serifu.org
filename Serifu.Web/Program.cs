@@ -15,6 +15,7 @@
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.Extensions.Options;
 using Microsoft.Extensions.WebEncoders;
 using Serifu.Data.Elasticsearch;
 using Serifu.Web;
@@ -99,6 +100,16 @@ builder.Services.AddHeaders(headers =>
     headers.ContentSecurityPolicy = "frame-ancestors 'none'";
     headers.XPoweredBy = "Rin-chan";
 });
+
+builder.Services.AddSingleton<IUrlSigner>(provider =>
+{
+    var options = provider.GetRequiredService<IOptions<SerifuOptions>>().Value.AudioFiles;
+    return string.IsNullOrEmpty(options.SigningKey) ?
+        new NoopUrlSigner() :
+        new CloudFrontUrlSigner(options.SigningKey, options.KeyPairId);
+});
+
+builder.Services.AddSingleton<AudioFileUrlProvider>();
 
 builder.WebHost.ConfigureKestrel(options => options.AddServerHeader = false);
 
