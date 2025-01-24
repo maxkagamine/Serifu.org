@@ -9,7 +9,7 @@ export default defineConfig(({ command }) => ({
     emptyOutDir: true,
     manifest: true,
     outDir: '../wwwroot',
-    assetsDir: '',
+    assetsDir: 'assets',
     rollupOptions: {
       input: 'Assets/main.ts',
     },

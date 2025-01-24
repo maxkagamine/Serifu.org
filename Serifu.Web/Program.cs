@@ -47,6 +47,7 @@ builder.Services.Configure<WebEncoderOptions>(options =>
 
 builder.Services.Configure<StaticFileOptions>(options =>
 {
+    // https://github.com/dotnet/aspnetcore/issues/39984
     options.ContentTypeProvider = new FileExtensionContentTypeProvider()
     {
         Mappings =
@@ -58,10 +59,23 @@ builder.Services.Configure<StaticFileOptions>(options =>
     options.OnPrepareResponse = ctx =>
     {
         string contentType = ctx.Context.Response.Headers.ContentType.ToString();
-
         if (contentType.StartsWith("text/"))
         {
             ctx.Context.Response.Headers.ContentType = $"{contentType}; charset=utf-8";
+        }
+
+        if (ctx.Context.Request.Path.StartsWithSegments("/assets"))
+        {
+            if (contentType.StartsWith("image/"))
+            {
+                // Getting the background image to look right (correct color, no banding) was a struggle, and it will
+                // almost definitely get messed up if a mobile browser's data saver tries to re-"optimize" it.
+                ctx.Context.Response.Headers.CacheControl = "public, max-age=31536000, immutable, no-transform";
+            }
+            else
+            {
+                ctx.Context.Response.Headers.CacheControl = "public, max-age=31536000, immutable";
+            }
         }
     };
 });
