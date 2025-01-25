@@ -10,6 +10,7 @@ import './about-page.css';
 import './error-page.css';
 
 import './images/serifu.svg';
+import './images/favicon.svg?no-inline';
 
 import './search-box';
 import './audio-button';

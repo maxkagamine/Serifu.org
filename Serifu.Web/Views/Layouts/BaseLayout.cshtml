@@ -62,10 +62,10 @@ $$  jR'     $L      1R"                      '*%RR$,,,ggRRM*"'    ]$F      $$
             var altLang = lang == "en" ? "ja" : "en";
             routeValues["lang"] = altLang;
 
-            <link rel="alternate" hreflang="@altLang" href="@Url.RouteUrl(urlRouteContext)"/>
+            <link rel="alternate" hreflang="@altLang" href="@Url.RouteUrl(urlRouteContext)" />
         }
     }
-    <link rel="icon" href="/favicon.svg" />
+    <link rel="icon" vite-href="/images/favicon.svg" />
     <style>
         :root {
             color-scheme: dark;
@@ -76,11 +76,11 @@ $$  jR'     $L      1R"                      '*%RR$,,,ggRRM*"'    ]$F      $$
     <link rel="dns-prefetch" href="https://static.serifu.org" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Merriweather:ital@0;1&family=Noto+Serif+JP&display=swap" />
-    <link rel="stylesheet" vite-href="~/main.ts" />
+    <link rel="stylesheet" vite-href="/main.ts" />
     @await RenderSectionAsync("head", required: false)
 </head>
 <body>
     @RenderBody()
-    <script type="module" vite-src="~/main.ts"></script>
+    <script type="module" vite-src="/main.ts"></script>
 </body>
 </html>
