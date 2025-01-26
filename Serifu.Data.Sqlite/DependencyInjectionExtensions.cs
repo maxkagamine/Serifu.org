@@ -44,7 +44,7 @@ public static class DependencyInjectionExtensions
         => services.AddSerilog((IServiceProvider provider, LoggerConfiguration config) =>
         {
             string appName = provider.GetRequiredService<IHostEnvironment>().ApplicationName;
-            string? seqUrl = provider.GetRequiredService<IConfiguration>()["SeqUrl"];
+            var appsettings = provider.GetRequiredService<IConfiguration>();
 
             config
                 .MinimumLevel.Debug()
@@ -60,7 +60,9 @@ public static class DependencyInjectionExtensions
 
             if (!EF.IsDesignTime)
             {
-                config.WriteTo.Seq(seqUrl ?? throw new Exception("SeqUrl not set in configuration (user secrets)"));
+                config.WriteTo.Seq(
+                    serverUrl: appsettings["SeqUrl"] ?? throw new Exception("SeqUrl not set in configuration"),
+                    apiKey: appsettings["SeqApiKey"] ?? throw new Exception("SeqApiKey not set in configuration"));
             }
 
             configureLogger?.Invoke(provider, config);
