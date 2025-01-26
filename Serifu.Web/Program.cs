@@ -150,7 +150,15 @@ builder.WebHost.ConfigureKestrel(options => options.AddServerHeader = false);
 
 var app = builder.Build();
 
-app.UseSerilogRequestLogging();
+app.UseSerilogRequestLogging(options =>
+{
+    // Trigger a warning when responses are slow
+    var threshold = app.Configuration.GetValue<TimeSpan>("ResponseTimeWarningThreshold").TotalMilliseconds;
+    options.GetLevel = (context, elapsed, ex) =>
+        ex is not null || context.Response.StatusCode >= 500 ? LogEventLevel.Error :
+        elapsed >= threshold ? LogEventLevel.Warning :
+        LogEventLevel.Information;
+});
 
 app.UseExceptionHandler("/Error/500");
 app.UseStatusCodePagesWithReExecute("/Error/{0}");
