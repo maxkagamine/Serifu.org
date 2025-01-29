@@ -21,7 +21,7 @@ namespace Serifu.Web.Controllers;
 
 public class ErrorController : Controller
 {
-    [Route("/Error/{statusCode}")]
+    [Route("/Error/{statusCode:range(400, 599)}")]
     public ActionResult Error(int statusCode)
     {
         var exceptionHandler = HttpContext.Features.Get<IExceptionHandlerFeature>();
@@ -29,8 +29,8 @@ public class ErrorController : Controller
 
         if (exceptionHandler is null && statusCodePage is null)
         {
-            // Someone's trying to navigate directly to the error page
-            Response.StatusCode = statusCode = StatusCodes.Status404NotFound;
+            // Someone's trying to navigate directly to the error page (that's fine, but don't return 200)
+            Response.StatusCode = StatusCodes.Status418ImATeapot;
         }
 
         if (exceptionHandler?.Error is ElasticsearchException { IsConnectionError: true })
