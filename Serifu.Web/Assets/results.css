@@ -120,6 +120,7 @@
     justify-content: flex-end;
     align-items: center;
     font-family: sans-serif;
+    font-variant-numeric: normal;
     font-size: 0.75em;
     font-size-adjust: none;
     color: rgb(from currentcolor r g b / 75%); /* Keeps active color fully opaque, as opposed to setting opacity */

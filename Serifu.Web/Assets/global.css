@@ -71,6 +71,7 @@
 b, strong, h2, h3, th {
   font-family: sans-serif;
   font-size-adjust: none;
+  font-variant-numeric: normal;
 }
 
 body {
