@@ -24,7 +24,6 @@ using Serifu.Web.Localization;
 using Serilog;
 using Serilog.Core;
 using Serilog.Events;
-using Serilog.Formatting.Compact;
 using System.Text.Unicode;
 using Vite.AspNetCore;
 
@@ -47,8 +46,8 @@ builder.Services.AddSerilog((IServiceProvider provider, LoggerConfiguration conf
         .WriteTo.Seq(
             serverUrl: appsettings["SeqUrl"] ?? throw new Exception("SeqUrl not set in configuration"),
             apiKey: appsettings["SeqApiKey"] ?? throw new Exception("SeqApiKey not set in configuration"),
-            controlLevelSwitch: levelSwitch)
-        .WriteTo.Console(new RenderedCompactJsonFormatter());
+            bufferBaseFilename: appsettings["SeqBufferDirectory"] is string dir ? $"{dir.TrimEnd('/')}/log" : null,
+            controlLevelSwitch: levelSwitch);
 });
 
 builder.Services.AddOptions<SerifuOptions>().BindConfiguration("").ValidateDataAnnotations();

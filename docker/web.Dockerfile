@@ -29,6 +29,8 @@ RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
         --configfile /run/secrets/nugetconfig \
         -c Release -v normal -o /publish /p:UseAppHost=false
 
+RUN mkdir /var/log/seq
+
 # Final image
 FROM mcr.microsoft.com/dotnet/aspnet:${DOTNET_VERSION}-noble-chiseled-extra
 
@@ -37,5 +39,8 @@ EXPOSE 3900
 
 WORKDIR /app
 COPY --from=build /publish .
+
+COPY --from=build --chown=$APP_UID:$APP_UID /var/log/seq /var/log/seq
+ENV SeqBufferDirectory=/var/log/seq
 
 ENTRYPOINT ["dotnet", "Serifu.Web.dll"]

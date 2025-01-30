@@ -74,8 +74,11 @@ services:
         condition: 'service_healthy'
       sqlarserver:
         condition: 'service_healthy'
+    mem_limit: '512M'
     ports:
       - '3900:3900'
+    volumes:
+      - 'seq-log-buffer:/var/log/seq'
     environment:
       AudioFiles__BaseUrl: 'http://localhost:3939'
       SeqUrl: '${SEQ_URL}'
@@ -99,3 +102,6 @@ services:
 secrets:
   nugetconfig:
     file: '/mnt/c/Users/max/AppData/Roaming/NuGet/NuGet.Config'
+
+volumes:
+  seq-log-buffer:
