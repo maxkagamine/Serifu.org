@@ -22,6 +22,7 @@ using Serilog;
 using Serilog.Events;
 using System.Globalization;
 using System.Runtime.CompilerServices;
+using System.Runtime.ExceptionServices;
 
 namespace Serifu.Data.Elasticsearch;
 
@@ -202,6 +203,11 @@ public class ElasticsearchService : IElasticsearchService
         }
         catch (TransportException ex)
         {
+            if (ex.InnerException is TaskCanceledException)
+            {
+                ExceptionDispatchInfo.Capture(ex.InnerException).Throw();
+            }
+
             throw new ElasticsearchException(ex);
         }
     }
