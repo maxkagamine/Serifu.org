@@ -17,7 +17,7 @@ I started this project after realizing that, after going to the arcade nearly ev
 
 ## Architecture diagram
 
-[![](.github/images/architecture-diagram.svg)](https://github.com/maxkagamine/Serifu.org/raw/refs/heads/master/.github/images/architecture-diagram.svg)
+[![](.github/images/architecture-diagram-english.svg)](https://github.com/maxkagamine/Serifu.org/raw/refs/heads/master/.github/images/architecture-diagram-english.svg)
 
 ## Importers
 
