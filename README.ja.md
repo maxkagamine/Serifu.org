@@ -17,7 +17,7 @@ Serifu.orgは、興味のあるものなら言語を学ぶのがより早いと�
 
 ## アーキテクチャ図
 
-[![](.github/images/architecture-diagram-japanese.svg)](https://github.com/maxkagamine/Serifu.org/raw/refs/heads/master/.github/images/architecture-diagram-japanese.svg)
+[![](.github/images/architecture-diagram-japanese.svg)](https://cdn.jsdelivr.net/gh/maxkagamine/Serifu.org/.github/images/architecture-diagram-japanese.svg)
 
 ## インポーター
 
