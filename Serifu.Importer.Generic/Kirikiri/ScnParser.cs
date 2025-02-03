@@ -29,25 +29,27 @@ internal partial class ScnParser : IParser<ScnParserOptions>
     [GeneratedRegex("""
         (?<!\\) # Not preceeded by a backslash escape
         (
-            # Percent formatting (%l takes an extra argument)
-            %(l[^;]*;)?[^;]*; |
+            # Special case to handle what appear to be nested %l tags (see notes)
+            %l;%l(?:[^;]+;){3} |
+            # Percent formatting (%l takes two arguments)
+            %(?:l[^;]*;)?[^;]*; |
             # Furigana
             \[[^\]]*\]
         )
         """,
         RegexOptions.IgnorePatternWhitespace | RegexOptions.IgnoreCase)]
-    private partial Regex FormattingRegex { get; }
+    private static partial Regex FormattingRegex { get; }
 
     // We'll need to check any new %-tags to see if they take multiple arguments like %l or not.
     [GeneratedRegex(@"(?<!\\)%[^\d;dfl]", RegexOptions.IgnoreCase)]
-    private partial Regex UnknownPercentTagRegex { get; }
+    private static partial Regex UnknownPercentTagRegex { get; }
 
     // The ampersand was seen escaped, which implies it might have special meaning (perhaps HTML entities are allowed?)
     [GeneratedRegex(@"(?<!\\)&")]
-    private partial Regex UnescapedAmpersandRegex { get; }
+    private static partial Regex UnescapedAmpersandRegex { get; }
 
     [GeneratedRegex(@"\\.", RegexOptions.Singleline)]
-    private partial Regex EscapeCharacterRegex { get; }
+    private static partial Regex EscapeCharacterRegex { get; }
 
     public ScnParser(IOptions<ScnParserOptions> options, ILogger logger)
     {
@@ -131,7 +133,7 @@ internal partial class ScnParser : IParser<ScnParserOptions>
         }
     }
 
-    private string StripFormatting(string text, string key)
+    private static string StripFormatting(string text, string key)
     {
         // Check for unknown percent tags
         Match match = UnknownPercentTagRegex.Match(text);

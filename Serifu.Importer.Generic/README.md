@@ -312,6 +312,49 @@ To filter out multi-speaker voice lines: `x.texts?.filter(x => x[3] == null || x
 
 Aside from the `%f` for font, seen above, Maitetsu links words in the glossary using the syntax `%l<key>;#<color>;`, with empty key & color acting as an apparent reset. **This means %-tags can take multiple parameters.**
 
+Note that the parsing can get somewhat non-trivial. A typical use of `%l` looks like this:
+
+```
+「停止位置、良し。%l単弁;#00ffc040;単弁%l;#;、緩ブレーキ。\n%l逆転機;#00ffc040;逆転機%l;#;、%lミッドギア;#00ffc040;ミッドギア%l;#;」
+```
+
+But there are several instances where `%l` tags appear to take not two but one or three arguments, such as:
+
+```
+旧%l帝鉄;#00ffc040;帝鉄%l;%l8620;#;#00ffc040;8620%l;#;形トップナンバー
+```
+
+Notice how the second `%l` appears like a closing tag for the first one but without the empty color argument as usual, and how the third one, `%l8620;#;#00ffc040;`, appears to have an empty color first followed by the actual color. It displays the same as any other link in the game. There are also four instances where an actual newline appears _in the middle of the tag_, such as `%lミッドギア;#00ffc040;ミッドギア%l;\n#;` (note: the newline is `\\n` in the json; see "escaping" below).
+
+Two observations I've made that might explain this:
+
+1. Every time an `%l` tag appears to have three arguments, it's directly preceded by another "%l".
+2. The only time the string "%l;" appears and isn't followed by "#;" or another "%l" is when it's `%l;\n#;` (so just a regular reset / closing tag with a stray newline)
+
+What I suspect is happening here is that there's actually an `%l` tag _inside_ another `%l` tag — possibly an editor mistake (either human error or perhaps a wonky WYSIWYG). If we assume that an `%l` can terminate a preceding `%l` without an explicit `%l;#;` (which follows, since we know Kirikiri doesn't actually have "closing tags," just "resets" akin to ANSI color escapes in a terminal), then this:
+
+```
+旧%l帝鉄;#00ffc040;帝鉄%l;%l8620;#;#00ffc040;8620%l;#;形トップナンバー
+```
+
+might be getting parsed as this (pseudo-python for illustrative purposes):
+
+```py
+"旧"
+Link(to="帝鉄", color="#00ffc040")
+"帝鉄"
+Link(to="", color=f"{Link(to="8620", color="#")}#00ffc040")
+"8620"
+Link(to="", color="#")
+"形トップナンバー"
+```
+
+**and the parser is just forgiving enough to un-derp the second link.**
+
+That said, with no documentation or source code (that I can find) and without further examples, it's hard to say if this hypothesis is correct or not. For the time being, I'm special-casing Maitetsu's `%l` tag in the regex below. [You can see my list of test cases here.][scn formatting regex]
+
+Moving on...
+
 There's also a bracket syntax for furigana. `[バン]板` becomes <ruby>板<rt>バン</rt></ruby>, `[イビ,1]伊日川` becomes <ruby>伊日<rt>イビ</rt></ruby>川, and so on. In both cases, the marked-up line is followed by two additional strings without the markup. The last one looks to be the one we want:
 
 ```jsonc
@@ -414,14 +457,18 @@ Maitetsu's `%l` is the only one seen so far that takes multiple arguments.
 ```regexp
 (?<!\\) # Not preceeded by a backslash escape
 (
-    # Percent formatting (%l takes an extra argument)
-    %(l[^;]*;)?[^;]*; |
+    # Special case to handle what appear to be nested %l tags (see notes)
+    %l;%l(?:[^;]+;){3} |
+    # Percent formatting (%l takes two arguments)
+    %(?:l[^;]*;)?[^;]*; |
     # Furigana
     \[[^\]]*\]
 )
 ```
 
-[Test](https://regex101.com/r/y3Tchn/1) | Use RegexOptions.IgnorePatternWhitespace
+[Open in regex101][scn formatting regex]
+
+[scn formatting regex]: https://regex101.com/r/4NTQVb/1
 
 We'll want to check for unknown %-formattings since they may take a different number of arguments like %l: `(?<!\\)%[^\d;dfl]`.
 
