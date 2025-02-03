@@ -43,24 +43,25 @@ Serifu.orgは、興味のあるものなら言語を学ぶのがより早いと�
 
 ## フロントエンド
 
-- [**Serifu.Web**](./Serifu.Web) — ASP.NET Core、Razor、TypeScript、Viteで作られました。近年は普通にReactやAngularのプロジェクトに働きますが、今回はシンプルにするために、あえて伝統的なMVCにしました。それでも、ここで最新のウェブプラットフォームの機能がいくつか採用されています。重要な点は：
-  - JS無しでHTML[ポップオーバー](https://developer.mozilla.org/ja/docs/Web/API/Popover_API)と[アンカー位置指定](https://developer.mozilla.org/ja/docs/Web/CSS/CSS_anchor_positioning/Using)を使って実装された注釈ポップアップやリンクメニュー
-  - 実際普通のウェブサイトのように作られたのに、SPAのように感じさせるために[ドキュメント間のビュー遷移](https://developer.chrome.com/docs/web-platform/view-transitions/cross-document?hl=ja)を使用すること
-  - レスポンシブなモバイル用レイアウトのためにCSSグリッドの使用
-  - リンちゃんをフレーム内でヘッダーの下に収めるように、（二次元）線形補間の使う細心の背景位置の調整（そのヘッダーも、固定ブレークポイントと違ってスムーズに補間されます）
-  - それにかっこいい検索ボックスのローディングアニメーション：
+- [**Serifu.Web**](./Serifu.Web) — ASP.NET Core、Razor、TypeScript、Viteで作られました。近年は普通にReactやAngularのプロジェクトに働きますが、今回はシンプルにするために、あえて伝統的なMVCにしました。それでも、ここで最新のウェブプラットフォームの機能がいくつか採用されています。面白いポイント：
 
-  <p align="center">
-    <a href="https://github.com/maxkagamine/Serifu.org/raw/refs/heads/master/.github/images/popovers.avif"><img src=".github/images/popovers.avif" height="295" /></a>
-    <a href="https://github.com/maxkagamine/Serifu.org/raw/refs/heads/master/.github/images/view-transitions.avif"><img src=".github/images/view-transitions.avif" height="295" /></a>
-    <a href="https://github.com/maxkagamine/Serifu.org/raw/refs/heads/master/.github/images/search-box-loading-animation.avif"><img src=".github/images/search-box-loading-animation.avif" width="791" /></a>
-    <br />
-    <sup>
-      1. 純粋なHTMLとCSSのポップオーバー、ここにJavaScriptがないよ！<br />
-      2. CSSビュー遷移によってシームレスに隠されているフルページナビゲーション<br />
-      3. @property型CSS変数をキーフレームしてSVGのstroke-dasharrayを制御することで実現した（ほぼ）純粋なCSSローディングアニメーション
-    </sup>
-  </p>
+  JavaScript無しで、HTML[ポップオーバー](https://developer.mozilla.org/ja/docs/Web/API/Popover_API)と[アンカー位置指定](https://developer.mozilla.org/ja/docs/Web/CSS/CSS_anchor_positioning/Using)を使って実装された注釈ポップアップやリンクメニュー：
+
+  <p align="center"><a href="https://github.com/maxkagamine/Serifu.org/raw/refs/heads/master/.github/images/popovers.avif"><img src=".github/images/popovers.avif" height="300" /></a></p>
+
+  実際普通のウェブサイトのように作られたのに、SPAのように感じさせてフルページナビゲーションを隠すために[ドキュメント間のビュー遷移](https://developer.chrome.com/docs/web-platform/view-transitions/cross-document?hl=ja)を使用すること：
+
+  <p align="center"><a href="https://github.com/maxkagamine/Serifu.org/raw/refs/heads/master/.github/images/view-transitions.avif"><img src=".github/images/view-transitions.avif" height="300" /></a></p>
+
+  レスポンシブなモバイル用レイアウトのためにCSSグリッドの使用、
+
+  リンちゃんをフレーム内でヘッダーの下に収めるように、（二次元）線形補間の使う細心の背景位置とサイズの調整（そのヘッダーも、固定ブレークポイントと違ってスムーズに補間されます）：
+
+  <p align="center"><a href="https://github.com/maxkagamine/Serifu.org/raw/refs/heads/master/.github/images/background-size-and-position-calculation.avif"><img src=".github/images/background-size-and-position-calculation.avif" /></a></p>
+
+  それにかっこいい検索ボックスのローディングアニメーション：
+
+  <p align="center"><a href="https://github.com/maxkagamine/Serifu.org/raw/refs/heads/master/.github/images/search-box-loading-animation.avif"><img src=".github/images/search-box-loading-animation.avif" /></a></p>
 
 ## ライセンス
 

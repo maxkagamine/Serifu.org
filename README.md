@@ -43,24 +43,25 @@ I started this project after realizing that, after going to the arcade nearly ev
 
 ## Frontend
 
-- [**Serifu.Web**](./Serifu.Web) — Built using ASP.NET Core, Razor, TypeScript, and Vite. While I tend to work on React and Angular projects these days, I deliberately went old-school with MVC for this one in the interest of keeping it simple. That said, there are a number of modern web platform features in use here. Key points include:
-  - Notes popup and link menu implemented with zero JS using HTML [popovers](https://developer.mozilla.org/en-US/docs/Web/API/Popover_API) and [anchor positioning](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_anchor_positioning/Using);
-  - [Cross-document view transitions](https://developer.chrome.com/docs/web-platform/view-transitions/cross-document) to make the app feel like a SPA despite being built like a regular website;
-  - Use of CSS grids for an adaptive mobile layout;
-  - Meticulous background image positioning using (bi)linear interpolation to keep Rin in frame and below the header (which also smoothly interpolates, as opposed to fixed breakpoints);
-  - And a slick search box loading animation:
+- [**Serifu.Web**](./Serifu.Web) — Built using ASP.NET Core, Razor, TypeScript, and Vite. While I tend to work on React and Angular projects these days, I deliberately went old-school with MVC for this one in the interest of keeping it simple. That said, there are a number of modern web platform features in use here. Some interesting parts:
 
-  <p align="center">
-    <a href="https://github.com/maxkagamine/Serifu.org/raw/refs/heads/master/.github/images/popovers.avif"><img src=".github/images/popovers.avif" height="295" /></a>
-    <a href="https://github.com/maxkagamine/Serifu.org/raw/refs/heads/master/.github/images/view-transitions.avif"><img src=".github/images/view-transitions.avif" height="295" /></a>
-    <a href="https://github.com/maxkagamine/Serifu.org/raw/refs/heads/master/.github/images/search-box-loading-animation.avif"><img src=".github/images/search-box-loading-animation.avif" width="791" /></a>
-    <br />
-    <sup>
-      1. Pure HTML & CSS popovers, no JavaScript here!<br />
-      2. Full page navigation being seamlessly masked by CSS view transitions.<br />
-      3. An (almost) pure CSS loading animation accomplished by keyframing @property-typed CSS variables controlling an SVG stroke-dasharray.
-    </sup>
-  </p>
+  Notes popup and link menu implemented with zero JavaScript using HTML [popovers](https://developer.mozilla.org/en-US/docs/Web/API/Popover_API) and [anchor positioning](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_anchor_positioning/Using):
+
+  <p align="center"><a href="https://github.com/maxkagamine/Serifu.org/raw/refs/heads/master/.github/images/popovers.avif"><img src=".github/images/popovers.avif" height="300" /></a></p>
+
+  [Cross-document view transitions](https://developer.chrome.com/docs/web-platform/view-transitions/cross-document) conceal the full page navigation and make the app feel like a SPA despite being built like a regular website:
+
+  <p align="center"><a href="https://github.com/maxkagamine/Serifu.org/raw/refs/heads/master/.github/images/view-transitions.avif"><img src=".github/images/view-transitions.avif" height="300" /></a></p>
+
+  Use of CSS grids for an adaptive mobile layout;
+
+  Meticulous background size & position calculation using (bi)linear interpolation to keep Rin in frame and below the header (which also smoothly interpolates, as opposed to fixed breakpoints):
+
+  <p align="center"><a href="https://github.com/maxkagamine/Serifu.org/raw/refs/heads/master/.github/images/background-size-and-position-calculation.avif"><img src=".github/images/background-size-and-position-calculation.avif" /></a></p>
+
+  And a slick search box loading animation:
+
+  <p align="center"><a href="https://github.com/maxkagamine/Serifu.org/raw/refs/heads/master/.github/images/search-box-loading-animation.avif"><img src=".github/images/search-box-loading-animation.avif" /></a></p>
 
 ## License
 
