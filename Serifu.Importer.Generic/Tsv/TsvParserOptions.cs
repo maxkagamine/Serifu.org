@@ -19,7 +19,8 @@ namespace Serifu.Importer.Generic.Tsv;
 internal class TsvParserOptions : ParserOptions
 {
     /// <summary>
-    /// The columns in the TSV. <see cref="TsvColumn.Key"/> and <see cref="TsvColumn.Text"/> are required.
+    /// The columns in the TSV. <see cref="TsvColumn.Text"/> and either <see cref="TsvColumn.IntKey"/> or <see
+    /// cref="TsvColumn.StringKey"/> are required.
     /// </summary>
     public List<TsvColumn> Columns { get; init; } = [];
 
@@ -30,9 +31,14 @@ internal class TsvParserOptions : ParserOptions
             yield return result;
         }
 
-        if (!Columns.Contains(TsvColumn.Key))
+        if (!Columns.Contains(TsvColumn.IntKey) && !Columns.Contains(TsvColumn.StringKey))
         {
-            yield return new ValidationResult($"{nameof(TsvColumn.Key)} column is required.", [nameof(Columns)]);
+            yield return new ValidationResult($"Either {nameof(TsvColumn.IntKey)} or {nameof(TsvColumn.StringKey)} column is required.", [nameof(Columns)]);
+        }
+
+        if (Columns.Contains(TsvColumn.IntKey) && Columns.Contains(TsvColumn.StringKey))
+        {
+            yield return new ValidationResult($"Cannot have both {nameof(TsvColumn.IntKey)} and {nameof(TsvColumn.StringKey)} columns.", [nameof(Columns)]);
         }
 
         if (!Columns.Contains(TsvColumn.Text))
@@ -47,7 +53,8 @@ internal class TsvParserOptions : ParserOptions
 /// </summary>
 internal enum TsvColumn
 {
-    Key,
+    IntKey,
+    StringKey,
     Language,
     Text,
     AudioFilePath,

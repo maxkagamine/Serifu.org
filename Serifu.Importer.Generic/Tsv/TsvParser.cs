@@ -49,8 +49,8 @@ internal class TsvParser : IParser<TsvParserOptions>
 
                 tl = new()
                 {
-                    // Note: Current impl expects the key to be an int in decimal form.
-                    Key = GetColumn<int>(row, TsvColumn.Key),
+                    Key = options.Columns.Contains(TsvColumn.IntKey) ?
+                        GetColumn<int>(row, TsvColumn.IntKey) : GetColumn<string>(row, TsvColumn.StringKey, ""),
                     Language = language is Language.Multilingual ?
                         Enum.Parse<Language>(GetColumn(row, TsvColumn.Language, "")) : language,
                     Text = GetColumn(row, TsvColumn.Text, ""),

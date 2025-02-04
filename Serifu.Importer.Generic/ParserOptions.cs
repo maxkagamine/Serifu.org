@@ -92,10 +92,5 @@ internal abstract class ParserOptions : IValidatableObject
                 }
             }
         }
-
-        if (AudioDirectories.Count == 0)
-        {
-            yield return new ValidationResult("Audio directories is empty.", [nameof(AudioDirectories)]);
-        }
     }
 }

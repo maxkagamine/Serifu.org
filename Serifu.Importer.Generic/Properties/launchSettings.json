@@ -31,6 +31,10 @@
     "Baldur's Gate 3 Importer": {
       "commandName": "Project",
       "commandLineArgs": "BaldursGate3"
+    },
+    "Go! Go! Nippon! Importer": {
+      "commandName": "Project",
+      "commandLineArgs": "GoGoNippon"
     }
   }
 }

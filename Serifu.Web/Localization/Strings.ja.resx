@@ -255,4 +255,10 @@
   <data name="MetaDescription_Search_Japanese" xml:space="preserve">
     <value>ゲームのセリフを検索して、「{query}」が英語版でどのように翻訳されるのか調べる</value>
   </data>
+  <data name="SourceTitle_GoGoNippon" xml:space="preserve">
+    <value>ゴ－！ゴ－！日本！</value>
+  </data>
+  <data name="SourceCopyright_GoGoNippon" xml:space="preserve">
+    <value>OVERDRIVE</value>
+  </data>
 </root>

@@ -35,4 +35,6 @@ public enum Source : short
     NewtonToRingoNoKi,
     [Description("Baldur's Gate 3")]
     BaldursGate3,
+    [Description("Go! Go! Nippon!")]
+    GoGoNippon,
 }
