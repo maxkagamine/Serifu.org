@@ -32,6 +32,8 @@ public static class QuotesIndex
     private const string KanjiTokenizer = "serifu_kanji_tokenizer";
     private const string CjkFilter = "serifu_cjk_filter";
     private const string DesDivFilter = "serifu_desdiv_filter";
+    private const string IcuFoldingExceptDakutenFilter = "serifu_icu_folding_filter";
+    private const string MinimumConjugationLengthFilter = "serifu_minimum_conjugation_length_filter";
 
     public static TypeMapping Mappings => new()
     {
@@ -136,10 +138,11 @@ public static class QuotesIndex
                 Tokenizer = JapaneseKuromojiTokenizer,
                 Filter = [
                     "kuromoji_number",
+                    // The kuromoji tokenizer will sometimes produce individual kana which the baseform filter will try
+                    // to deconjugate e.g. by turning ち into ちる, which causes weird (and irrelevant) results.
+                    MinimumConjugationLengthFilter,
                     "kuromoji_baseform",
                     "kuromoji_part_of_speech",
-                    "cjk_width",
-                    "ja_stop",
                     "kuromoji_stemmer",
                     "lowercase"
                 ]
@@ -172,6 +175,10 @@ public static class QuotesIndex
         },
         TokenFilters = new()
         {
+            [IcuFoldingExceptDakutenFilter] = new IcuFoldingTokenFilter()
+            {
+                UnicodeSetFilter = @"[^\u3040-\u30FF]" // Hiragana & Katakana blocks
+            },
             [DesDivFilter] = new PatternCaptureTokenFilter()
             {
                 Patterns = [
@@ -184,6 +191,10 @@ public static class QuotesIndex
             [CjkFilter] = new CjkBigramTokenFilter()
             {
                 OutputUnigrams = false
+            },
+            [MinimumConjugationLengthFilter] = new LengthTokenFilter()
+            {
+                Min = 2
             }
         }
     };
@@ -191,8 +202,12 @@ public static class QuotesIndex
     private static CustomAnalyzer CreateDefaultAnalyzer() => new()
     {
         Tokenizer = "standard",
+        CharFilter = [
+            // Needed to normalize halfwidth kana and (han)dakuten combining chars since our icu folding skips kana
+            NormalizeUnicodeCharFilter
+        ],
         Filter = [
-            "icu_folding", // Normalizes unicode, strips accents, and lowercases
+            IcuFoldingExceptDakutenFilter, // Normalizes unicode, strips accents except (han)dakuten, and lowercases
             DesDivFilter,
             CjkFilter
         ]
