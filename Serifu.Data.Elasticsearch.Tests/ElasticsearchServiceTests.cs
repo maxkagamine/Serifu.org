@@ -30,7 +30,7 @@ public class ElasticsearchServiceTests
 
     public ElasticsearchServiceTests()
     {
-        client = new Mock<ElasticsearchClient>();
+        client = new Mock<ElasticsearchClient>(MockBehavior.Strict);
         service = new ElasticsearchService(client.Object, new LoggerConfiguration().CreateLogger());
     }
 
@@ -210,6 +210,32 @@ public class ElasticsearchServiceTests
         results[1].Quote.Should().Be(quotes[1]);
         results[1].JapaneseHighlights.Should().BeEmpty();
         results[1].EnglishHighlights.Should().BeEmpty();
+    }
+
+    [Theory]
+    [InlineData("", ElasticsearchValidationError.TooShort)]
+    [InlineData("a", ElasticsearchValidationError.TooShort)]
+    [InlineData("a\u0301", ElasticsearchValidationError.TooShort)] // Accent combining character
+    [InlineData("aa", null)]
+    [InlineData("か", ElasticsearchValidationError.TooShort)]
+    [InlineData("か\u3099", ElasticsearchValidationError.TooShort)] // Dakuten combining character
+    [InlineData("かか", null)]
+    [InlineData("鏡", null)]
+    [InlineData("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", ElasticsearchValidationError.TooLong)]
+    [InlineData("あああああああああああああああああああああああああああああああああ", ElasticsearchValidationError.TooLong)]
+    public async Task ThrowsIfQueryIsTooShortOrLong(string query, ElasticsearchValidationError? error)
+    {
+        Func<Task> func = () => service.Search(query, CancellationToken.None);
+
+        if (error is null)
+        {
+            await func.Should().ThrowAsync<MockException>(); // Attempted the search
+        }
+        else
+        {
+            (await func.Should().ThrowAsync<ElasticsearchValidationException>())
+                .Which.Error.Should().Be(error);
+        }
     }
 
     private static ValueArray<Alignment> DecodeAlignmentData(string base64) =>

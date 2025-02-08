@@ -69,7 +69,7 @@ const MAX_LENGTH_JAPANESE = 32;
   });
 
   input.addEventListener('input', () => {
-    const query = input.value.trim();
+    const query = input.value.trim().normalize();
 
     // If the input is empty, there's no need to display a validation warning; the form just won't submit (unless JS is
     // disabled, but we handle that server-side)
@@ -78,17 +78,23 @@ const MAX_LENGTH_JAPANESE = 32;
       return;
     }
 
-    // Unlike .NET, regexes in JS have full Unicode support, so we can match the server-side validation easily.
-    // Normalizing the string first so someone can't pull a fast one on us using combining characters.
-    if (!/\S\S|^\p{Script=Han}$/u.test(query.normalize())) {
+    // Unlike .NET, regexes in JS have full Unicode support, so we can match the server-side validation easily
+    const isJapanese = /\p{Script=Hiragana}|\p{Script=Katakana}|\p{Script=Han}/u.test(query);
+    const length = getLength(query);
+    const maxLength = isJapanese ? MAX_LENGTH_JAPANESE : MAX_LENGTH_ENGLISH;
+
+    if (length > maxLength) {
+      input.setCustomValidity(assertDefined(form.dataset.tooLong, 'tooLong'));
+      return;
+    }
+
+    if (length < 2 && !/^\p{Script=Han}$/u.test(query)) {
       input.setCustomValidity(assertDefined(form.dataset.tooShort, 'tooShort'));
       return;
     }
 
-    const isJapanese = /\p{Script=Hiragana}|\p{Script=Katakana}|\p{Script=Han}/u.test(query);
-    const maxLength = isJapanese ? MAX_LENGTH_JAPANESE : MAX_LENGTH_ENGLISH;
-    if (getLength(query) > maxLength) {
-      input.setCustomValidity(assertDefined(form.dataset.tooLong, 'tooLong'));
+    if (/;\s*DROP TABLE/i.test(query)) {
+      input.setCustomValidity('(╯°□°)╯︵ ┻━┻');
       return;
     }
 
