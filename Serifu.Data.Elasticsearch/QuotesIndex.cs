@@ -34,6 +34,7 @@ public static class QuotesIndex
     private const string DesDivFilter = "serifu_desdiv_filter";
     private const string IcuFoldingExceptDakutenFilter = "serifu_icu_folding_filter";
     private const string MinimumConjugationLengthFilter = "serifu_minimum_conjugation_length_filter";
+    private const string KatakanaToHiraganaFilter = "serifu_katakana_to_hiragana_filter";
 
     public static TypeMapping Mappings => new()
     {
@@ -144,7 +145,9 @@ public static class QuotesIndex
                     "kuromoji_baseform",
                     "kuromoji_part_of_speech",
                     "kuromoji_stemmer",
-                    "lowercase"
+                    "lowercase",
+                    // Normalize kana so that わくわく and ワクワク are treated equal. Must come after kuromoji.
+                    KatakanaToHiraganaFilter
                 ]
             },
             [JapaneseKanjiAnalyzer] = new CustomAnalyzer()
@@ -195,6 +198,10 @@ public static class QuotesIndex
             [MinimumConjugationLengthFilter] = new LengthTokenFilter()
             {
                 Min = 2
+            },
+            [KatakanaToHiraganaFilter] = new IcuTransformTokenFilter()
+            {
+                Id = "Katakana-Hiragana"
             }
         }
     };
@@ -208,6 +215,7 @@ public static class QuotesIndex
         ],
         Filter = [
             IcuFoldingExceptDakutenFilter, // Normalizes unicode, strips accents except (han)dakuten, and lowercases
+            KatakanaToHiraganaFilter,
             DesDivFilter,
             CjkFilter
         ]
