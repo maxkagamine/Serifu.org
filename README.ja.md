@@ -3,9 +3,9 @@
   <a href="https://serifu.org"><img src=".github/images/serifu-light-dark.svg" height="45" alt="Serifu.org" /></a>
 </h1>
 
-Serifu.orgは、興味のあるものなら言語を学ぶのがより早いという考えに基づくオープンソースの語学学習ツールです。30万以上のゲームのセリフを検索して、日本語の単語や表現が英語でどのように翻訳されているか、またはその逆を調べることができます。それに機械学習 (AI) による単語アラインメントを使って、検索した言葉に対応する翻訳部分がハイライトされます。[Tatoeba](https://tatoeba.org/ja)と[Reverso Context](https://context.reverso.net/%E7%BF%BB%E8%A8%B3/)に触発されました。
+Serifu.orgは、言語を学ぶには興味のあるものからの方がより早いという考えに基づくオープンソースの語学学習ツールです。30万以上のゲームのセリフを検索して、日本語の単語や表現が英語でどのように翻訳されているか、またはその逆を調べることができます。そして機械学習（AI）による単語アラインメントを使用しており、検索した言葉に対応する翻訳部分がハイライトされます。[Tatoeba](https://tatoeba.org/ja)と[Reverso Context](https://context.reverso.net/%E7%BF%BB%E8%A8%B3/)に影響されました。
 
-私は1ヶ月間ほぼ毎日ゲーセンに行って艦これをプレイしてから、「[sun](https://serifu.org/%E7%BF%BB%E8%A8%B3/concentrated%20power%20of%20the%20sun)」を日本語で何と言うか知らないのに「[魚雷](https://serifu.org/%E7%BF%BB%E8%A8%B3/%E9%AD%9A%E9%9B%B7)」とか「[軽空母](https://serifu.org/%E7%BF%BB%E8%A8%B3/%E8%BB%BD%E7%A9%BA%E6%AF%8D)」とかを覚えたことに気づいたら、このプロジェクトを始めました。どうやら瑞鳳がどの教科書よりも良い先生です！
+私がSerifu.orgを始めたきっかけは、艦これをプレイするために1ヶ月間ゲーセンへ通い続けたとき、まだ「[sun](https://serifu.org/%E7%BF%BB%E8%A8%B3/concentrated%20power%20of%20the%20sun)」を日本語で何と言うか知らなかったのに「[魚雷](https://serifu.org/%E7%BF%BB%E8%A8%B3/%E9%AD%9A%E9%9B%B7)」や「[軽空母](https://serifu.org/%E7%BF%BB%E8%A8%B3/%E8%BB%BD%E7%A9%BA%E6%AF%8D)」の海軍用語をすぐに覚えたことに気づきました。どうやら瑞鳳はどの教科書よりも良い先生のようです！
 
 ## スクリーンショット
 

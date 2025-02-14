@@ -3,7 +3,7 @@
   <a href="https://serifu.org"><img src=".github/images/serifu-light-dark.svg" height="45" alt="Serifu.org" /></a>
 </h1>
 
-Serifu.org is an open source language learning tool based on the idea that it’s easier to learn a language through something you’re interested in. Search over 300,000 quotes from video games to see how an English word or idiom appears in its Japanese translation or vice versa, using machine learning to highlight the relevant part of the translation. Inspired by [Tatoeba](https://tatoeba.org/en) and [Reverso Context](https://context.reverso.net/translation/).
+Serifu.org is an open source language learning tool based on the idea that it’s easier to learn a language through something you’re interested in. Search over 300,000 quotes from video games to see how an English word or idiom appears in its Japanese translation or vice versa, using machine learning (AI) to highlight the relevant part of the translation. Inspired by [Tatoeba](https://tatoeba.org/en) and [Reverso Context](https://context.reverso.net/translation/).
 
 I started this project after realizing that, after going to the arcade nearly every day for a month to play Kancolle, I’d learned words like [<ruby>魚雷<rp>（</rp><rt>ぎょらい</rt><rp>）</rp></ruby>](https://serifu.org/translate/%E9%AD%9A%E9%9B%B7) and [<ruby>軽空母<rp>（</rp><rt>けいくうぼ</rt><rp>）</rp></ruby>](https://serifu.org/translate/%E8%BB%BD%E7%A9%BA%E6%AF%8D) before I even knew the word for “[sun](https://serifu.org/translate/concentrated%20power%20of%20the%20sun).” Turns out, Zuihou is a better language teacher than any textbook!
 

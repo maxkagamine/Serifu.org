@@ -131,7 +131,7 @@ public class DefaultController : Controller
     }
 
     [HttpGet("/about")]
-    [HttpGet("/について")]
+    [HttpGet("/とは")]
     public ActionResult About()
     {
         AboutPageViewModel model = new()

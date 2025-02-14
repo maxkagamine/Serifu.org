@@ -118,10 +118,10 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="FooterText" xml:space="preserve">
-    <value>教育目的の利用専用です。セリフの著作権は各社に帰属します。詳しくは&lt;a href="{aboutUrl}"&gt;について&lt;/a&gt;ページをご確認ください。</value>
+    <value>教育目的の利用専用です。セリフの著作権は各社に帰属します。詳しくは&lt;a href="{aboutUrl}"&gt;Serifu.orgとは&lt;/a&gt;ページをご確認ください。</value>
   </data>
   <data name="NavLinkAbout" xml:space="preserve">
-    <value>について</value>
+    <value>Serifu.orgとは</value>
   </data>
   <data name="NavLinkGitHub" xml:space="preserve">
     <value>ギットハブ</value>
@@ -241,7 +241,7 @@
     <value>「{query}」はゲームでどう英語訳される？ | Serifu.org</value>
   </data>
   <data name="AboutPageTitle" xml:space="preserve">
-    <value>Serifu.orgについて</value>
+    <value>Serifu.orgとは</value>
   </data>
   <data name="HomePageTitle" xml:space="preserve">
     <value>Serifu.org ～ゲームのセリフで英語を学ぶ～</value>
