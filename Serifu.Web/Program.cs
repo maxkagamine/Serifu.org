@@ -122,15 +122,9 @@ builder.Services.AddRequestLocalization(options =>
 
 builder.Services.AddSerifuElasticsearch();
 
-builder.Services.AddHsts(options =>
-{
-    options.MaxAge = TimeSpan.FromDays(730);
-    options.IncludeSubDomains = true;
-    options.Preload = true;
-});
-
 builder.Services.AddHeaders(headers =>
 {
+    headers.StrictTransportSecurity = "max-age=63072000; includeSubDomains; preload";
     headers.ContentSecurityPolicy = "frame-ancestors 'none'";
     headers.XPoweredBy = "Rin-chan";
 });
@@ -162,9 +156,7 @@ app.UseSerilogRequestLogging(options =>
 app.UseExceptionHandler("/Error/500");
 app.UseStatusCodePagesWithReExecute("/Error/{0}");
 
-app.UseHsts();
 app.UseHeaders();
-
 app.UseStaticFiles();
 app.UseRouting();
 app.UseRequestLocalization();
