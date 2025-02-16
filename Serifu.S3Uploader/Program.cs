@@ -15,7 +15,9 @@
 using Amazon;
 using Amazon.Runtime;
 using Amazon.S3;
+using FFMpegCore;
 using Kagamine.Extensions.Hosting;
+using Kagamine.Extensions.IO;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Serifu.Data.Sqlite;
@@ -23,6 +25,8 @@ using Serifu.S3Uploader;
 using Serilog;
 
 var builder = ConsoleApplication.CreateBuilder();
+
+GlobalFFOptions.Current.BinaryFolder = builder.Configuration["FFMpegBinDirectory"] ?? "";
 
 builder.Services.AddSerifuSerilog();
 builder.Services.AddSerifuSqlite();
@@ -54,7 +58,10 @@ builder.Services.AddSingleton<IAmazonS3>(provider =>
     return new AmazonS3Client(credentials, config);
 });
 
+builder.Services.AddTemporaryFileProvider();
+
 builder.Services.AddSingleton<S3Uploader>();
+builder.Services.AddSingleton<AacAudioFallbackConverter>();
 
 builder.Run(async (S3Uploader uploader, CancellationToken cancellationToken) =>
 {

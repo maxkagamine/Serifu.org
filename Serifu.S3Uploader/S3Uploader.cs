@@ -22,6 +22,7 @@ using Microsoft.Extensions.Options;
 using Serifu.Data.Sqlite;
 using Serilog;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 
 namespace Serifu.S3Uploader;
@@ -33,6 +34,7 @@ public sealed class S3Uploader : IAsyncDisposable
 
     private readonly IAmazonS3 s3;
     private readonly IDbContextFactory<SerifuDbContext> dbFactory;
+    private readonly AacAudioFallbackConverter aacAudioFallbackConverter;
     private readonly S3UploaderOptions options;
     private readonly ILogger logger;
 
@@ -44,11 +46,13 @@ public sealed class S3Uploader : IAsyncDisposable
     public S3Uploader(
         IAmazonS3 s3,
         IDbContextFactory<SerifuDbContext> dbFactory,
+        AacAudioFallbackConverter aacAudioFallbackConverter,
         IOptions<S3UploaderOptions> options,
         ILogger logger)
     {
         this.s3 = s3;
         this.dbFactory = dbFactory;
+        this.aacAudioFallbackConverter = aacAudioFallbackConverter;
         this.options = options.Value;
         this.logger = logger.ForContext<S3Uploader>();
     }
@@ -97,46 +101,66 @@ public sealed class S3Uploader : IAsyncDisposable
 
             using var stream = new MemoryStream(data);
 
-            PutObjectResponse response = await s3.PutObjectAsync(
-                new PutObjectRequest()
-                {
-                    BucketName = options.AudioBucket,
-                    Key = objectName,
-                    ContentType = Path.GetExtension(objectName) switch
-                    {
-                        ".mp3" => "audio/mp3",
-                        ".ogg" or ".opus" => "audio/ogg",
-                        string ext => throw new UnreachableException($"No content type defined for {ext}")
-                    },
-                    InputStream = stream
-                },
-                cancellationToken);
+            await Upload(objectName, stream, db, cancellationToken);
 
-            if (response.HttpStatusCode != HttpStatusCode.OK) // Docs don't make it clear if it'll always throw or not
+            // Upload AAC fallback for Safari (see comment in converter)
+            if (Path.GetExtension(objectName) is not (".mp3" or ".m4a"))
             {
-                throw new AmazonS3Exception($"Upload failed with status code {response.HttpStatusCode}.");
+                stream.Position = 0;
+                string aacObjectName = Path.ChangeExtension(objectName, ".m4a");
+                await using Stream aacStream = await aacAudioFallbackConverter.ConvertToAac(stream, cancellationToken);
+
+                await Upload(aacObjectName, aacStream, db, cancellationToken);
             }
 
-            // If we successfully uploaded a file, make sure to track it in the db before cancelling
             using (await dbLock.AcquireWriteLockAsync(CancellationToken.None))
             {
-                db.S3ObjectCache.Add(new(options.AudioBucket, objectName));
                 await db.SaveChangesAsync(CancellationToken.None);
                 progress.SetProgress(++uploadedCount, totalCount);
             }
         });
     }
 
+    private async Task Upload(string objectName, Stream stream, SerifuDbContext db, CancellationToken cancellationToken)
+    {
+        PutObjectResponse response = await s3.PutObjectAsync(
+            new PutObjectRequest()
+            {
+                BucketName = options.AudioBucket,
+                Key = objectName,
+                ContentType = Path.GetExtension(objectName) switch
+                {
+                    ".mp3" => "audio/mp3",
+                    ".ogg" or ".opus" => "audio/ogg",
+                    ".m4a" => "audio/mp4",
+                    string ext => throw new UnreachableException($"No content type defined for {ext}")
+                },
+                InputStream = stream,
+                AutoCloseStream = false
+            },
+            cancellationToken);
+
+        if (response.HttpStatusCode != HttpStatusCode.OK) // Docs don't make it clear if it'll always throw or not
+        {
+            throw new AmazonS3Exception($"Upload failed with status code {response.HttpStatusCode}.");
+        }
+
+        db.S3ObjectCache.Add(new(options.AudioBucket, objectName));
+    }
+
+    [SuppressMessage("Performance", "CA1866:Use char overload", Justification = "not translatable to SQL warning")]
     public async Task PostDeploy(CancellationToken cancellationToken)
     {
         await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
 
         string[] audioFilesToDelete = await db.S3ObjectCache
-            .Where(c => c.Bucket == options.AudioBucket && !db.AudioFiles.Any(a => a.ObjectName == c.ObjectName))
+            .Where(c => c.Bucket == options.AudioBucket && !db.AudioFiles
+                .Select(a => a.ObjectName.Substring(0, a.ObjectName.IndexOf(".")))
+                .Contains(c.ObjectName.Substring(0, c.ObjectName.IndexOf("."))))
             .Select(c => c.ObjectName)
             .ToArrayAsync(cancellationToken);
 
-        using var _ = logger.BeginTimedOperation("Deleting {Count} old audio files from {Bucket}",
+        using var _ = logger.BeginTimedOperation("Deleting {Count} old files from {Bucket}",
             audioFilesToDelete.Length, options.AudioBucket);
 
         string[][] batches = audioFilesToDelete.Chunk(1000).ToArray();

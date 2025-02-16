@@ -10,6 +10,7 @@
 
     <ItemGroup>
       <PackageReference Include="AWSSDK.S3" Version="3.7.412.2" />
+      <PackageReference Include="FFMpegCore" Version="5.1.0" />
       <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="9.0.0" />
     </ItemGroup>
 
