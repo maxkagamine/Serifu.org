@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Serifu.Data.Sqlite;
 
@@ -11,9 +12,11 @@ using Serifu.Data.Sqlite;
 namespace Serifu.Data.Sqlite.Migrations
 {
     [DbContext(typeof(SerifuDbContext))]
-    partial class SerifuContextModelSnapshot : ModelSnapshot
+    [Migration("20250216184045_S3ObjectCacheSizeColumn")]
+    partial class S3ObjectCacheSizeColumn
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.0");

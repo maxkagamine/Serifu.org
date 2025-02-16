@@ -19,4 +19,5 @@ namespace Serifu.Data;
 /// </summary>
 /// <param name="Bucket">The S3 bucket name.</param>
 /// <param name="ObjectName">The object name within the bucket.</param>
-public record S3ObjectCache(string Bucket, string ObjectName);
+/// <param name="Size">Size of the object in bytes.</param>
+public record S3ObjectCache(string Bucket, string ObjectName, long Size);

@@ -145,7 +145,7 @@ public sealed class S3Uploader : IAsyncDisposable
             throw new AmazonS3Exception($"Upload failed with status code {response.HttpStatusCode}.");
         }
 
-        db.S3ObjectCache.Add(new(options.AudioBucket, objectName));
+        db.S3ObjectCache.Add(new(options.AudioBucket, objectName, stream.Length));
     }
 
     [SuppressMessage("Performance", "CA1866:Use char overload", Justification = "not translatable to SQL warning")]
