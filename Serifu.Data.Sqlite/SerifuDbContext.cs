@@ -57,7 +57,7 @@ public class SerifuDbContext : DbContext
 
             entity.Property(q => q.AlignmentData)
                 .HasConversion(
-                    model => model.AsBytes().ToArray(),
+                    model => ValueArray.ToByteArray(model),
                     column => ValueArray.FromBytes<Alignment>(column));
 
             entity.Ignore(q => q.Weight);
