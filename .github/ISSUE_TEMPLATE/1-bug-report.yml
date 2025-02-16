@@ -1,0 +1,30 @@
+name: 💥 Bug report
+description: バグレポート
+labels:
+  - bug
+body:
+  - type: textarea
+    attributes:
+      label: Problem / 問題
+      description: |
+        Please include screenshots.
+        スクリーンショットも含めてください。
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Steps to reproduce / 再現手順
+      value: |
+        1.
+        2.
+        3.
+  - type: textarea
+    attributes:
+      label: Browser / ブラウザ
+      description: |
+        iPhone users, find the version here: https://support.apple.com/en-us/109065
+        iPhoneの方は、こちらからバージョンを見つけてください： https://support.apple.com/ja-jp/109065
+      value: |
+        - Device/OS:
+        - Browser:
+        - Version:
