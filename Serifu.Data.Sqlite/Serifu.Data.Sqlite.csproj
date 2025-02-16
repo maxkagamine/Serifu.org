@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <PackageReference Include="Kagamine.Extensions.EntityFramework" Version="1.9.1" />
+    <PackageReference Include="Kagamine.Extensions.EntityFramework" Version="1.10.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.0" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.0" />
     <PackageReference Include="Serilog.Extensions.Hosting" Version="8.0.0" />
@@ -18,5 +18,5 @@
   <ItemGroup>
     <InternalsVisibleTo Include="Serifu.Data.Sqlite.Tests" />
   </ItemGroup>
-  
+
 </Project>

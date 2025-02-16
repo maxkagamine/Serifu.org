@@ -13,8 +13,7 @@
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
 using FFMpegCore;
-using Microsoft.Extensions.Hosting;
-using Noggog.IO;
+using Kagamine.Extensions.IO;
 using Serifu.Data.Sqlite;
 using Serilog;
 using System.Buffers.Binary;
@@ -30,29 +29,28 @@ public class FuzConverter : IFuzConverter
     private const int Bitrate = 32;
 
     private readonly ILogger logger;
-    private readonly IHostEnvironment hostEnv;
+    private readonly ITemporaryFileProvider tempFileProvider;
 
-    public FuzConverter(ILogger logger, IHostEnvironment hostEnv)
+    public FuzConverter(ILogger logger, ITemporaryFileProvider tempFileProvider)
     {
+        this.tempFileProvider = tempFileProvider;
         this.logger = logger.ForContext<FuzConverter>();
-        this.hostEnv = hostEnv;
     }
 
     public async Task<Stream> ConvertToOpus(Stream fuzStream, CancellationToken cancellationToken = default)
     {
-        using var xwmTempFile = new TempFile(hostEnv.ApplicationName, suffix: ".xwm");
-        using (var xwmStream = File.OpenWrite(xwmTempFile.File))
+        using TemporaryFile xwmTempFile = tempFileProvider.Create(".xwm");
+        await using (var xwmStream = xwmTempFile.OpenWrite())
         {
             SeekToXwm(fuzStream);
             await fuzStream.CopyToAsync(xwmStream, cancellationToken);
         }
 
-        var opusTempFile = new TempFile(hostEnv.ApplicationName, suffix: ".opus");
+        using TemporaryFile opusTempFile = tempFileProvider.Create(".opus");
 
-        // Expects ffmpeg in PATH (install with winget)
         var command = FFMpegArguments
-            .FromFileInput(xwmTempFile.File)
-            .OutputToFile(opusTempFile.File, true, options => options
+            .FromFileInput(xwmTempFile.Path)
+            .OutputToFile(opusTempFile.Path, true, options => options
                 .WithAudioCodec("libopus")
                 .WithAudioBitrate(Bitrate)
                 .WithoutMetadata())
@@ -61,8 +59,7 @@ public class FuzConverter : IFuzConverter
         logger.Debug("Running {Command}", "ffmpeg " + command.Arguments);
         await command.ProcessAsynchronously();
 
-        // This stream will delete the temp file when disposed
-        return new TempFileStream(opusTempFile, FileMode.Open, FileAccess.Read);
+        return opusTempFile.OpenRead(deleteWhenClosed: true);
     }
 
     /// <summary>
@@ -70,7 +67,7 @@ public class FuzConverter : IFuzConverter
     /// </summary>
     /// <param name="fuzStream">The fuz file stream.</param>
     /// <exception cref="UnsupportedAudioFormatException"/>
-    private void SeekToXwm(Stream fuzStream)
+    private static void SeekToXwm(Stream fuzStream)
     {
         // Offset  Length   Purpose
         // ------  -------  -----------------------------------------
@@ -97,14 +94,5 @@ public class FuzConverter : IFuzConverter
 
         int lipSize = BinaryPrimitives.ReadInt32LittleEndian(header[8..]);
         fuzStream.Seek(lipSize, SeekOrigin.Current);
-    }
-
-    private class TempFileStream(TempFile tempFile, FileMode mode, FileAccess access) : FileStream(tempFile.File, mode, access)
-    {
-        protected override void Dispose(bool disposing)
-        {
-            base.Dispose(disposing);
-            tempFile.Dispose();
-        }
     }
 }

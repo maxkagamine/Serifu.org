@@ -12,7 +12,9 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
+using FFMpegCore;
 using Kagamine.Extensions.Hosting;
+using Kagamine.Extensions.IO;
 using Kagamine.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -32,6 +34,8 @@ var builder = ConsoleApplication.CreateBuilder(new HostApplicationBuilderSetting
     EnvironmentName = Environments.Development
 });
 
+GlobalFFOptions.Current.BinaryFolder = builder.Configuration["FFMpegBinDirectory"] ?? "";
+
 builder.Services.AddSerifuSerilog((provider, config) => config.Destructure.FormattedFormIds(provider));
 builder.Services.AddSerifuSqlite();
 builder.Services.AddSerifuMachineLearning();
@@ -40,6 +44,8 @@ builder.Services.AddOptions<SkyrimOptions>().BindConfiguration("Skyrim").Validat
 
 builder.Services.AddMutagen<ISkyrimMod, ISkyrimModGetter>(GameRelease.SkyrimSE, (provider, options) => options
     .WithTargetDataFolder(provider.GetRequiredService<IOptions<SkyrimOptions>>().Value.DataDirectory));
+
+builder.Services.AddTemporaryFileProvider();
 
 builder.Services.AddSingleton<IFormIdProvider, FormIdProvider>();
 builder.Services.AddSingleton<ISpeakerFactory, SpeakerFactory>();
