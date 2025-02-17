@@ -9,7 +9,7 @@
 
 <div class="translation">
     <div class="translation-actions">
-        @if (Model.HasAudioFile)
+        @if (Model.HasAudio)
         {
             <audio-button
                 role="button"
@@ -18,7 +18,12 @@
                 aria-label="@Strings.AudioButtonLabel"
             >
                 <i class="icon icon-play"></i>
-                <audio src="@Model.AudioFileUrl" preload="none" hidden></audio>
+                <audio preload="none" hidden>
+                    @foreach (AudioSource source in Model.AudioSources)
+                    {
+                        <source src="@source.Src" type="@source.Type" />
+                    }
+                </audio>
             </audio-button>
         }
         @if (Model.HasNotes)

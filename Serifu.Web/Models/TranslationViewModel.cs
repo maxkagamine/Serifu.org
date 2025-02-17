@@ -15,9 +15,11 @@
 using Microsoft.AspNetCore.Html;
 using Serifu.Data;
 using Serifu.Web.Helpers;
-using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics;
 
 namespace Serifu.Web.Models;
+
+public record AudioSource(string Src, string Type);
 
 public class TranslationViewModel
 {
@@ -33,8 +35,33 @@ public class TranslationViewModel
         Context = translation.Context;
         Text = Highlighter.ApplyHighlights(translation.Text, highlights);
         Notes = string.IsNullOrWhiteSpace(translation.Notes) ? null : new HtmlString(translation.Notes);
-        AudioFileUrl = audioFileUrlProvider.GetUrl(translation.AudioFile);
         Quote = quoteViewModel;
+
+        if (translation.AudioFile is string objectName)
+        {
+            string ext = Path.GetExtension(objectName);
+            List<AudioSource> sources = [new(
+                Src: audioFileUrlProvider.GetUrl(objectName),
+                Type: ext switch
+                {
+                    // See also the content type list in S3Uploader and related logic in AudioFormatUtility
+                    ".mp3" => "audio/mp3",
+                    ".ogg" => "audio/ogg; codecs=vorbis", // Always Vorbis in our case
+                    ".opus" => "audio/ogg; codecs=opus",
+                    _ => throw new UnreachableException($"No content type defined for {ext}")
+                })];
+
+            if (ext != ".mp3")
+            {
+                // Fallback AAC for Safari (see Serifu.S3Uploader.AacAudioFallbackConverter)
+                sources.Add(new(
+                    Src: audioFileUrlProvider.GetUrl(Path.ChangeExtension(objectName, ".m4a")),
+                    Type: "audio/mp4; codecs=mp4a.40.5")); // AAC-HE
+            }
+
+            AudioSources = sources;
+            HasAudio = true;
+        }
     }
 
     /// <summary>
@@ -74,15 +101,14 @@ public class TranslationViewModel
     public bool HasNotes => Notes is not null;
 
     /// <summary>
-    /// The audio file URL, or <see langword="null"/> if audio is not available for this quote or language.
+    /// The audio file URLs and content types. Empty if audio is not available for this quote or language.
     /// </summary>
-    public string? AudioFileUrl { get; }
+    public IEnumerable<AudioSource> AudioSources { get; } = [];
 
     /// <summary>
     /// Whether the translation has audio.
     /// </summary>
-    [MemberNotNullWhen(true, nameof(AudioFileUrl))]
-    public bool HasAudioFile => AudioFileUrl is not null;
+    public bool HasAudio { get; }
 
     public QuoteViewModel Quote { get; }
 }

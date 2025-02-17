@@ -104,7 +104,7 @@ public sealed class S3Uploader : IAsyncDisposable
             await Upload(objectName, stream, db, cancellationToken);
 
             // Upload AAC fallback for Safari (see comment in converter)
-            if (Path.GetExtension(objectName) is not (".mp3" or ".m4a"))
+            if (Path.GetExtension(objectName) != ".mp3")
             {
                 stream.Position = 0;
                 string aacObjectName = Path.ChangeExtension(objectName, ".m4a");
@@ -130,6 +130,7 @@ public sealed class S3Uploader : IAsyncDisposable
                 Key = objectName,
                 ContentType = Path.GetExtension(objectName) switch
                 {
+                    // See also the content type list in Serifu.Web and related logic in AudioFormatUtility
                     ".mp3" => "audio/mp3",
                     ".ogg" or ".opus" => "audio/ogg",
                     ".m4a" => "audio/mp4",
