@@ -4,11 +4,13 @@
   "type": "module",
   "scripts": {
     "start": "node.exe node_modules/vite/bin/vite.js",
-    "build": "node.exe node_modules/vite/bin/vite.js build"
+    "build": "node.exe node_modules/vite/bin/vite.js build",
+    "lint": "node_modules/@biomejs/cli-win32-x64/biome.exe check --write"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
-    "lightningcss": "1.28.2",
+    "@oddbird/popover-polyfill": "0.5.2",
+    "lightningcss": "1.29.1",
     "typescript": "5.7.2",
     "vite": "6.0.6",
     "vite-plugin-biome": "1.0.12",

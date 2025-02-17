@@ -15,6 +15,9 @@ import './images/favicon.svg?no-inline';
 import './search-box';
 import './audio-button';
 
+// Polyfill for Safari/iOS
+import { apply, isSupported } from '@oddbird/popover-polyfill/fn';
+
 // Initially, when a user visits the root they'll be redirected to the homepage
 // corresponding to their Accept-Language header. If they switch languages
 // manually, we'll want to remember and redirect them to their preferred
@@ -33,3 +36,8 @@ import './audio-button';
 //
 const lang = document.documentElement.lang;
 document.cookie = `.AspNetCore.Culture=c=${lang}|uic=${lang}; path=/; max-age=34560000`;
+
+if (!isSupported()) {
+  console.log('Polyfilling popovers');
+  apply();
+}
