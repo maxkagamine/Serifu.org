@@ -23,7 +23,11 @@
         }
       },
       "correctness": {
-        "noUnknownProperty": "off"
+        "noUnknownProperty": "off",
+        "noUnusedFunctionParameters": "warn",
+        "noUnusedImports": "warn",
+        "noUnusedPrivateClassMembers": "warn",
+        "noUnusedVariables": "warn"
       }
     }
   },
