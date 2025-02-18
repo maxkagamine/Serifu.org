@@ -3,6 +3,7 @@
     method="get"
     id="searchBox"
     role="search"
+    autocomplete="off"
     data-route-template="@Url.Action("Results", new { query = "__QUERY__" })"
     data-too-short="@Strings.ValidationErrorTooShort"
     data-too-long="@Strings.ValidationErrorTooLong"
@@ -21,3 +22,5 @@
 
 <!-- Firefox workaround, see css -->
 <style id="searchBoxKeyframes"></style>
+
+<select id="searchBoxAutocomplete" class="popover-like" hidden></select>

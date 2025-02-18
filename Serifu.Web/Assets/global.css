@@ -8,7 +8,8 @@
 :root {
   --page-width: 920px;
   --body-padding: 1em;
-  --menu-hover-background: #111;
+  --popover-background: #1c1c1c;
+  --menu-hover-background: #414141;
 
   /* Scale top margin to match space on left/right on smaller viewports (we need this for the background offset too) */
   --header-margin-top: clamp(0.25em, (100vw - var(--page-width)) / 2 - var(--body-padding), 96px);

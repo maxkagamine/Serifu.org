@@ -96,6 +96,7 @@ body > header {
   margin: 0;
   flex-direction: column;
   justify-content: space-between;
+  background: var(--popover-background);
   transition:
     right var(--duration),
     overlay var(--duration) allow-discrete,
