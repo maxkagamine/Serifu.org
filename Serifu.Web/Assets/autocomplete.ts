@@ -128,6 +128,12 @@ interface Mention {
     input.setSelectionRange(newCaretPos, newCaretPos);
   }
 
+  input.addEventListener('input', () => {
+    // Replace fullwidth at signs with halfwidth ones. This will abort IME composition when an ＠ is typed, but that
+    // actually works in our favor.
+    input.value = input.value.replace(/＠/g, '@');
+  });
+
   input.addEventListener('selectionchange', updateAutocomplete);
   input.addEventListener('focus', updateAutocomplete);
 
