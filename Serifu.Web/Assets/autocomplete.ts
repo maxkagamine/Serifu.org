@@ -9,6 +9,12 @@ interface Mention {
   end: number;
 }
 
+// Must opt-in to the virtual keyboard api to enable env(keyboard-inset-height) in css
+if ('virtualKeyboard' in navigator) {
+  // @ts-ignore
+  navigator.virtualKeyboard.overlaysContent = true;
+}
+
 (async () => {
   const input = document.querySelector('#searchBox input') as HTMLInputElement;
   const list = document.querySelector('autocomplete-list') as AutocompleteList;
@@ -194,6 +200,7 @@ interface Mention {
  */
 class AutocompleteList extends HTMLElement {
   private static readonly SELECTED_CLASS = 'selected';
+  private static readonly MAX_SIZE = 10;
 
   #options: string[] = [];
 
@@ -222,6 +229,7 @@ class AutocompleteList extends HTMLElement {
       }),
     );
     this.scrollTop = 0;
+    this.style.setProperty('--size', Math.min(options.length, AutocompleteList.MAX_SIZE).toString());
   }
 
   get selectedIndex(): number {

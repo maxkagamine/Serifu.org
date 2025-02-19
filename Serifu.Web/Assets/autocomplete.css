@@ -1,10 +1,10 @@
 autocomplete-list {
   --option-height: 2em;
-  --max-visible-options: 10;
 
-  overflow-y: auto;
-  max-height: calc(var(--option-height) * var(--max-visible-options));
   position: absolute;
+  max-height: calc(var(--option-height) * var(--size)); /* --size set from JS */
+  bottom: calc(env(keyboard-inset-height) + var(--body-padding));
+  overflow-y: auto;
   z-index: 9999;
 
   &[hidden] {
