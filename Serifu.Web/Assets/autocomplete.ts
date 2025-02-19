@@ -20,7 +20,7 @@ interface Mention {
     return;
   }
 
-  const names: string[] = (await import('./names.json')).default;
+  const names: string[][] = (await import('./names.json')).default;
 
   function getMentionUnderCaret(): Mention | null {
     // Check if the text preceeding the caret ends with an @-mention and no space
@@ -46,6 +46,11 @@ interface Mention {
     return { value, start, end };
   }
 
+  /** Lowercases and converts katakana to hiragana */
+  function normalizeSearchString(str: string) {
+    return str.toLowerCase().replace(/[ァ-ヶ]/g, x => String.fromCodePoint(x.codePointAt(0)! - 96));
+  }
+
   function updateAutocomplete() {
     const mention = getMentionUnderCaret();
     if (!mention) {
@@ -60,13 +65,13 @@ interface Mention {
 
       // Search the list of names and add <option>s. There are more efficient ways of doing this (e.g. a trie) but at
       // that point we'd probably want to shift this work to the server.
-      const mentionValueLower = mention.value.toLowerCase();
+      const mentionValueNormalized = normalizeSearchString(mention.value);
       for (const name of names) {
-        if (!name.toLowerCase().includes(mentionValueLower)) {
+        if (!name.some(n => normalizeSearchString(n).includes(mentionValueNormalized))) {
           continue;
         }
         const option = document.createElement('option');
-        option.innerText = name;
+        option.innerText = name[0];
         if (select.options.length === 0) {
           option.selected = true;
         }
