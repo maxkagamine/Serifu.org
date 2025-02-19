@@ -122,17 +122,22 @@ interface Mention {
     const completedValue = option.value + ' ';
     input.value = input.value.substring(0, mention.start) + completedValue + input.value.substring(mention.end);
 
+    // Trigger validation check
+    input.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertReplacementText' }));
+
     // Make sure the input is focused (user may have used mouse to select) with the caret after the mention
     const newCaretPos = mention.start + completedValue.length;
     input.focus();
     input.setSelectionRange(newCaretPos, newCaretPos);
   }
 
-  input.addEventListener('input', () => {
+  function replaceAtSigns() {
     // Replace fullwidth at signs with halfwidth ones. This will abort IME composition when an ＠ is typed, but that
     // actually works in our favor.
     input.value = input.value.replace(/＠/g, '@');
-  });
+  }
+
+  input.addEventListener('input', replaceAtSigns, true);
 
   input.addEventListener('selectionchange', updateAutocomplete);
   input.addEventListener('focus', updateAutocomplete);
