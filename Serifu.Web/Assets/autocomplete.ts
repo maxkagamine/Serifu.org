@@ -131,15 +131,25 @@ interface Mention {
     input.setSelectionRange(newCaretPos, newCaretPos);
   }
 
-  function replaceAtSigns() {
+  function handleInput() {
     // Replace fullwidth at signs with halfwidth ones. This will abort IME composition when an ＠ is typed, but that
     // actually works in our favor.
     input.value = input.value.replace(/＠/g, '@');
+
+    // The selectionchange event doesn't fire when backspacing for some reason, so to be safe we'll update on input too
+    updateAutocomplete();
   }
 
-  input.addEventListener('input', replaceAtSigns, true);
+  input.addEventListener('input', handleInput, true); // Fire ours before validation's since we change input.value
 
-  input.addEventListener('selectionchange', updateAutocomplete);
+  // On recent browser versions, the selectionchange event is fired from the input element as you'd expect, but
+  // historically it was fired on document only. For best support, we'll listen to it there instead.
+  document.addEventListener('selectionchange', e => {
+    if (e.target === input) {
+      updateAutocomplete();
+    }
+  });
+
   input.addEventListener('focus', updateAutocomplete);
 
   input.addEventListener('blur', e => {
