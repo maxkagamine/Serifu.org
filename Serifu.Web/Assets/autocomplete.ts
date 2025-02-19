@@ -90,8 +90,8 @@ if ('virtualKeyboard' in navigator) {
       return;
     }
 
-    // Position the select list under the caret (or as an extension of the textbox on mobile)
-    const relLeft = getCaretCoordinates(input, mention.start).left;
+    // Position the autocomplete list under the mention (or as an extension of the entire textbox on mobile)
+    const relLeft = getCaretCoordinates(input, mention.start - 1).left;
     const inputRect = input.getBoundingClientRect();
 
     list.style.top = `${inputRect.bottom}px`;
