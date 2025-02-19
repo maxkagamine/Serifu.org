@@ -1,8 +1,8 @@
-/* I don't like Merriweather's hyphens */
+/* I don't like Merriweather's hyphens and underscores */
 @font-face {
   font-family: 'override';
   src: local('Times New Roman'), local('Times'), local('Noto Serif'), local('Droid Serif'); /* Can't use 'serif' here */
-  unicode-range: U+2D;
+  unicode-range: U+2D, U+5F;
 }
 
 :root {
