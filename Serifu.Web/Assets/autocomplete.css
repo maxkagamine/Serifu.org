@@ -1,29 +1,31 @@
-#searchBoxAutocomplete {
+autocomplete-list {
   --option-height: 2em;
+  --max-visible-options: 10;
 
   overflow-y: auto;
+  max-height: calc(var(--option-height) * var(--max-visible-options));
   position: absolute;
   z-index: 9999;
-  font-family: inherit;
-  font-size-adjust: inherit;
-  color: inherit;
 
-  option {
-    padding: 0 var(--option-height) 0 calc(var(--option-height) * 0.3);
-    height: var(--option-height);
-    align-content: center;
-    font: inherit;
-    color: inherit;
-
-    &:checked {
-      background: var(--menu-hover-background);
-    }
+  &[hidden] {
+    display: none;
   }
 
-  &:has(option:only-child) {
-    /* Can't set size="1" since then it turns into a dropdown */
+  button {
+    all: unset;
+    display: block;
+    width: 100%;
+    padding: 0 var(--option-height) 0 calc(var(--option-height) * 0.3);
     height: var(--option-height);
-    overflow-y: hidden;
+    box-sizing: border-box;
+
+    &.selected {
+      background: var(--menu-hover-background);
+    }
+
+    &::before {
+      content: '@';
+    }
   }
 
   @media not (pointer: fine) {

@@ -1,9 +1,7 @@
 import getCaretCoordinates from 'textarea-caret';
 
 const MENTION_REGEX = /(?<=(?:^|\s)@)(\S*)$/;
-
 const MAX_AUTOCOMPLETE_COUNT = 50;
-const MAX_AUTOCOMPLETE_HEIGHT = 10;
 
 interface Mention {
   value: string;
@@ -13,7 +11,7 @@ interface Mention {
 
 (async () => {
   const input = document.querySelector('#searchBox input') as HTMLInputElement;
-  const select = document.getElementById('searchBoxAutocomplete') as HTMLSelectElement;
+  const list = document.querySelector('autocomplete-list') as AutocompleteList;
 
   if (!input) {
     // Page is using base layout without search box
@@ -54,72 +52,67 @@ interface Mention {
   function updateAutocomplete() {
     const mention = getMentionUnderCaret();
     if (!mention) {
-      select.hidden = true;
+      list.hidden = true;
       return;
     }
 
     // Check if the select list needs to be repopulated (user may have just clicked away and then back)
-    if (select.dataset.suggestionsFor !== mention.value) {
-      select.dataset.suggestionsFor = mention.value;
-      select.options.length = 0;
+    if (list.dataset.suggestionsFor !== mention.value) {
+      const options: string[] = [];
 
-      // Search the list of names and add <option>s. There are more efficient ways of doing this (e.g. a trie) but at
-      // that point we'd probably want to shift this work to the server.
+      // Search the list of names. There are more efficient ways of doing this (e.g. a trie), but at that point we'd
+      // probably want to shift this work to the server anyway.
       const mentionValueNormalized = normalizeSearchString(mention.value);
       for (const name of names) {
         if (!name.some(n => normalizeSearchString(n).includes(mentionValueNormalized))) {
           continue;
         }
-        const option = document.createElement('option');
-        option.innerText = name[0];
-        if (select.options.length === 0) {
-          option.selected = true;
-        }
-        select.options.add(option);
-        if (select.options.length === MAX_AUTOCOMPLETE_COUNT) {
+        options.push(name[0]);
+        if (options.length === MAX_AUTOCOMPLETE_COUNT) {
           break;
         }
       }
+
+      list.options = options;
+      list.dataset.suggestionsFor = mention.value;
     }
 
     // Show the autocomplete list only if not empty and not already completed
-    select.hidden =
-      select.options.length === 0 || (select.options.length === 1 && select.options[0].value === mention.value);
+    list.hidden = list.options.length === 0 || (list.options.length === 1 && list.options[0] === mention.value);
 
-    if (select.hidden) {
+    if (list.hidden) {
       return;
     }
-
-    // Resize the list according to the number of options. This has to be at least 2, since 1 turns it into a regular
-    // select dropdown (we use css to shrink it to a height of 1 in that case).
-    select.size = Math.max(2, Math.min(MAX_AUTOCOMPLETE_HEIGHT, select.options.length));
 
     // Position the select list under the caret (or as an extension of the textbox on mobile)
     const relLeft = getCaretCoordinates(input, mention.start).left;
     const inputRect = input.getBoundingClientRect();
 
-    select.style.top = `${inputRect.bottom}px`;
+    list.style.top = `${inputRect.bottom}px`;
 
-    if (window.matchMedia('max-width: 500px').matches || select.clientWidth > inputRect.width) {
-      select.style.left = `${inputRect.left}px`;
-      select.style.right = `${window.innerWidth - inputRect.right}px`;
-    } else if (relLeft + select.clientWidth > inputRect.width) {
-      select.style.left = 'auto';
-      select.style.right = `${window.innerWidth - inputRect.right}px`;
+    list.style.left = 'auto'; // If both left & right are values other than auto, we won't get an accurate offsetWidth
+    list.style.right = 'auto';
+
+    if (window.matchMedia('(max-width: 500px)').matches || list.offsetWidth > inputRect.width) {
+      list.style.left = `${inputRect.left}px`;
+      list.style.right = `${document.body.clientWidth - inputRect.right}px`;
+    } else if (relLeft + list.offsetWidth > inputRect.width) {
+      list.style.left = 'auto';
+      list.style.right = `${document.body.clientWidth - inputRect.right}px`;
     } else {
-      select.style.left = `${inputRect.left + relLeft}px`;
-      select.style.right = 'auto';
+      list.style.left = `${inputRect.left + relLeft}px`;
+      list.style.right = 'auto';
     }
   }
 
-  function acceptSuggestion(option: HTMLOptionElement) {
+  function acceptSuggestion(option: string) {
     const mention = getMentionUnderCaret();
     if (!mention) {
       return;
     }
 
     // Replace the mention being typed with the selected autocomplete option
-    const completedValue = option.value + ' ';
+    const completedValue = option + ' ';
     input.value = input.value.substring(0, mention.start) + completedValue + input.value.substring(mention.end);
 
     // Trigger validation check
@@ -140,7 +133,7 @@ interface Mention {
     updateAutocomplete();
   }
 
-  input.addEventListener('input', handleInput, true); // Fire ours before validation's since we change input.value
+  input.addEventListener('input', handleInput, true);
 
   // On recent browser versions, the selectionchange event is fired from the input element as you'd expect, but
   // historically it was fired on document only. For best support, we'll listen to it there instead.
@@ -153,46 +146,125 @@ interface Mention {
   input.addEventListener('focus', updateAutocomplete);
 
   input.addEventListener('blur', e => {
-    if (e.relatedTarget !== select) {
-      select.hidden = true;
+    if (!e.relatedTarget || !(e.relatedTarget as Element).closest('autocomplete-list')) {
+      list.hidden = true;
     }
   });
 
   input.addEventListener('keydown', e => {
-    if (select.hidden) {
+    if (list.hidden) {
       return;
     }
     switch (e.key) {
       case 'ArrowDown':
-        if (select.selectedIndex === select.options.length - 1) {
-          select.selectedIndex = 0;
+        if (list.selectedIndex === list.options.length - 1) {
+          list.selectedIndex = 0;
         } else {
-          select.selectedIndex++;
+          list.selectedIndex++;
         }
         e.preventDefault();
         break;
       case 'ArrowUp':
-        if (select.selectedIndex === 0) {
-          select.selectedIndex = select.options.length - 1;
+        if (list.selectedIndex === 0) {
+          list.selectedIndex = list.options.length - 1;
         } else {
-          select.selectedIndex--;
+          list.selectedIndex--;
         }
         e.preventDefault();
         break;
       case 'Enter':
       case 'Tab':
-        acceptSuggestion(select.selectedOptions[0]);
+        acceptSuggestion(list.selectedOption);
         e.preventDefault();
         break;
       case 'Escape':
-        select.hidden = true;
+        list.hidden = true;
         break;
     }
   });
 
-  select.addEventListener('click', e => {
-    if (e.target instanceof HTMLOptionElement) {
-      acceptSuggestion(e.target);
-    }
+  list.addEventListener('option-clicked', () => {
+    acceptSuggestion(list.selectedOption);
   });
 })();
+
+/**
+ * Custom element for the autocomplete list, partially emulating a select list. Originally I wanted to use a native
+ * <select> element, but on mobile it always appears as a dropdown even if size > 1.
+ */
+class AutocompleteList extends HTMLElement {
+  private static readonly SELECTED_CLASS = 'selected';
+
+  #options: string[] = [];
+
+  connectedCallback() {
+    this.addEventListener('mouseover', this.onMouseOver);
+    this.addEventListener('click', this.onClick);
+  }
+
+  disconnectedCallback() {
+    this.removeEventListener('mouseover', this.onMouseOver);
+    this.removeEventListener('click', this.onClick);
+  }
+
+  get options(): readonly string[] {
+    return this.#options;
+  }
+
+  set options(options: string[]) {
+    this.#options = options;
+    this.replaceChildren(
+      ...options.map((x, i) => {
+        const el = document.createElement('button');
+        el.innerText = x;
+        el.classList.toggle(AutocompleteList.SELECTED_CLASS, i === 0);
+        return el;
+      }),
+    );
+    this.scrollTop = 0;
+  }
+
+  get selectedIndex(): number {
+    for (let i = 0; i < this.childElementCount; i++) {
+      if (this.children[i].classList.contains(AutocompleteList.SELECTED_CLASS)) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  set selectedIndex(index: number) {
+    for (let i = 0; i < this.childElementCount; i++) {
+      const child = this.children[i] as HTMLButtonElement;
+      child.classList.toggle(AutocompleteList.SELECTED_CLASS, i === index);
+
+      // Scroll into view if needed
+      if (
+        i === index &&
+        (child.offsetTop < this.scrollTop || child.offsetTop + child.offsetHeight > this.scrollTop + this.clientHeight)
+      ) {
+        child.scrollIntoView({ block: 'nearest', behavior: 'instant' });
+      }
+    }
+  }
+
+  get selectedOption(): string {
+    return this.#options[this.selectedIndex];
+  }
+
+  onMouseOver = (e: MouseEvent) => {
+    if (e.target instanceof HTMLButtonElement) {
+      for (const child of this.children) {
+        child.classList.toggle(AutocompleteList.SELECTED_CLASS, child === e.target);
+      }
+    }
+  };
+
+  onClick = (e: MouseEvent) => {
+    if (e.target instanceof HTMLButtonElement) {
+      this.dispatchEvent(new CustomEvent('option-clicked', { bubbles: true }));
+    }
+  };
+}
+
+customElements.define('autocomplete-list', AutocompleteList);
