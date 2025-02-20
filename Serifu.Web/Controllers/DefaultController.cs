@@ -120,6 +120,7 @@ public class DefaultController : Controller
                 {
                     ElasticsearchValidationError.TooShort => Strings.ValidationErrorTooShort,
                     ElasticsearchValidationError.TooLong => Strings.ValidationErrorTooLong,
+                    ElasticsearchValidationError.MultipleMentions => Strings.ValidationErrorMultipleMentions,
                     _ => throw new UnreachableException($"Unknown validation error: {ex.Error}")
                 }
             };
