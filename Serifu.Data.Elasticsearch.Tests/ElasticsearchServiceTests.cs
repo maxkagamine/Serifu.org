@@ -51,8 +51,8 @@ public class ElasticsearchServiceTests
     public void MapHighlightsToTargetLanguage()
     {
         // 阿賀野型軽巡二番艦、能代。着任しました。よろしくどうぞ！
-        // \_____/\_/\____/ \__/ \_________/ \__________/
-        //    1    2    3    4        5           6
+        // \_____/\__/\____/ \__/  \_________/  \__________/
+        //    1    2    3     4         5            6
         //
         //  ___3__          _1_   _1_   _____2______    __4__    _______5________    ________6________
         // /      \        /   \ /   \ /            \  /     \  /                \  /                 \
@@ -78,19 +78,35 @@ public class ElasticsearchServiceTests
         actualEnglishHighlights.Should().Equal(expectedEnglishHighlights);
     }
 
+    public static IEnumerable<TheoryDataRow<string, string[], string?, string>> GetQueriesCorrectFieldsTestCases()
+    {
+        (string Mention, string? Filter)[] withOrWithoutMention =
+        [
+            ("", null), (" @Balgruuf_the_Greater", "Balgruuf the Greater") // Needed a name with spaces. Jarl Ballin'!
+        ];
+
+        foreach (var (mention, filter) in withOrWithoutMention)
+        {
+            yield return (
+                "能代" + mention, ["japanese.text", "japanese.text.conjugations"], filter,
+                "a query in Japanese should search the Japanese translation");
+
+            yield return (
+                "light　cruiser" + mention, ["english.text", "english.text.conjugations"], filter,
+                "a query in English should search the English translation, even if it contains full-width spaces");
+
+            // ↓ This is also an example of a four-byte kanji (which, since .NET uses UTF-16, means the string has a length of 2)
+            yield return (
+                "𪚲" + mention, ["japanese.text.kanji"], filter,
+                "a query containing a single kanji should search the dedicated kanji subfield (since the regular field is restricted to bigrams)");
+        }
+    }
+
     [Theory]
-    [InlineData(
-        "能代", new[] { "japanese.text", "japanese.text.conjugations" },
-        "a query in Japanese should search the Japanese translation")]
-    [InlineData(
-        "light　cruiser", new[] { "english.text", "english.text.conjugations" },
-        "a query in English should search the English translation, even if it contains full-width spaces")]
-    [InlineData(
-        "𪚲", new[] { "japanese.text.kanji" },
-        "a query containing a single kanji should search the dedicated kanji subfield (since the regular field is restricted to bigrams)")]
-        // ↑ This is also an example of a four-byte kanji (which, since .NET uses UTF-16, means the string has a length of 2)
+    [MemberData(nameof(GetQueriesCorrectFieldsTestCases))]
     [SuppressMessage("Performance", "CA1861:Avoid constant arrays as arguments", Justification = "Simpler for tests")]
-    public async Task QueriesCorrectFields(string query, string[] expectedFields, string because)
+    public async Task QueriesCorrectFields(
+        string query, string[] expectedFields, string? expectedSpeakerNameFilter, string because)
     {
         var unexpectedFields = new[]
         {
@@ -110,11 +126,23 @@ public class ElasticsearchServiceTests
         }
         catch (NotImplementedException) { }
 
-        // There's no way to actually inspect the query without reflection or serializing
         var request = (SearchRequest)client.Invocations.Single().Arguments[0];
         var json = client.Object.RequestResponseSerializer.SerializeToString(request.Query);
+
+        output.WriteLine(json);
+
         json.Should().ContainAll(expectedFields.Select(f => $"\"{f}\""), because)
             .And.NotContainAny(unexpectedFields.Select(f => $"\"{f}\""), because);
+
+        if (expectedSpeakerNameFilter is not null)
+        {
+            json.Should().NotContain("\"english.speakerName\"", "this is a text field, not a keyword field");
+            json.Should().Contain($"\"filter\":{{\"term\":{{\"english.speakerName.keyword\":{{\"value\":\"{expectedSpeakerNameFilter}\"}}}}}}");
+        }
+        else
+        {
+            json.Should().NotContain("english.speakerName");
+        }
     }
 
     [Fact]
@@ -236,6 +264,29 @@ public class ElasticsearchServiceTests
             (await func.Should().ThrowAsync<ElasticsearchValidationException>())
                 .Which.Error.Should().Be(error);
         }
+    }
+
+    [Theory]
+    [InlineData("top number", "top number", null)]
+    [InlineData("top number@Hachiroku", "top number@Hachiroku", null)] // No space before @ sign
+    [InlineData("top number @Hachiroku", "top number", "Hachiroku")]
+    [InlineData("@Hachiroku top number", "top number", "Hachiroku")]
+    [InlineData("  top  @Hachiroku  number  ", "top number", "Hachiroku")]
+    public void ExtractMention(string query, string expectedQuery, string? expectedMention)
+    {
+        var (actualQuery, actualMention) = ElasticsearchService.ExtractMention(query);
+
+        actualQuery.Should().Be(expectedQuery);
+        actualMention.Should().Be(expectedMention);
+    }
+
+    [Fact]
+    public void ExtractMention_ThrowsIfMultiple()
+    {
+        Assert.Throws<ElasticsearchValidationException>(() =>
+                ElasticsearchService.ExtractMention("@Hachiroku @Nimaru"))
+            .Error.Should()
+            .Be(ElasticsearchValidationError.MultipleMentions);
     }
 
     private static ValueArray<Alignment> DecodeAlignmentData(string base64) =>

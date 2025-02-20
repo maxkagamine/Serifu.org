@@ -23,10 +23,11 @@ using Serilog.Events;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
+using System.Text.RegularExpressions;
 
 namespace Serifu.Data.Elasticsearch;
 
-public class ElasticsearchService : IElasticsearchService
+public partial class ElasticsearchService : IElasticsearchService
 {
     private const int PageSize = 39;
     private const string WeightedRandomScriptId = "weighted_random";
@@ -40,9 +41,14 @@ public class ElasticsearchService : IElasticsearchService
 
     private static readonly Field EnglishTextField = new("english.text");
     private static readonly Field EnglishConjugationsField = new("english.text.conjugations");
+    private static readonly Field EnglishSpeakerNameField = new("english.speakerName.keyword");
     private static readonly Field JapaneseTextField = new("japanese.text");
     private static readonly Field JapaneseConjugationsField = new("japanese.text.conjugations");
     private static readonly Field JapaneseKanjiField = new("japanese.text.kanji");
+
+    // Keep consistent with regexes in autocomplete.ts
+    [GeneratedRegex(@"(?:^|\s+)[@＠](\S+)\s*(?![@＠]\S)")]
+    private static partial Regex MentionRegex { get; }
 
     private readonly ElasticsearchClient client;
     private readonly ILogger logger;
@@ -62,11 +68,12 @@ public class ElasticsearchService : IElasticsearchService
         }
     };
 
-    // TODO: Add tags so we can look up the translation for a quote from a specific character (e.g. "top number #Hachiroku")
     public async Task<SearchResults> Search(string query, CancellationToken cancellationToken)
     {
         try
         {
+            (query, string? mention) = ExtractMention(query);
+
             SearchLanguage searchLanguage = UnicodeHelper.IsJapanese(query) ?
                 SearchLanguage.Japanese : SearchLanguage.English;
 
@@ -74,7 +81,6 @@ public class ElasticsearchService : IElasticsearchService
             Fields? additionalFields = null;
             Query requestQuery;
 
-            query = query.Trim();
             int length = new StringInfo(query).LengthInTextElements;
             int maxLength = searchLanguage is SearchLanguage.English ? MaxLengthEnglish : MaxLengthJapanese;
 
@@ -89,6 +95,10 @@ public class ElasticsearchService : IElasticsearchService
             // conjugations). However, it would still be helpful to be able to search for a single kanji, so for that
             // reason the index contains a dedicated subfield exclusively indexing kanji characters. This should also
             // help to speed up typical searches containing multiple characters.
+            //
+            // TODO: Consider splitting queries by whitespace so that individual kanji can be searched in conjunction
+            //  with another word.
+            //
             if (searchLanguage is SearchLanguage.Japanese && UnicodeHelper.IsSingleKanji(query))
             {
                 searchField = JapaneseKanjiField;
@@ -123,8 +133,26 @@ public class ElasticsearchService : IElasticsearchService
                             Query = query,
                             MinimumShouldMatch = "75%"
                         }
-                    ]
+                    ],
+                    MinimumShouldMatch = 1
                 };
+            }
+
+            if (mention is not null)
+            {
+                // Elasticsearch's .NET library is a bit weird: BoolQuery and MatchQuery etc. are NOT subclasses of
+                // Query as you'd expect. Assignment to Query invokes an implicit conversion, and for some reason the
+                // only way to access the actual query object is like this.
+                if (!requestQuery.TryGet(out BoolQuery? boolQuery))
+                {
+                    requestQuery = boolQuery = new BoolQuery() { Must = [requestQuery] };
+                }
+
+                boolQuery.Filter ??= new List<Query>();
+                boolQuery.Filter.Add(new TermQuery(EnglishSpeakerNameField)
+                {
+                    Value = mention.Replace('_', ' ')
+                });
             }
 
             SearchRequest request = new()
@@ -210,6 +238,33 @@ public class ElasticsearchService : IElasticsearchService
 
             throw new ElasticsearchException(ex);
         }
+    }
+
+    /// <summary>
+    /// Extracts any @-mention from the query if present.
+    /// </summary>
+    /// <param name="query">The query.</param>
+    /// <returns>
+    /// The query without the mention (with whitespace collapsed/trimmed) and the mention (without the @ sign). If no
+    /// mention is present, returns the query (still trimmed) and <see langword="null"/>.
+    /// </returns>
+    /// <exception cref="ElasticsearchValidationException">Multiple mentions are present in the query.</exception>
+    internal static (string Query, string? Mention) ExtractMention(string query)
+    {
+        string? mention = null;
+        query = MentionRegex.Replace(query, match =>
+            {
+                if (mention is not null)
+                {
+                    throw new ElasticsearchValidationException(ElasticsearchValidationError.MultipleMentions);
+                }
+
+                mention = match.Groups[1].Value;
+                return " ";
+            })
+            .Trim();
+
+        return (query, mention);
     }
 
     /// <summary>

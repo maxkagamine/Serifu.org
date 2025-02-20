@@ -1,7 +1,10 @@
 import getCaretCoordinates from 'textarea-caret';
 
-const MENTION_AT_END_REGEX = /((?:^|\s)@)(\S*)$/;
-export const MULTIPLE_MENTIONS_REGEX = /(^|\s)@\S.*?\s@/;
+// Keep consistent with regex in ElasticsearchService
+const MENTION_AT_END_REGEX = /((?:^|\s)[@＠])(\S*)$/;
+export const MULTIPLE_MENTIONS_REGEX = /(^|\s)[@＠]\S.*?\s[@＠]/; // For validation
+export const MENTION_REGEX = /(?:^|\s+)[@＠](\S+)\s*/; // For validation
+
 const MAX_AUTOCOMPLETE_COUNT = 50;
 
 interface Mention {
