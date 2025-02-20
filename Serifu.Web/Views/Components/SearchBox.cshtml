@@ -7,6 +7,7 @@
     data-route-template="@Url.Action("Results", new { query = "__QUERY__" })"
     data-too-short="@Strings.ValidationErrorTooShort"
     data-too-long="@Strings.ValidationErrorTooLong"
+    data-multiple-mentions="@Strings.ValidationErrorMultipleMentions"
 >
     <input name="query" placeholder="@Strings.SearchBoxPlaceholder" value="@Context.GetRouteValue("query")" />
 

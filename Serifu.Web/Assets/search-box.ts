@@ -1,3 +1,4 @@
+import { MULTIPLE_MENTIONS_REGEX } from './autocomplete';
 import { assertDefined } from './util';
 
 // Sync with constants in ElasticsearchService
@@ -90,6 +91,15 @@ const MAX_LENGTH_JAPANESE = 32;
 
     if (length < 2 && !/^\p{Script=Han}$/u.test(query)) {
       input.setCustomValidity(assertDefined(form.dataset.tooShort, 'tooShort'));
+      return;
+    }
+
+    if (MULTIPLE_MENTIONS_REGEX.test(query)) {
+      input.setCustomValidity(assertDefined(form.dataset.multipleMentions, 'multipleMentions'));
+
+      // Trigger browser's validation popup so user isn't left wondering why the autocomplete list won't appear
+      input.reportValidity();
+
       return;
     }
 

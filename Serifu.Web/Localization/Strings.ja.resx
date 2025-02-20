@@ -261,4 +261,7 @@
   <data name="SourceCopyright_GoGoNippon" xml:space="preserve">
     <value>OVERDRIVE</value>
   </data>
+  <data name="ValidationErrorMultipleMentions" xml:space="preserve">
+    <value>使用できる@メンションは1だけです。</value>
+  </data>
 </root>

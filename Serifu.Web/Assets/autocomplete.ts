@@ -1,6 +1,7 @@
 import getCaretCoordinates from 'textarea-caret';
 
-const MENTION_REGEX = /(?<=(?:^|\s)@)(\S*)$/;
+const MENTION_AT_END_REGEX = /((?:^|\s)@)(\S*)$/;
+export const MULTIPLE_MENTIONS_REGEX = /(^|\s)@\S.*?\s@/;
 const MAX_AUTOCOMPLETE_COUNT = 50;
 
 interface Mention {
@@ -29,17 +30,18 @@ if ('virtualKeyboard' in navigator) {
   function getMentionUnderCaret(): Mention | null {
     // Check if the text preceeding the caret ends with an @-mention and no space
     const caretPos = input.selectionStart!;
-    const beforeMatch = input.value.substring(0, caretPos).match(MENTION_REGEX);
+    const beforeMatch = input.value.substring(0, caretPos).match(MENTION_AT_END_REGEX);
     if (!beforeMatch) {
       return null;
     }
 
     // Combine the matched part before the caret with the part after the caret (if typing in the middle of a mention)
-    const beforePart = beforeMatch[1];
+    const beforePart = beforeMatch[2];
     const afterPart = input.value.substring(caretPos).match(/^\S*/)?.[0] ?? '';
     const value = beforePart + afterPart;
 
-    const start = beforeMatch.index!;
+    // Lookbehinds (& the d flag) aren't supported in older versions of Safari, so we add the length of the first group
+    const start = beforeMatch.index! + beforeMatch[1].length;
     const end = start + value.length;
 
     // Don't show suggestions if highlighting text outside the mention
@@ -57,7 +59,7 @@ if ('virtualKeyboard' in navigator) {
 
   function updateAutocomplete() {
     const mention = getMentionUnderCaret();
-    if (!mention) {
+    if (!mention || MULTIPLE_MENTIONS_REGEX.test(input.value)) {
       list.hidden = true;
       return;
     }
