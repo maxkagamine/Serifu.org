@@ -210,12 +210,12 @@ class AutocompleteList extends HTMLElement {
   #options: string[] = [];
 
   connectedCallback() {
-    this.addEventListener('mouseover', this.onMouseOver);
+    this.addEventListener('mousemove', this.onMouseMove);
     this.addEventListener('click', this.onClick);
   }
 
   disconnectedCallback() {
-    this.removeEventListener('mouseover', this.onMouseOver);
+    this.removeEventListener('mousemove', this.onMouseMove);
     this.removeEventListener('click', this.onClick);
   }
 
@@ -265,8 +265,8 @@ class AutocompleteList extends HTMLElement {
     return this.#options[this.selectedIndex];
   }
 
-  onMouseOver = (e: MouseEvent) => {
-    if (e.target instanceof HTMLButtonElement) {
+  onMouseMove = (e: MouseEvent) => {
+    if (e.target instanceof HTMLButtonElement && !e.target.classList.contains(AutocompleteList.SELECTED_CLASS)) {
       for (const child of this.children) {
         child.classList.toggle(AutocompleteList.SELECTED_CLASS, child === e.target);
       }
@@ -275,6 +275,7 @@ class AutocompleteList extends HTMLElement {
 
   onClick = (e: MouseEvent) => {
     if (e.target instanceof HTMLButtonElement) {
+      this.onMouseMove(e); // Make sure option under cursor is selected
       this.dispatchEvent(new CustomEvent('option-clicked', { bubbles: true }));
     }
   };
