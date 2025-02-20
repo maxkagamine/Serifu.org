@@ -21,7 +21,7 @@ if ('virtualKeyboard' in navigator) {
 
 (async () => {
   const input = document.querySelector('#searchBox input') as HTMLInputElement;
-  const list = document.querySelector('autocomplete-list') as AutocompleteList;
+  const list = document.getElementById('searchBoxAutocomplete') as AutocompleteList;
 
   if (!input) {
     // Page is using base layout without search box
@@ -208,10 +208,15 @@ class AutocompleteList extends HTMLElement {
   private static readonly MAX_SIZE = 10;
 
   #options: string[] = [];
+  #input?: Element | null;
 
   connectedCallback() {
     this.addEventListener('mousemove', this.onMouseMove);
     this.addEventListener('click', this.onClick);
+
+    this.role = 'listbox';
+    this.tabIndex = 0;
+    this.#input = document.querySelector(`[aria-controls="${this.id}"]`);
   }
 
   disconnectedCallback() {
@@ -219,17 +224,31 @@ class AutocompleteList extends HTMLElement {
     this.removeEventListener('click', this.onClick);
   }
 
+  get hidden(): boolean {
+    return super.hidden;
+  }
+
+  set hidden(value: boolean) {
+    super.hidden = value;
+    if (this.#input) {
+      this.#input.ariaExpanded = (!value).toString();
+    }
+  }
+
   get options(): readonly string[] {
     return this.#options;
   }
 
   set options(options: string[]) {
+    const id = Math.random().toString(36).substring(2, 8);
     this.#options = options;
     this.replaceChildren(
       ...options.map((x, i) => {
-        const el = document.createElement('button');
+        const el = document.createElement('div');
+        el.id = `${id}-${i}`;
         el.innerText = x;
-        el.classList.toggle(AutocompleteList.SELECTED_CLASS, i === 0);
+        el.role = 'option';
+        this.toggleSelected(el, i === 0);
         return el;
       }),
     );
@@ -248,8 +267,8 @@ class AutocompleteList extends HTMLElement {
 
   set selectedIndex(index: number) {
     for (let i = 0; i < this.childElementCount; i++) {
-      const child = this.children[i] as HTMLButtonElement;
-      child.classList.toggle(AutocompleteList.SELECTED_CLASS, i === index);
+      const child = this.children[i] as HTMLElement;
+      this.toggleSelected(child, i === index);
 
       // Scroll into view if needed
       if (
@@ -266,19 +285,31 @@ class AutocompleteList extends HTMLElement {
   }
 
   onMouseMove = (e: MouseEvent) => {
-    if (e.target instanceof HTMLButtonElement && !e.target.classList.contains(AutocompleteList.SELECTED_CLASS)) {
+    if (
+      e.target instanceof HTMLElement &&
+      e.target.parentElement === this &&
+      !e.target.classList.contains(AutocompleteList.SELECTED_CLASS)
+    ) {
       for (const child of this.children) {
-        child.classList.toggle(AutocompleteList.SELECTED_CLASS, child === e.target);
+        this.toggleSelected(child, child === e.target);
       }
     }
   };
 
   onClick = (e: MouseEvent) => {
-    if (e.target instanceof HTMLButtonElement) {
+    if (e.target instanceof HTMLElement && e.target.parentElement === this) {
       this.onMouseMove(e); // Make sure option under cursor is selected
       this.dispatchEvent(new CustomEvent('option-clicked', { bubbles: true }));
     }
   };
+
+  private toggleSelected(el: Element, selected: boolean) {
+    el.classList.toggle(AutocompleteList.SELECTED_CLASS, selected);
+    el.ariaSelected = selected.toString();
+    if (selected) {
+      this.#input?.setAttribute('aria-activedescendant', el.id);
+    }
+  }
 }
 
 customElements.define('autocomplete-list', AutocompleteList);

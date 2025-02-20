@@ -9,13 +9,20 @@
     data-too-long="@Strings.ValidationErrorTooLong"
     data-multiple-mentions="@Strings.ValidationErrorMultipleMentions"
 >
-    <input name="query" placeholder="@Strings.SearchBoxPlaceholder" value="@Context.GetRouteValue("query")" />
+    <!-- Edge complains that aria-expanded isn't allowed here, but WAI's autocomplete example uses it, and the spec
+    suggests it as well, so I'm keeping it. NVDA doesn't use it, but other assistive technologies might. -->
+    <input
+        name="query"
+        placeholder="@Strings.SearchBoxPlaceholder"
+        value="@Context.GetRouteValue("query")"
+        aria-autocomplete="list"
+        aria-controls="searchBoxAutocomplete"
+        aria-expanded="false"
+    />
 
-    <!--
-    For animation purposes, the stroke length is centered on its midpoint, and the
-    offset starts at 0. The shape's origin is therefore placed 1/8th down so that
-    the stroke starts exactly halfway down and extends to the right 1/3 its length.
-    -->
+    <!-- For animation purposes, the stroke length is centered on its midpoint, and the offset starts at 0. The shape's
+    origin is therefore placed 1/8th down so that the stroke starts exactly halfway down and extends to the right 1/3
+    its length. -->
     <svg viewBox="0 0 8 8" preserveAspectRatio="none">
         <polygon vector-effect="non-scaling-stroke" points="0,1 0,0 8,0 8,8 0,8" />
     </svg>
@@ -24,4 +31,10 @@
 <!-- Firefox workaround, see css -->
 <style id="searchBoxKeyframes"></style>
 
-<autocomplete-list class="popover-like" lang="en" hidden></autocomplete-list>
+<autocomplete-list
+    id="searchBoxAutocomplete"
+    class="popover-like"
+    lang="en"
+    hidden
+    aria-label="@Strings.AutocompleteListLabel"
+></autocomplete-list>

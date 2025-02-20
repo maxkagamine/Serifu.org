@@ -264,4 +264,7 @@
   <data name="ValidationErrorMultipleMentions" xml:space="preserve">
     <value>Only one @-mention is allowed.</value>
   </data>
+  <data name="AutocompleteListLabel" xml:space="preserve">
+    <value>Autocomplete</value>
+  </data>
 </root>
