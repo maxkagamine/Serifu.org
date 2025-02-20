@@ -122,9 +122,9 @@ if ('virtualKeyboard' in navigator) {
       return;
     }
 
-    // Replace the mention being typed with the selected autocomplete option
-    const completedValue = option + ' ';
-    input.value = input.value.substring(0, mention.start) + completedValue + input.value.substring(mention.end);
+    // Replace the mention being typed with the selected autocomplete option (also the @ sign, in case fullwidth)
+    const completedValue = `@${option} `;
+    input.value = input.value.substring(0, mention.start - 1) + completedValue + input.value.substring(mention.end);
 
     // Trigger validation check
     input.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertReplacementText' }));
@@ -135,17 +135,6 @@ if ('virtualKeyboard' in navigator) {
     input.setSelectionRange(newCaretPos, newCaretPos);
   }
 
-  function handleInput() {
-    // Replace fullwidth at signs with halfwidth ones. This will abort IME composition when an ＠ is typed, but that
-    // actually works in our favor.
-    input.value = input.value.replace(/＠/g, '@');
-
-    // The selectionchange event doesn't fire when backspacing for some reason, so to be safe we'll update on input too
-    updateAutocomplete();
-  }
-
-  input.addEventListener('input', handleInput, true);
-
   // On recent browser versions, the selectionchange event is fired from the input element as you'd expect, but
   // historically it was fired on document only. For best support, we'll listen to it there instead.
   document.addEventListener('selectionchange', e => {
@@ -154,8 +143,11 @@ if ('virtualKeyboard' in navigator) {
     }
   });
 
-  input.addEventListener('focus', updateAutocomplete);
+  // The selectionchange event doesn't fire when backspacing for some reason, so we'll update on input too
+  input.addEventListener('input', updateAutocomplete);
 
+  // Show and hide the autocomplete list when focus changes
+  input.addEventListener('focus', updateAutocomplete);
   input.addEventListener('blur', e => {
     if (!e.relatedTarget || !(e.relatedTarget as Element).closest('autocomplete-list')) {
       list.hidden = true;
