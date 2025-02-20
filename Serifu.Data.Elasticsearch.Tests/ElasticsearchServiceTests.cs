@@ -13,6 +13,7 @@
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
 using Elastic.Clients.Elasticsearch;
+using Elastic.Transport;
 using Elastic.Transport.Extensions;
 using FluentAssertions;
 using Kagamine.Extensions.Collections;
@@ -78,45 +79,10 @@ public class ElasticsearchServiceTests
         actualEnglishHighlights.Should().Equal(expectedEnglishHighlights);
     }
 
-    public static IEnumerable<TheoryDataRow<string, string[], string?, string>> GetQueriesCorrectFieldsTestCases()
-    {
-        (string Mention, string? Filter)[] withOrWithoutMention =
-        [
-            ("", null), (" @Balgruuf_the_Greater", "Balgruuf the Greater") // Needed a name with spaces. Jarl Ballin'!
-        ];
-
-        foreach (var (mention, filter) in withOrWithoutMention)
-        {
-            yield return (
-                "能代" + mention, ["japanese.text", "japanese.text.conjugations"], filter,
-                "a query in Japanese should search the Japanese translation");
-
-            yield return (
-                "light　cruiser" + mention, ["english.text", "english.text.conjugations"], filter,
-                "a query in English should search the English translation, even if it contains full-width spaces");
-
-            // ↓ This is also an example of a four-byte kanji (which, since .NET uses UTF-16, means the string has a length of 2)
-            yield return (
-                "𪚲" + mention, ["japanese.text.kanji"], filter,
-                "a query containing a single kanji should search the dedicated kanji subfield (since the regular field is restricted to bigrams)");
-        }
-    }
-
     [Theory]
-    [MemberData(nameof(GetQueriesCorrectFieldsTestCases))]
-    [SuppressMessage("Performance", "CA1861:Avoid constant arrays as arguments", Justification = "Simpler for tests")]
-    public async Task QueriesCorrectFields(
-        string query, string[] expectedFields, string? expectedSpeakerNameFilter, string because)
+    [ClassData(typeof(QueryJsonTestData))]
+    public async Task Search_MakesCorrectQueries(string query, string expectedJson, string because)
     {
-        var unexpectedFields = new[]
-        {
-            "english.text",
-            "english.text.conjugations",
-            "japanese.text",
-            "japanese.text.conjugations",
-            "japanese.text.kanji",
-        }.Except(expectedFields);
-
         client.Setup(x => x.SearchAsync<Quote>(It.IsAny<SearchRequest>(), It.IsAny<CancellationToken>()))
             .Throws<NotImplementedException>();
 
@@ -127,26 +93,15 @@ public class ElasticsearchServiceTests
         catch (NotImplementedException) { }
 
         var request = (SearchRequest)client.Invocations.Single().Arguments[0];
-        var json = client.Object.RequestResponseSerializer.SerializeToString(request.Query);
+        var actualJson = client.Object.RequestResponseSerializer.SerializeToString(
+            request.Query,
+            SerializationFormatting.Indented);
 
-        output.WriteLine(json);
-
-        json.Should().ContainAll(expectedFields.Select(f => $"\"{f}\""), because)
-            .And.NotContainAny(unexpectedFields.Select(f => $"\"{f}\""), because);
-
-        if (expectedSpeakerNameFilter is not null)
-        {
-            json.Should().NotContain("\"english.speakerName\"", "this is a text field, not a keyword field");
-            json.Should().Contain($"\"filter\":{{\"term\":{{\"english.speakerName.keyword\":{{\"value\":\"{expectedSpeakerNameFilter}\"}}}}}}");
-        }
-        else
-        {
-            json.Should().NotContain("english.speakerName");
-        }
+        actualJson.ReplaceLineEndings().Trim().Should().Be(expectedJson.ReplaceLineEndings().Trim(), because);
     }
 
     [Fact]
-    public async Task ReturnsExpectedSearchResults()
+    public async Task Search_ReturnsExpectedSearchResults()
     {
         Quote[] quotes = [
             new()
@@ -251,7 +206,7 @@ public class ElasticsearchServiceTests
     [InlineData("鏡", null)]
     [InlineData("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", ElasticsearchValidationError.TooLong)]
     [InlineData("あああああああああああああああああああああああああああああああああ", ElasticsearchValidationError.TooLong)]
-    public async Task ThrowsIfQueryIsTooShortOrLong(string query, ElasticsearchValidationError? error)
+    public async Task Search_ThrowsIfQueryIsTooShortOrLong(string query, ElasticsearchValidationError? error)
     {
         Func<Task> func = () => service.Search(query, CancellationToken.None);
 
