@@ -9,7 +9,14 @@
     data-too-long="@Strings.ValidationErrorTooLong"
     data-multiple-mentions="@Strings.ValidationErrorMultipleMentions"
 >
-    <input name="query" placeholder="@Strings.SearchBoxPlaceholder" value="@Context.GetRouteValue("query")" />
+    <input
+        name="query"
+        placeholder="@Strings.SearchBoxPlaceholder"
+        value="@Context.GetRouteValue("query")"
+        aria-autocomplete="list"
+        aria-controls="searchBoxAutocomplete"
+        aria-expanded="false"
+    />
 
     <!--
     For animation purposes, the stroke length is centered on its midpoint, and the
@@ -24,4 +31,4 @@
 <!-- Firefox workaround, see css -->
 <style id="searchBoxKeyframes"></style>
 
-<autocomplete-list class="popover-like" lang="en" hidden></autocomplete-list>
+<autocomplete-list id="searchBoxAutocomplete" class="popover-like" lang="en" hidden></autocomplete-list>

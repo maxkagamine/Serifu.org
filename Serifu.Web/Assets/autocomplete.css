@@ -6,17 +6,16 @@ autocomplete-list {
   bottom: calc(env(keyboard-inset-height) + var(--body-padding));
   overflow-y: auto;
   z-index: 9999;
+  user-select: none;
+  cursor: default;
 
   &[hidden] {
     display: none;
   }
 
-  button {
-    all: unset;
-    display: block;
-    width: 100%;
+  div {
     padding: 0 var(--option-height) 0 calc(var(--option-height) * 0.3);
-    height: var(--option-height);
+    line-height: var(--option-height);
     box-sizing: border-box;
 
     &.selected {
