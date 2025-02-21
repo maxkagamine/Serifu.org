@@ -36,6 +36,10 @@ public partial class ElasticsearchService : IElasticsearchService
     private const int MaxLengthEnglish = 64;
     private const int MaxLengthJapanese = 32;
 
+    // Used to return early if an @-mention exceeds the maximum speaker name length, also to avoid a potential attack
+    // vector (a warning is thrown when generating the autocomplete json if this needs to be raised)
+    private const int MaxSpeakerNameLength = 30;
+
     // Using a single char lets us optimize the code a bit; form feed specifically has the shortest json representation
     public const char HighlightMarker = '\f';
 
@@ -76,6 +80,11 @@ public partial class ElasticsearchService : IElasticsearchService
 
             SearchLanguage searchLanguage = UnicodeHelper.IsJapanese(query) ?
                 SearchLanguage.Japanese : SearchLanguage.English;
+
+            if (mention is { Length: > MaxSpeakerNameLength })
+            {
+                return new(searchLanguage, []);
+            }
 
             Field searchField;
             Fields? additionalFields = null;
