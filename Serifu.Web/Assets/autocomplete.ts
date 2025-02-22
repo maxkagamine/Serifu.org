@@ -60,6 +60,20 @@ if ('virtualKeyboard' in navigator) {
     return str.toLowerCase().replace(/[ァ-ヶ]/g, x => String.fromCodePoint(x.codePointAt(0)! - 96));
   }
 
+  /** Gets the element's bounding rect relative to the document, rather than the viewport */
+  function getAbsoluteBoundingRect(el: Element): DOMRect {
+    const rect = el.getBoundingClientRect();
+    return {
+      ...rect,
+      x: rect.x + window.scrollX,
+      y: rect.y + window.scrollY,
+      top: rect.top + window.scrollY,
+      left: rect.left + window.scrollX,
+      bottom: rect.bottom + window.scrollY,
+      right: rect.right + window.scrollX,
+    };
+  }
+
   function updateAutocomplete() {
     const mention = getMentionUnderCaret();
     if (!mention || MULTIPLE_MENTIONS_REGEX.test(input.value)) {
@@ -97,7 +111,7 @@ if ('virtualKeyboard' in navigator) {
 
     // Position the autocomplete list under the mention (or as an extension of the entire textbox on mobile)
     const relLeft = getCaretCoordinates(input, mention.start - 1).left;
-    const inputRect = input.getBoundingClientRect();
+    const inputRect = getAbsoluteBoundingRect(input);
 
     list.style.top = `${inputRect.bottom}px`;
 
