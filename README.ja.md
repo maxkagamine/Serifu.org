@@ -59,6 +59,10 @@ Serifu.orgは、言語を学ぶには興味のあるものからの方がより�
 
   <p align="center"><a href="https://github.com/maxkagamine/Serifu.org/raw/refs/heads/master/.github/images/background-size-and-position-calculation.avif"><img src=".github/images/background-size-and-position-calculation.avif" /></a></p>
 
+  [カスタム要素を使って素のJSで実装された](Serifu.Web/Assets/autocomplete.ts)完全にスクリーンリーダーとスマホ対応の＠メンションの自動補完（検索したい言葉の書き方が分からないけど誰が言ったか覚えてる場合は役に立ちます）：
+
+  <p align="center"><a href="https://github.com/maxkagamine/Serifu.org/raw/refs/heads/master/.github/images/autocomplete.avif"><img src=".github/images/autocomplete.avif" /></a></p>
+
   それにかっこいい検索ボックスのローディングアニメーション：
 
   <p align="center"><a href="https://github.com/maxkagamine/Serifu.org/raw/refs/heads/master/.github/images/search-box-loading-animation.avif"><img src=".github/images/search-box-loading-animation.avif" /></a></p>
