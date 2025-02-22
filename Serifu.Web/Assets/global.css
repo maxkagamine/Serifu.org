@@ -23,6 +23,7 @@
   font-optical-sizing: auto;
   font-synthesis: none;
   font-variant-numeric: oldstyle-nums; /* Default for Merriweather, specified for fallback */
+  text-size-adjust: none;
   line-height: 1.6;
   color: #f2f2f2;
   visibility: visible !important;
