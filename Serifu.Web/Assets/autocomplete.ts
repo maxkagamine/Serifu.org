@@ -130,7 +130,7 @@ if ('virtualKeyboard' in navigator) {
     input.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertReplacementText' }));
 
     // Make sure the input is focused (user may have used mouse to select) with the caret after the mention
-    const newCaretPos = mention.start + completedValue.length;
+    const newCaretPos = mention.start + completedValue.length - 1;
     input.focus();
     input.setSelectionRange(newCaretPos, newCaretPos);
   }
