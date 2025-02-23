@@ -7,8 +7,8 @@
   }
 }
 
-/* Default styles applied to classes to allow for [popover]s that aren't styled like regular popovers (e.g. the drawer)
- * and not-[popover]s that are styled like popovers (.popover-like, e.g. the autocomplete select list) */
+/* Default styles applied to classes to allow for [popover]s that aren't styled like regular popovers and not-[popover]s
+ * that are styled like popovers (.popover-like, e.g. the autocomplete select list) */
 .popover-like, .popover {
   border: 1px solid #414141;
   background: var(--popover-background);

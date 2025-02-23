@@ -6,38 +6,29 @@
     string? query = routeValues.GetValueOrDefault("query");
 }
 
-<header>
+<header class="site-header">
     <h1>
         <a asp-action="Home" aria-label="Serifu.org"><img vite-src="/images/serifu.svg" aria-hidden="true" /></a>
     </h1>
     <nav>
-        <a asp-action="About">@Strings.NavLinkAbout</a>
-        <a href="https://github.com/maxkagamine/Serifu.org" target="_blank" rel="external noreferrer">@Strings.NavLinkGitHub</a>
-        @if (CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "en")
-        {
-            <a asp-all-route-data="routeValues" asp-route-lang="ja" lang="ja" hreflang="ja" data-search="@query">日本語</a>
-        }
-        else
-        {
-            <a asp-all-route-data="routeValues" asp-route-lang="en" lang="en" hreflang="en" data-search="@query">English</a>
-        }
-        <span class="subtitle">@Strings.NavSubtitle</span>
+        <div class="menu-start">
+            <a asp-action="About">@Strings.NavLinkAbout</a>
+            <a href="https://github.com/maxkagamine/Serifu.org" target="_blank" rel="external noreferrer">@Strings.NavLinkGitHub</a>
+            @if (CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "en")
+            {
+                <a asp-all-route-data="routeValues" asp-route-lang="ja" lang="ja" hreflang="ja" data-search="@query">日本語</a>
+            }
+            else
+            {
+                <a asp-all-route-data="routeValues" asp-route-lang="en" lang="en" hreflang="en" data-search="@query">English</a>
+            }
+        </div>
+        <div class="menu-end">
+            @Strings.NavSubtitle
+        </div>
     </nav>
-    <button popovertarget="drawer" class="menu-button icon icon-menu" aria-label="@Strings.MenuButtonLabel"></button>
+    <div id="drawer" hidden></div>
+    <div id="drawerBackdrop"></div>
+    @* By putting the menu button after the drawer, when the user tabs past the last item, they'll be back at the button *@
+    <button id="menuButton" class="icon icon-menu" aria-label="@Strings.MenuButtonLabel"></button>
 </header>
-
-<div popover id="drawer">
-    <nav>
-        <a asp-action="About">@Strings.NavLinkAbout</a>
-        <a href="https://github.com/maxkagamine/Serifu.org" target="_blank" rel="external noreferrer">@Strings.NavLinkGitHub</a>
-        @if (CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "en")
-        {
-            <a asp-all-route-data="routeValues" asp-route-lang="ja" lang="ja" hreflang="ja" data-search="@query">日本語</a>
-        }
-        else
-        {
-            <a asp-all-route-data="routeValues" asp-route-lang="en" lang="en" hreflang="en" data-search="@query">English</a>
-        }
-    </nav>
-    <div class="subtitle">@Strings.NavSubtitle</div>
-</div>
