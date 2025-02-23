@@ -1,3 +1,4 @@
+import { MENTION_REGEX, MULTIPLE_MENTIONS_REGEX } from './autocomplete';
 import { assertDefined } from './util';
 
 // Sync with constants in ElasticsearchService
@@ -69,7 +70,7 @@ const MAX_LENGTH_JAPANESE = 32;
   });
 
   input.addEventListener('input', () => {
-    const query = input.value.trim().normalize();
+    let query = input.value.trim().normalize();
 
     // If the input is empty, there's no need to display a validation warning; the form just won't submit (unless JS is
     // disabled, but we handle that server-side)
@@ -77,6 +78,18 @@ const MAX_LENGTH_JAPANESE = 32;
       input.setCustomValidity('');
       return;
     }
+
+    if (MULTIPLE_MENTIONS_REGEX.test(query)) {
+      input.setCustomValidity(assertDefined(form.dataset.multipleMentions, 'multipleMentions'));
+
+      // Trigger browser's validation popup so user isn't left wondering why the autocomplete list won't appear
+      input.reportValidity();
+
+      return;
+    }
+
+    // Remove any @-mention prior to validating query length
+    query = query.replace(MENTION_REGEX, ' ').trim();
 
     // Unlike .NET, regexes in JS have full Unicode support, so we can match the server-side validation easily
     const isJapanese = /\p{Script=Hiragana}|\p{Script=Katakana}|\p{Script=Han}/u.test(query);

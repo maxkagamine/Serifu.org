@@ -29,7 +29,7 @@
    * Noto Serif JP is less readable and 300 weight Merriweather doesn't look as good, so in general I'm using Merri for
    * EN only and Noto for JA only, with Noto's Latin script for EN-in-JA. The search box may be either language, though,
    * so it makes sense to combine them here. Unfortunately font-size-adjust doesn't support per-fallback adjustments. */
-  font-family: 'override', 'Merriweather', 'Noto Serif JP', serif;
+  font-family: 'Merriweather-Override', 'Merriweather', 'Noto Serif JP', serif;
   font-size-adjust: none;
 
   input {

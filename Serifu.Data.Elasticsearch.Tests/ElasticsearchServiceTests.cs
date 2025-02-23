@@ -13,6 +13,7 @@
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
 using Elastic.Clients.Elasticsearch;
+using Elastic.Transport;
 using Elastic.Transport.Extensions;
 using FluentAssertions;
 using Kagamine.Extensions.Collections;
@@ -51,8 +52,8 @@ public class ElasticsearchServiceTests
     public void MapHighlightsToTargetLanguage()
     {
         // 阿賀野型軽巡二番艦、能代。着任しました。よろしくどうぞ！
-        // \_____/\_/\____/ \__/ \_________/ \__________/
-        //    1    2    3    4        5           6
+        // \_____/\__/\____/ \__/  \_________/  \__________/
+        //    1    2    3     4         5            6
         //
         //  ___3__          _1_   _1_   _____2______    __4__    _______5________    ________6________
         // /      \        /   \ /   \ /            \  /     \  /                \  /                 \
@@ -79,28 +80,9 @@ public class ElasticsearchServiceTests
     }
 
     [Theory]
-    [InlineData(
-        "能代", new[] { "japanese.text", "japanese.text.conjugations" },
-        "a query in Japanese should search the Japanese translation")]
-    [InlineData(
-        "light　cruiser", new[] { "english.text", "english.text.conjugations" },
-        "a query in English should search the English translation, even if it contains full-width spaces")]
-    [InlineData(
-        "𪚲", new[] { "japanese.text.kanji" },
-        "a query containing a single kanji should search the dedicated kanji subfield (since the regular field is restricted to bigrams)")]
-        // ↑ This is also an example of a four-byte kanji (which, since .NET uses UTF-16, means the string has a length of 2)
-    [SuppressMessage("Performance", "CA1861:Avoid constant arrays as arguments", Justification = "Simpler for tests")]
-    public async Task QueriesCorrectFields(string query, string[] expectedFields, string because)
+    [ClassData(typeof(QueryJsonTestData))]
+    public async Task Search_MakesCorrectQueries(string query, string expectedJson, string because)
     {
-        var unexpectedFields = new[]
-        {
-            "english.text",
-            "english.text.conjugations",
-            "japanese.text",
-            "japanese.text.conjugations",
-            "japanese.text.kanji",
-        }.Except(expectedFields);
-
         client.Setup(x => x.SearchAsync<Quote>(It.IsAny<SearchRequest>(), It.IsAny<CancellationToken>()))
             .Throws<NotImplementedException>();
 
@@ -110,15 +92,16 @@ public class ElasticsearchServiceTests
         }
         catch (NotImplementedException) { }
 
-        // There's no way to actually inspect the query without reflection or serializing
         var request = (SearchRequest)client.Invocations.Single().Arguments[0];
-        var json = client.Object.RequestResponseSerializer.SerializeToString(request.Query);
-        json.Should().ContainAll(expectedFields.Select(f => $"\"{f}\""), because)
-            .And.NotContainAny(unexpectedFields.Select(f => $"\"{f}\""), because);
+        var actualJson = client.Object.RequestResponseSerializer.SerializeToString(
+            request.Query,
+            SerializationFormatting.Indented);
+
+        actualJson.ReplaceLineEndings().Trim().Should().Be(expectedJson.ReplaceLineEndings().Trim(), because);
     }
 
     [Fact]
-    public async Task ReturnsExpectedSearchResults()
+    public async Task Search_ReturnsExpectedSearchResults()
     {
         Quote[] quotes = [
             new()
@@ -223,7 +206,7 @@ public class ElasticsearchServiceTests
     [InlineData("鏡", null)]
     [InlineData("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", ElasticsearchValidationError.TooLong)]
     [InlineData("あああああああああああああああああああああああああああああああああ", ElasticsearchValidationError.TooLong)]
-    public async Task ThrowsIfQueryIsTooShortOrLong(string query, ElasticsearchValidationError? error)
+    public async Task Search_ThrowsIfQueryIsTooShortOrLong(string query, ElasticsearchValidationError? error)
     {
         Func<Task> func = () => service.Search(query, CancellationToken.None);
 
@@ -236,6 +219,29 @@ public class ElasticsearchServiceTests
             (await func.Should().ThrowAsync<ElasticsearchValidationException>())
                 .Which.Error.Should().Be(error);
         }
+    }
+
+    [Theory]
+    [InlineData("top number", "top number", null)]
+    [InlineData("top number@Hachiroku", "top number@Hachiroku", null)] // No space before @ sign
+    [InlineData("top number @Hachiroku", "top number", "Hachiroku")]
+    [InlineData("@Hachiroku top number", "top number", "Hachiroku")]
+    [InlineData("  top  @Hachiroku  number  ", "top number", "Hachiroku")]
+    public void ExtractMention(string query, string expectedQuery, string? expectedMention)
+    {
+        var (actualQuery, actualMention) = ElasticsearchService.ExtractMention(query);
+
+        actualQuery.Should().Be(expectedQuery);
+        actualMention.Should().Be(expectedMention);
+    }
+
+    [Fact]
+    public void ExtractMention_ThrowsIfMultiple()
+    {
+        Assert.Throws<ElasticsearchValidationException>(() =>
+                ElasticsearchService.ExtractMention("@Hachiroku @Nimaru"))
+            .Error.Should()
+            .Be(ElasticsearchValidationError.MultipleMentions);
     }
 
     private static ValueArray<Alignment> DecodeAlignmentData(string base64) =>

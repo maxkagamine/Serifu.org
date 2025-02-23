@@ -96,6 +96,8 @@ body > header {
   margin: 0;
   flex-direction: column;
   justify-content: space-between;
+  background: var(--popover-background);
+  box-shadow: 0 0 min(25vw, 125px) #111;
   transition:
     right var(--duration),
     overlay var(--duration) allow-discrete,

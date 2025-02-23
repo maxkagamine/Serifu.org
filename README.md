@@ -59,6 +59,10 @@ I started this project after realizing that, after going to the arcade nearly ev
 
   <p align="center"><a href="https://github.com/maxkagamine/Serifu.org/raw/refs/heads/master/.github/images/background-size-and-position-calculation.avif"><img src=".github/images/background-size-and-position-calculation.avif" /></a></p>
 
+  Fully screen-reader-accessible & mobile-friendly autocomplete for @-mentions, [implemented in vanilla JS](Serifu.Web/Assets/autocomplete.ts) using custom elements (useful when you don't know how to write a word you want to search for but remember who it was that spoke it):
+
+  <p align="center"><a href="https://github.com/maxkagamine/Serifu.org/raw/refs/heads/master/.github/images/autocomplete.avif"><img src=".github/images/autocomplete.avif" /></a></p>
+
   And a slick search box loading animation:
 
   <p align="center"><a href="https://github.com/maxkagamine/Serifu.org/raw/refs/heads/master/.github/images/search-box-loading-animation.avif"><img src=".github/images/search-box-loading-animation.avif" /></a></p>

@@ -25,7 +25,9 @@ public enum ElasticsearchValidationError
     [Description("Search query must contain at least two characters or a single kanji.")]
     TooShort,
     [Description("Search query exceeds max length.")]
-    TooLong
+    TooLong,
+    [Description("Only one @-mention is allowed.")]
+    MultipleMentions,
 }
 
 public class ElasticsearchValidationException : ElasticsearchException

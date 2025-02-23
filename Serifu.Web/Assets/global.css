@@ -1,14 +1,14 @@
-/* I don't like Merriweather's hyphens */
 @font-face {
-  font-family: 'override';
-  src: local('Times New Roman'), local('Times'), local('Noto Serif'), local('Droid Serif'); /* Can't use 'serif' here */
-  unicode-range: U+2D;
+  font-family: 'Merriweather-Override';
+  src: url('./fonts/Merriweather-Override.woff2') format('woff2');
+  unicode-range: U+2D, U+5F, U+40, U+FF20;
 }
 
 :root {
   --page-width: 920px;
   --body-padding: 1em;
-  --menu-hover-background: #111;
+  --popover-background: #1c1c1c;
+  --menu-hover-background: #414141;
 
   /* Scale top margin to match space on left/right on smaller viewports (we need this for the background offset too) */
   --header-margin-top: clamp(0.25em, (100vw - var(--page-width)) / 2 - var(--body-padding), 96px);
@@ -23,6 +23,7 @@
   font-optical-sizing: auto;
   font-synthesis: none;
   font-variant-numeric: oldstyle-nums; /* Default for Merriweather, specified for fallback */
+  text-size-adjust: none;
   line-height: 1.6;
   color: #f2f2f2;
   visibility: visible !important;
@@ -59,7 +60,7 @@
 }
 
 [lang='en'] {
-  font-family: 'override', 'Merriweather', serif;
+  font-family: 'Merriweather-Override', 'Merriweather', serif;
   font-size-adjust: 0.555;
 }
 

@@ -12,7 +12,7 @@
 
     &::before {
       content: '*\2002*\2002*'; /* en space */
-      font-family: 'override', 'Merriweather', serif;
+      font-family: 'Merriweather-Override', 'Merriweather', serif;
       font-size-adjust: 0.555;
     }
   }
