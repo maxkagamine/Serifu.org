@@ -13,6 +13,7 @@ import './error-page.css';
 import './images/serifu.svg';
 import './images/favicon.svg?no-inline';
 
+import './header';
 import './search-box';
 import './autocomplete';
 import './audio-button';
