@@ -111,6 +111,14 @@
         width: min(600px, 85vw);
         max-width: max-content;
       }
+
+      /* Right side of two-column layout; button is in the middle of the page, so the popover needs to be smaller */
+      @media (width > 750px) {
+        .translation:not(:first-child) & {
+          width: min(600px, 45vw);
+          position-area: span-bottom left;
+        }
+      }
     }
   }
 

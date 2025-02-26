@@ -26,6 +26,7 @@
    * like a dialog rather than a tooltip or context menu. */
   @supports (position-area: span-bottom right) {
     @media (min-width: 500px) {
+      inset: auto;
       margin: 0;
       position-area: span-bottom right;
       position-try:
