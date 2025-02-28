@@ -3,6 +3,9 @@
 @*
     This is structured as a <table> for semantics/accessibility purposes, but the default UA styles are overridden with
     a CSS grid to allow for responsive layout (moving the links to a second row to avoid horizontal scrolling).
+
+    Each table cell is a flexbox since vertical-align won't work and align-content on block elements isn't supported on
+    older browsers, hence the container divs.
 *@
 
 <table class="game-list">
@@ -22,20 +25,22 @@
                     <span>@row.Game</span>
                 </td>
                 <td class="game-copyright">
-                    <span>©</span> @row.Copyright
+                    <div><span>©</span> @row.Copyright</div>
                 </td>
                 <td class="game-links">
-                    @for (int i = 0; i < row.Links.Count; i++)
-                    {
-                        ExternalLink link = row.Links[i];
-
-                        if (i > 0)
+                    <div>
+                        @for (int i = 0; i < row.Links.Count; i++)
                         {
-                            <text> / </text>
-                        }
+                            ExternalLink link = row.Links[i];
 
-                        <a href="@link.Url" target="_blank" rel="external noreferrer">@link.Label</a>
-                    }
+                            if (i > 0)
+                            {
+                                <text> / </text>
+                            }
+
+                            <a href="@link.Url" target="_blank" rel="external noreferrer">@link.Label</a>
+                        }
+                    </div>
                 </td>
             </tr>
         }

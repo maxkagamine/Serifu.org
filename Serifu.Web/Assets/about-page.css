@@ -12,7 +12,9 @@
   }
 
   th, td {
-    align-content: center;
+    display: flex;
+    justify-content: start;
+    align-items: center;
     border-bottom: 1px solid #fff3;
     padding: var(--padding-y) var(--padding-x);
 
@@ -35,15 +37,10 @@
     line-height: 1;
   }
 
-  .game-title {
-    display: flex;
-    justify-content: start;
-    align-items: center;
-  }
-
   .game-icon {
     font-size: 28px;
     margin-right: 1rem;
+    flex-shrink: 0;
   }
 
   .game-copyright span:lang(en) {
@@ -56,7 +53,7 @@
     a {
       white-space: nowrap;
     }
-    
+
     a:not(:hover, :active) {
       opacity: 0.75;
     }
@@ -66,7 +63,7 @@
     --padding-y: 0.75rem;
     --padding-x: 0.75rem;
 
-    grid-template-columns: 1fr auto;
+    grid-template-columns: 4fr 3fr;
 
     th:last-child {
       display: none;
