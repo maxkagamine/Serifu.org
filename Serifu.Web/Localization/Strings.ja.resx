@@ -267,4 +267,10 @@
   <data name="AutocompleteListLabel" xml:space="preserve">
     <value>自動補完</value>
   </data>
+  <data name="SourceTitle_SteinsGate" xml:space="preserve">
+    <value>STEINS;GATE</value>
+  </data>
+  <data name="SourceCopyright_SteinsGate" xml:space="preserve">
+    <value>MAGES. &amp; NITRO PLUS</value>
+  </data>
 </root>

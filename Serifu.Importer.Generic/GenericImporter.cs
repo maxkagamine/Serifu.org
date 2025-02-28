@@ -112,7 +112,7 @@ internal partial class GenericImporter
 
         // Run word alignment
         Task<IEnumerable<Alignment>> alignmentDataTask = wordAligner.AlignSymmetric(english.Text, japanese.Text, cancellationToken);
-        
+
         // Wait for tasks to complete
         await Task.WhenAll(englishAudioFileTask, japaneseAudioFileTask, alignmentDataTask);
 
@@ -145,7 +145,7 @@ internal partial class GenericImporter
 
     private async Task<string?> ImportAudioFile(ParsedQuoteTranslation tl, CancellationToken cancellationToken)
     {
-        if (tl.AudioFilePath is null)
+        if (string.IsNullOrEmpty(tl.AudioFilePath))
         {
             return null;
         }

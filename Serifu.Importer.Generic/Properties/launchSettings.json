@@ -35,6 +35,10 @@
     "Go! Go! Nippon! Importer": {
       "commandName": "Project",
       "commandLineArgs": "GoGoNippon"
+    },
+    "Steins;Gate Importer": {
+      "commandName": "Project",
+      "commandLineArgs": "SteinsGate"
     }
   }
 }

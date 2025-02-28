@@ -37,4 +37,6 @@ public enum Source : short
     BaldursGate3,
     [Description("Go! Go! Nippon!")]
     GoGoNippon,
+    [Description("Steins;Gate")]
+    SteinsGate,
 }
