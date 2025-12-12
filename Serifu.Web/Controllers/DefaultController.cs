@@ -19,12 +19,11 @@ using Serifu.Data.Elasticsearch;
 using Serifu.Web.Helpers;
 using Serifu.Web.Localization;
 using Serifu.Web.Models;
-using System.Diagnostics;
 using System.Globalization;
 
 namespace Serifu.Web.Controllers;
 
-public class DefaultController : Controller
+public sealed class DefaultController : Controller
 {
     private readonly IElasticsearchService elasticsearch;
     private readonly AudioFileUrlProvider audioFileUrlProvider;
@@ -121,7 +120,6 @@ public class DefaultController : Controller
                     ElasticsearchValidationError.TooShort => Strings.ValidationErrorTooShort,
                     ElasticsearchValidationError.TooLong => Strings.ValidationErrorTooLong,
                     ElasticsearchValidationError.MultipleMentions => Strings.ValidationErrorMultipleMentions,
-                    _ => throw new UnreachableException($"Unknown validation error: {ex.Error}")
                 }
             };
 

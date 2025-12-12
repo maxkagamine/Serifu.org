@@ -47,7 +47,7 @@ public sealed class XlsxFixture : IDisposable
     }
 }
 
-public record SourceOnlyQuote([property: JsonPropertyName("source")] Source Source);
+internal sealed record SourceOnlyQuote([property: JsonPropertyName("source")] Source Source);
 
 public sealed class SearchRankingAnalysis : IClassFixture<XlsxFixture>
 {

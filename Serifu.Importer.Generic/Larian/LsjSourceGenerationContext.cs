@@ -22,9 +22,9 @@ namespace Serifu.Importer.Generic.Larian;
     PropertyNameCaseInsensitive = true,
     Converters = [typeof(LsjGuidConverter), typeof(LsjTranslatedStringConverter)]
 )]
-internal partial class LsjSourceGenerationContext : JsonSerializerContext
+internal sealed partial class LsjSourceGenerationContext : JsonSerializerContext
 {
-    private class LsjGuidConverter : JsonConverter<LsjGuid?>
+    private sealed class LsjGuidConverter : JsonConverter<LsjGuid?>
     {
         public override LsjGuid? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
@@ -44,7 +44,7 @@ internal partial class LsjSourceGenerationContext : JsonSerializerContext
         }
     }
 
-    private class LsjTranslatedStringConverter : JsonConverter<LsjTranslatedString?>
+    private sealed class LsjTranslatedStringConverter : JsonConverter<LsjTranslatedString?>
     {
         public override LsjTranslatedString? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {

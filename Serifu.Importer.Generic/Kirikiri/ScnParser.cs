@@ -20,7 +20,7 @@ using System.Text.RegularExpressions;
 
 namespace Serifu.Importer.Generic.Kirikiri;
 
-internal partial class ScnParser : IParser<ScnParserOptions>
+internal sealed partial class ScnParser : IParser<ScnParserOptions>
 {
     private readonly ScnParserOptions options;
     private readonly ILogger logger;

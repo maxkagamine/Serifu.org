@@ -22,7 +22,7 @@ namespace Serifu.ML.Benchmark;
 /// <summary>
 /// Simulates symmetric word alignment of short and long sentences with varying batch sizes.
 /// </summary>
-public class BatchSizeBenchmark
+internal sealed class BatchSizeBenchmark
 {
     [Params(1, 2, 4, 8, 16, 32, 64, 83)]
     public int BatchSize { get; set; }

@@ -21,7 +21,7 @@ namespace Serifu.Importer.Generic;
 /// translation, validated &amp; normalized, word-aligned, and have its audio file imported before being assigned to a
 /// <see cref="Quote"/> as a finalized <see cref="Translation"/>.
 /// </summary>
-internal record ParsedQuoteTranslation
+internal sealed record ParsedQuoteTranslation
 {
     /// <summary>
     /// A key that will be used to pair translations of a quote, as they may be coming from separate files. If all

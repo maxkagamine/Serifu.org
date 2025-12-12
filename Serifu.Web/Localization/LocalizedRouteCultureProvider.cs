@@ -19,7 +19,7 @@ namespace Serifu.Web.Localization;
 /// <summary>
 /// Sets the culture to the language defined in the route values by <see cref="LocalizedRouteEndpointConvention"/>.
 /// </summary>
-public class LocalizedRouteCultureProvider : RequestCultureProvider
+internal sealed class LocalizedRouteCultureProvider : RequestCultureProvider
 {
     public override Task<ProviderCultureResult?> DetermineProviderCultureResult(HttpContext httpContext)
     {

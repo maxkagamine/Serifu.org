@@ -30,7 +30,7 @@ public enum ElasticsearchValidationError
     MultipleMentions,
 }
 
-public class ElasticsearchValidationException : ElasticsearchException
+public sealed class ElasticsearchValidationException : ElasticsearchException
 {
     internal ElasticsearchValidationException(ElasticsearchValidationError error)
         : base(GetMessage(error))

@@ -16,7 +16,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Serifu.Importer.Skyrim;
 
-public class SkyrimOptions
+internal sealed class SkyrimOptions
 {
     /// <summary>
     /// Absolute path to the game's Data directory.

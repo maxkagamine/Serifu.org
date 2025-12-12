@@ -17,7 +17,7 @@ namespace Serifu.Web.Helpers;
 /// <summary>
 /// Highly-optimized URL signer. Doesn't do anything, but is very fast.
 /// </summary>
-internal class NoopUrlSigner : IUrlSigner
+internal sealed class NoopUrlSigner : IUrlSigner
 {
     public string SignUrl(string url, DateTime expires) => url;
 }

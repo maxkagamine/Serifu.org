@@ -23,7 +23,7 @@ namespace Serifu.Web.Localization;
 /// <summary>
 /// This is added to the <see cref="CompositeViewEngine"/> to enable localized views for text-heavy pages.
 /// </summary>
-public class LocalizedViewEngine : IViewEngine, IConfigureOptions<MvcViewOptions>
+internal sealed class LocalizedViewEngine : IViewEngine, IConfigureOptions<MvcViewOptions>
 {
     private readonly IRazorViewEngine razorViewEngine;
 
@@ -48,7 +48,7 @@ public class LocalizedViewEngine : IViewEngine, IConfigureOptions<MvcViewOptions
     }
 }
 
-public static class LocalizedViewEngineExtensions
+internal static class LocalizedViewEngineExtensions
 {
     public static IMvcBuilder AddLocalizedViews(this IMvcBuilder builder)
     {

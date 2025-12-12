@@ -16,7 +16,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Serifu.Importer.Generic.Tsv;
 
-internal class TsvParserOptions : ParserOptions
+internal sealed class TsvParserOptions : ParserOptions
 {
     /// <summary>
     /// The columns in the TSV. <see cref="TsvColumn.Text"/> and either <see cref="TsvColumn.IntKey"/> or <see

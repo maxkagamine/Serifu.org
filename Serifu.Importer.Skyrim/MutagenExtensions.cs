@@ -25,11 +25,12 @@ using Serilog.Core;
 using Serilog.Events;
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Reflection;
 
 namespace Serifu.Importer.Skyrim;
 
-public static class MutagenExtensions
+internal static class MutagenExtensions
 {
     private static readonly ConcurrentDictionary<Type, string> recordTypeMap = [];
 
@@ -121,7 +122,7 @@ public static class MutagenExtensions
     /// expected eight characters. This probably wouldn't be needed if Serilog supported custom scalar converters.
     /// </remarks>
     /// <param name="formId">The form ID.</param>
-    public static string AsHex(this FormID formId) => formId.Raw.ToString("X8");
+    public static string AsHex(this FormID formId) => formId.Raw.ToString("X8", CultureInfo.InvariantCulture);
 
     /// <summary>
     /// Deconstructs a translated string into a tuple of (English, Japanese). Nulls are replaced with empty string.
@@ -150,7 +151,7 @@ public static class MutagenExtensions
     public static LoggerConfiguration FormattedFormIds(this LoggerDestructuringConfiguration config, IServiceProvider provider) =>
         config.With(new FormIdDestructuringPolicy(provider.GetRequiredService<IFormIdProvider>()));
 
-    private class FormIdDestructuringPolicy(IFormIdProvider formIdProvider) : IDestructuringPolicy
+    private sealed class FormIdDestructuringPolicy(IFormIdProvider formIdProvider) : IDestructuringPolicy
     {
         public bool TryDestructure(object value, ILogEventPropertyValueFactory propertyValueFactory, [NotNullWhen(true)] out LogEventPropertyValue? result)
         {

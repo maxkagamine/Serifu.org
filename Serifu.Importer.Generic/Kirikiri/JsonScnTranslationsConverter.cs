@@ -18,7 +18,7 @@ using System.Text.Json.Serialization;
 
 namespace Serifu.Importer.Generic.Kirikiri;
 
-internal class JsonScnTranslationsConverter : JsonConverterFactory
+internal sealed class JsonScnTranslationsConverter : JsonConverterFactory
 {
     private readonly ScnParserOptions scnOptions;
 
@@ -40,7 +40,7 @@ internal class JsonScnTranslationsConverter : JsonConverterFactory
     }
 }
 
-internal class JsonScnTranslationsConverter<T>(ScnParserOptions scnOptions) : JsonConverter<ScnTranslations<T>>
+internal sealed class JsonScnTranslationsConverter<T>(ScnParserOptions scnOptions) : JsonConverter<ScnTranslations<T>>
 {
     public override ScnTranslations<T>? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {

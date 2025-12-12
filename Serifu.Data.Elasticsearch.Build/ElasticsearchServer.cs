@@ -19,7 +19,7 @@ using System.Text;
 
 namespace Serifu.Data.Elasticsearch.Build;
 
-internal partial class ElasticsearchServer : IDisposable
+internal sealed partial class ElasticsearchServer : IDisposable
 {
     private readonly ElasticsearchClient client;
     private Process? process;

@@ -13,7 +13,8 @@
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
 namespace Serifu.Importer.Kancolle.Models;
-internal record Ship(int ShipNumber, string EnglishName, string JapaneseName)
+
+internal sealed record Ship(int ShipNumber, string EnglishName, string JapaneseName)
 {
     public override string ToString() => EnglishName;
 }

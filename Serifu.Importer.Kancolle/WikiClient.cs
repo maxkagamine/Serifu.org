@@ -21,7 +21,7 @@ namespace Serifu.Importer.Kancolle;
 /// <summary>
 /// Handles requests to the wiki (rate-limited by handler set in Program).
 /// </summary>
-internal class WikiClient
+internal sealed class WikiClient
 {
     private static readonly Uri WikiBaseUri = new("https://en.kancollewiki.net/");
 

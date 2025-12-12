@@ -19,7 +19,7 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace Serifu.Data.Sqlite;
 
-public class SerifuDbContext : DbContext
+public sealed class SerifuDbContext : DbContext
 {
     public SerifuDbContext(DbContextOptions options) : base(options)
     { }
@@ -108,7 +108,7 @@ public class SerifuDbContext : DbContext
     // System.Uri.Equals() does not conform to standard expectations for Equals overloads: it ignores URL fragments,
     // meaning http://example.com#foo and http://example.com#bar are considered "equal". Although they're stored as
     // strings in the database, EF uses the default comparer in its change tracker which will cause Add() to throw.
-    private class UriValueComparer : ValueComparer<Uri>
+    private sealed class UriValueComparer : ValueComparer<Uri>
     {
         public UriValueComparer() : base(
             (a, b) => string.Equals(a == null ? null : a.ToString(), b == null ? null : b.ToString(), StringComparison.Ordinal),

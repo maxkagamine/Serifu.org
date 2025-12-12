@@ -23,7 +23,7 @@ namespace Serifu.Importer.Generic.Kirikiri;
 /// Deserializes an array as a record's positional arguments.
 /// </summary>
 /// <typeparam name="T">The record type.</typeparam>
-internal class JsonArrayToRecordConverter<T> : JsonConverter<T>
+internal sealed class JsonArrayToRecordConverter<T> : JsonConverter<T>
 {
     private readonly ConstructorInfo ctor;
     private readonly Type[] ctorParams;

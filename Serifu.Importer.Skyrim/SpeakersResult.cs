@@ -18,7 +18,7 @@ using System.Diagnostics;
 namespace Serifu.Importer.Skyrim;
 
 [DebuggerDisplay("Count = {Speakers.Count}")]
-public class SpeakersResult : IEnumerable<Speaker>
+internal sealed class SpeakersResult : IEnumerable<Speaker>
 {
     public static readonly SpeakersResult Empty = new([]);
 

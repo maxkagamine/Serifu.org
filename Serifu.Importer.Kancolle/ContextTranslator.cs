@@ -30,8 +30,9 @@ namespace Serifu.Importer.Kancolle;
 /// the Japanese text.)
 /// </remarks>
 /// <seealso cref="ContextTokenizer">The tokenization regex.</seealso>
-internal class ContextTranslator
+internal sealed class ContextTranslator
 {
+#pragma warning disable format
     private static readonly Dictionary<string, string> Translations = new()
     {
         ["2nd"]                               = "二周年",
@@ -126,6 +127,7 @@ internal class ContextTranslator
         ["Winter"]                            = "冬",
         ["Zuiun Festival"]                    = "瑞雲祭り",
     };
+#pragma warning restore format
 
     private readonly ILogger logger;
 
@@ -188,8 +190,8 @@ internal class ContextTranslator
         context = FirstCharacterOfPascalCaseWord.Replace(context, x => " " + x.ToString());
 
         // Title case
-        context = FirstCharacterOfWord.Replace(context, x => x.ToString().ToUpper());
-        context = TitleCaseLowercaseWords.Replace(context, x => x.ToString().ToLower());
+        context = FirstCharacterOfWord.Replace(context, x => x.ToString().ToUpperInvariant());
+        context = TitleCaseLowercaseWords.Replace(context, x => x.ToString().ToLowerInvariant());
 
         // Equipment 2 => Equipment (excludes numbers in parenthesis in case someone writes Kai 2 instead of Kai Ni)
         context = SingleDigitNumberAfterContext.Replace(context, "");
@@ -222,7 +224,7 @@ internal class ContextTranslator
             .Replace("Return From Sortie", "Returning From Sortie")
             .Replace($"{ship.EnglishName} Special Attack", "Special Attack");
 
-        if (context.StartsWith("Idle"))
+        if (context.StartsWith("Idle", StringComparison.Ordinal))
         {
             context = context.Replace("Idle", "Secretary Idle");
         }

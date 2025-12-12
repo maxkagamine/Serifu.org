@@ -24,7 +24,7 @@ using System.Text.RegularExpressions;
 
 namespace Serifu.Importer.Skyrim;
 
-internal partial class VoiceFileArchive
+internal sealed partial class VoiceFileArchive
 {
     private readonly IEnumerable<string> archivePaths;
     private readonly HashSet<string> excludedVoiceFiles;
@@ -75,8 +75,8 @@ internal partial class VoiceFileArchive
 
             string mod = match.Groups["Mod"].Value;
             string voiceType = match.Groups["VoiceType"].Value;
-            uint formId = uint.Parse(match.Groups["FormId"].Value, NumberStyles.HexNumber);
-            int responseNumber = int.Parse(match.Groups["ResponseNumber"].Value); // Starts at 1
+            uint formId = uint.Parse(match.Groups["FormId"].Value, NumberStyles.HexNumber, CultureInfo.InvariantCulture);
+            int responseNumber = int.Parse(match.Groups["ResponseNumber"].Value, CultureInfo.InvariantCulture); // Starts at 1
 
             ModKey modKey = ModKey.FromNameAndExtension(mod); // ModKey.Equals() uses OrdinalIgnoreCase
             FormKey formKey = new(modKey, formId);
@@ -129,7 +129,7 @@ internal partial class VoiceFileArchive
         return file;
     }
 
-    private class VoiceFilePathComparer : IEqualityComparer<string>
+    private sealed class VoiceFilePathComparer : IEqualityComparer<string>
     {
         public static readonly VoiceFilePathComparer Instance = new();
 

@@ -17,7 +17,7 @@ using Serifu.Data.Sqlite;
 
 namespace Serifu.Importer.Skyrim;
 
-public interface IFuzConverter
+internal interface IFuzConverter
 {
     /// <summary>
     /// Extracts the XWM data from <paramref name="fuzStream"/> and converts it to Opus using ffmpeg.

@@ -78,7 +78,7 @@ public sealed class SqliteServiceTests : IDisposable
             await db.SaveChangesAsync();
         }
 
-        IEnumerable<Quote> newQuotes = [
+        Quote[] newQuotes = [
             new Quote() { Id = 100, Source = Source.Kancolle, English = newTl, Japanese = newTl, AlignmentData = [] },
             new Quote() { Id = 102, Source = Source.Kancolle, English = newTl, Japanese = newTl, AlignmentData = [] },
         ];
@@ -191,7 +191,7 @@ public sealed class SqliteServiceTests : IDisposable
         string actualObjectName = await sqliteService.DownloadAudioFile(url);
 
         using var db = dbFactory.CreateDbContext();
-        
+
         var audioFile = await db.AudioFiles.SingleAsync();
         var cache = await db.AudioFileCache.SingleAsync();
 

@@ -18,7 +18,7 @@ using Vite.AspNetCore;
 namespace Serifu.Web.Helpers;
 
 [HtmlTargetElement("img", Attributes = "vite-src")]
-public class ViteImageTagHelper : TagHelper
+public sealed class ViteImageTagHelper : TagHelper
 {
     private readonly IViteManifest manifest;
     private readonly IHostEnvironment env;

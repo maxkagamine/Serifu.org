@@ -18,14 +18,14 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Serifu.Web;
 
-public class SerifuOptions
+public sealed class SerifuOptions
 {
     public AudioFileOptions AudioFiles { get; set; } = new();
 
     public Dictionary<Source, List<ExternalLink>> SourceLinks { get; set; } = [];
 }
 
-public class ExternalLink
+public sealed class ExternalLink
 {
     public string? Language { get; set; }
 
@@ -39,7 +39,7 @@ public class ExternalLink
     public required Uri Url { get; set; }
 }
 
-public class AudioFileOptions
+public sealed class AudioFileOptions
 {
     [Required]
     public string BaseUrl { get; set; } = "";

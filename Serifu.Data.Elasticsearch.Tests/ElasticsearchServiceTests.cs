@@ -19,12 +19,12 @@ using FluentAssertions;
 using Kagamine.Extensions.Collections;
 using Moq;
 using Serilog;
-using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using Range = System.Range;
 
 namespace Serifu.Data.Elasticsearch.Tests;
 
-public class ElasticsearchServiceTests
+public sealed class ElasticsearchServiceTests
 {
     private readonly Mock<ElasticsearchClient> client;
     private readonly ElasticsearchService service;
@@ -125,7 +125,7 @@ public class ElasticsearchServiceTests
                     AudioFile = "e6/c3/f44719cc2562d4d0fe77eeaa4643eaf98a23.mp3"
                 },
                 AlignmentData = DecodeAlignmentData("AAAMAAAACwAXAB8AEwAWACAAIgASABMAJwArAA0AEAAsADEADQAQADIAQAAQABIAQgBGABgAHQBLAE8AIwApAFAAUwAfACMAVABbACMAKQBdAGwALAAxAGIAZAAjACkAaABsACMAKQA="),
-                DateImported = DateTime.Parse("2024-12-28T22:30:47.6133659")
+                DateImported = DateTime.Parse("2024-12-28T22:30:47.6133659", CultureInfo.InvariantCulture)
             },
             new()
             {
@@ -147,7 +147,7 @@ public class ElasticsearchServiceTests
                     AudioFile = "ad/f0/e29d56d4a16d33f194e9576e958c3bbc18f9.mp3"
                 },
                 AlignmentData = DecodeAlignmentData("AAAEAAAAAwAFAAoAAAADAAsAGAADAAUAGgAeAAYACAAgACwACgAPAC4AMwARABMANQA/ABMAFQA1AD8AFgAaAA=="),
-                DateImported = DateTime.Parse("2024-12-28T22:30:43.4581241")
+                DateImported = DateTime.Parse("2024-12-28T22:30:43.4581241", CultureInfo.InvariantCulture)
             }
         ];
 

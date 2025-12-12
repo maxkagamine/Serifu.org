@@ -14,7 +14,7 @@
 
 namespace Serifu.Web.Helpers;
 
-internal class HeadersMiddleware : IMiddleware
+internal sealed class HeadersMiddleware : IMiddleware
 {
     private readonly Action<IHeaderDictionary> configureHeaders;
 

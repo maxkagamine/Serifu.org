@@ -18,7 +18,7 @@ using Mutagen.Bethesda.Plugins.Records.Mapping;
 
 namespace Serifu.Importer.Skyrim;
 
-public interface IFormIdProvider
+internal interface IFormIdProvider
 {
     /// <summary>
     /// Translates a <see cref="FormKey"/> into a <see cref="FormID"/> based on the current load order, as it would be

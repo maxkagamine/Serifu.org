@@ -18,7 +18,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Serifu.Importer.Generic.Tsv;
 
-internal class TsvParser : IParser<TsvParserOptions>
+internal sealed class TsvParser : IParser<TsvParserOptions>
 {
     private readonly TsvParserOptions options;
 

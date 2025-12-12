@@ -18,7 +18,7 @@ using Serifu.Web.Helpers;
 
 namespace Serifu.Web.Models;
 
-public class QuoteViewModel
+internal sealed class QuoteViewModel
 {
     public QuoteViewModel(SearchResult result, bool englishFirst, AudioFileUrlProvider audioFileUrlProvider)
     {

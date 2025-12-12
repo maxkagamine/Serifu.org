@@ -20,7 +20,7 @@ using Serilog;
 
 namespace Serifu.Importer.Skyrim.Resolvers;
 
-internal class UniqueVoiceTypeResolver
+internal sealed class UniqueVoiceTypeResolver
 {
     // Some NPCs have copies (e.g. GeneralTullius & CWBattleTullius), hence the enumerable
     private readonly Dictionary<FormKey, SpeakersResult> voiceTypeToNpcs;

@@ -14,7 +14,7 @@
 
 namespace Serifu.Data.Sqlite.Tests;
 
-public class AudioFormatUtilityTests
+public sealed class AudioFormatUtilityTests
 {
     [Fact]
     public void DetectsMp3WithMpeg1Header()

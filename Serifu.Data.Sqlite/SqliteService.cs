@@ -22,7 +22,7 @@ using System.Security.Cryptography;
 
 namespace Serifu.Data.Sqlite;
 
-public class SqliteService : ISqliteService
+public sealed class SqliteService : ISqliteService
 {
     private readonly IDbContextFactory<SerifuDbContext> dbFactory;
     private readonly HttpClient httpClient;
@@ -52,9 +52,9 @@ public class SqliteService : ISqliteService
         }
     }
 
-    public async Task SaveQuotes(Source source, IEnumerable<Quote> quotes, CancellationToken cancellationToken = default)
+    public async Task SaveQuotes(Source source, IReadOnlyCollection<Quote> quotes, CancellationToken cancellationToken = default)
     {
-        logger.Information("Saving {Count} quotes for {Source}.", quotes.Count(), source);
+        logger.Information("Saving {Count} quotes for {Source}.", quotes.Count, source);
 
         // This avoids having to fetch all existing entities just so we can delete them, but it has to be done in a
         // transaction because ExecuteDeleteAsync will execute immediately (there's no way to delete via SaveChanges

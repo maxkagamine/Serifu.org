@@ -27,7 +27,7 @@ using System.Text.RegularExpressions;
 
 namespace Serifu.Data.Elasticsearch;
 
-public partial class ElasticsearchService : IElasticsearchService
+public sealed partial class ElasticsearchService : IElasticsearchService
 {
     private const int PageSize = 39;
     private const string WeightedRandomScriptId = "weighted_random";
@@ -157,7 +157,7 @@ public partial class ElasticsearchService : IElasticsearchService
                     requestQuery = boolQuery = new BoolQuery() { Must = [requestQuery] };
                 }
 
-                boolQuery.Filter ??= new List<Query>();
+                boolQuery.Filter ??= [];
                 boolQuery.Filter.Add(new TermQuery(EnglishSpeakerNameField)
                 {
                     Value = mention.Replace('_', ' ')

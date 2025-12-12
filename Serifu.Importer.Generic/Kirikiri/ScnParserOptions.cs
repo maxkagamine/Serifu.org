@@ -14,7 +14,7 @@
 
 namespace Serifu.Importer.Generic.Kirikiri;
 
-internal class ScnParserOptions : ParserOptions
+internal sealed class ScnParserOptions : ParserOptions
 {
     /// <summary>
     /// Index of Japanese text in the <c>.scenes[].texts[][2]</c> array.

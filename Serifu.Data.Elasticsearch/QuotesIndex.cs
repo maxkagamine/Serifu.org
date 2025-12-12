@@ -222,7 +222,7 @@ public static class QuotesIndex
     };
 
     // Missing from the .NET library
-    private class CjkBigramTokenFilter : ITokenFilter
+    private sealed class CjkBigramTokenFilter : ITokenFilter
     {
         [JsonInclude, JsonPropertyName("output_unigrams")]
         public bool? OutputUnigrams { get; set; }

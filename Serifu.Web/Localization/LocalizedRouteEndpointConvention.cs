@@ -24,7 +24,7 @@ namespace Serifu.Web.Localization;
 /// current language (using "ambient values" from the current route) unless a "lang" is explicitly specified, the same
 /// way that "controller" defaults to the current controller.
 /// </summary>
-public static partial class LocalizedRouteEndpointConvention
+internal static partial class LocalizedRouteEndpointConvention
 {
     public const string LanguageRouteValueKey = "lang";
 

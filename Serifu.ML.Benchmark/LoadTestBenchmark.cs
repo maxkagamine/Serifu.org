@@ -24,7 +24,7 @@ namespace Serifu.ML.Benchmark;
 /// Tests for both small and large inputs, as the size of the input does seem to have an effect irrespective of question
 /// count / batch size.
 /// </summary>
-public class LoadTestBenchmark
+internal sealed class LoadTestBenchmark
 {
     [Params(1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024)]
     public int QuestionCount { get; set; }

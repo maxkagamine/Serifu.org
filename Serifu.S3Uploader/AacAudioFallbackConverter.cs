@@ -27,7 +27,7 @@ namespace Serifu.S3Uploader;
 /// formats per translation and then reimporting all the things is a headache that I don't need right now. Blame Apple
 /// for not supporting open audio codecs and containers.
 /// </summary>
-public class AacAudioFallbackConverter
+internal sealed class AacAudioFallbackConverter
 {
     private readonly ILogger logger;
     private readonly ITemporaryFileProvider tempFileProvider;

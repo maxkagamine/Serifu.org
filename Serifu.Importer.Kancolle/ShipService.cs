@@ -30,7 +30,7 @@ namespace Serifu.Importer.Kancolle;
 /// <summary>
 /// Handles scraping the individual ship pages.
 /// </summary>
-internal class ShipService
+internal sealed class ShipService
 {
     private const string RowsOfTopLevelTablesSelector = ".mw-parser-output > table tr";
     private const string ScenarioSelector = "td[rowspan=2]:first-child b";

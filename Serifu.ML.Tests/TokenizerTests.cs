@@ -17,7 +17,7 @@ using Serifu.ML.Tokenizers;
 
 namespace Serifu.ML.Tests;
 
-public class TokenizerTests
+public sealed class TokenizerTests
 {
     [Theory]
     [InlineData("I'm the light cruiser, Tama. I'm not a cat-nya.", new[] { "I'm", "the", "light", "cruiser", "Tama", "I'm", "not", "a", "cat", "nya" })]

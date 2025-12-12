@@ -21,7 +21,7 @@ namespace Serifu.Web.Helpers;
 /// Amazon provides an "AWSSDK.Extensions.CloudFront.Signers" package for this, but it's rather inefficient. My code is
 /// 6-12% faster and consumes 95% less memory (benchmarked with batches of 10/100/1000, for loop or parallel).
 /// </summary>
-internal class CloudFrontUrlSigner : IUrlSigner
+internal sealed class CloudFrontUrlSigner : IUrlSigner
 {
     private readonly string keyPairId;
     private readonly RSAParameters rsaParameters;

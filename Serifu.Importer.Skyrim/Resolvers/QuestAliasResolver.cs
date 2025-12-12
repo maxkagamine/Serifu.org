@@ -20,7 +20,7 @@ using System.Collections.Immutable;
 
 namespace Serifu.Importer.Skyrim.Resolvers;
 
-internal class QuestAliasResolver
+internal sealed class QuestAliasResolver
 {
     private readonly ConditionsResolver conditionsResolver;
     private readonly IGameEnvironment<ISkyrimMod, ISkyrimModGetter> env;

@@ -24,7 +24,7 @@ namespace Serifu.Importer.Skyrim.Resolvers;
 
 using Mutagen.Bethesda.FormKeys.SkyrimSE;
 
-internal class ConditionsResolver
+internal sealed class ConditionsResolver
 {
     private readonly FactionResolver factionResolver;
     private readonly UniqueVoiceTypeResolver uniqueVoiceTypeResolver;
@@ -50,7 +50,7 @@ internal class ConditionsResolver
     /// Represents a non-negated condition that matches a specific NPC or group of NPCs (GetIsID, GetInFaction, etc.).
     /// These conditions can both narrow down a set of speakers and produce the initial set to be narrowed down.
     /// </summary>
-    private class ProducerCondition : FilterCondition
+    private sealed class ProducerCondition : FilterCondition
     {
         public ProducerCondition(SpeakersResult speakers, string conditionString)
             : this(speakers, speakers.Select(s => s.FormKey).ToHashSet(), conditionString)

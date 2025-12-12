@@ -14,7 +14,7 @@
 
 namespace Serifu.Data;
 
-public record Translation
+public sealed record Translation
 {
     /// <summary>
     /// The localized name of the character to whom this quote belongs. May be empty if unknown or generic.

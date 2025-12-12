@@ -14,6 +14,7 @@
 
 using Microsoft.Extensions.Options;
 using Serilog;
+using System.Globalization;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
@@ -25,7 +26,7 @@ using TriggersTools.CatSystem2.Scenes.Commands.Sounds;
 
 namespace Serifu.Importer.Generic.CatSystem2;
 
-internal class CstParser : IParser<CstParserOptions>
+internal sealed class CstParser : IParser<CstParserOptions>
 {
     private readonly CstParserOptions options;
     private readonly ILogger logger;
@@ -37,7 +38,7 @@ internal class CstParser : IParser<CstParserOptions>
         Encoder = JavaScriptEncoder.Create(UnicodeRanges.All)
     };
 
-    private class CurrentLine
+    private sealed class CurrentLine
     {
         public List<string> AudioFiles { get; } = [];
 
@@ -50,7 +51,7 @@ internal class CstParser : IParser<CstParserOptions>
             StringBuilder str = new();
             str.Append($"{nameof(AudioFiles)} = ");
             str.AppendJoin(", ", AudioFiles);
-            str.Append($"; {nameof(SpeakerName)} = {SpeakerName}");
+            str.Append(CultureInfo.InvariantCulture, $"; {nameof(SpeakerName)} = {SpeakerName}");
             str.Append($"; {nameof(Texts)} = ");
             str.AppendJoin(", ", Texts);
             return str.ToString();

@@ -176,7 +176,7 @@ public sealed class TransformersContext : ITransformersContext
 // https://github.com/pythonnet/pythonnet/issues/2107
 #pragma warning disable SYSLIB0011 // Type or member is obsolete
 #pragma warning disable SYSLIB0050 // Type or member is obsolete
-internal class NoopFormatter : IFormatter
+internal sealed class NoopFormatter : IFormatter
 {
     public object Deserialize(Stream s) => throw new NotImplementedException();
     public void Serialize(Stream s, object o) { }

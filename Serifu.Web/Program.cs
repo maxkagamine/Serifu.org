@@ -79,14 +79,14 @@ builder.Services.Configure<StaticFileOptions>(options =>
     options.OnPrepareResponse = ctx =>
     {
         string contentType = ctx.Context.Response.Headers.ContentType.ToString();
-        if (contentType.StartsWith("text/"))
+        if (contentType.StartsWith("text/", StringComparison.Ordinal))
         {
             ctx.Context.Response.Headers.ContentType = $"{contentType}; charset=utf-8";
         }
 
         if (ctx.Context.Request.Path.StartsWithSegments("/assets"))
         {
-            if (contentType.StartsWith("image/"))
+            if (contentType.StartsWith("image/", StringComparison.Ordinal))
             {
                 // Getting the background image to look right (correct color, no banding) was a struggle, and it will
                 // almost definitely get messed up if a mobile browser's data saver tries to re-"optimize" it.

@@ -21,7 +21,7 @@ using Serilog.Context;
 
 namespace Serifu.Importer.Skyrim.Resolvers;
 
-internal class SceneActorResolver
+internal sealed class SceneActorResolver
 {
     private readonly QuestAliasResolver questAliasResolver;
     private readonly IGameEnvironment<ISkyrimMod, ISkyrimModGetter> env;

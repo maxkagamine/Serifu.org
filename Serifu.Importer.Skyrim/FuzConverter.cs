@@ -20,7 +20,7 @@ using System.Buffers.Binary;
 
 namespace Serifu.Importer.Skyrim;
 
-public class FuzConverter : IFuzConverter
+internal sealed class FuzConverter : IFuzConverter
 {
     // 32 kbps is a rather low bitrate, but the vanilla voice files are around 35 kbps to begin with. We could probe the
     // source bitrate and bump this up to a more respectable 96k for the English voices since we're using the UHDAP, but

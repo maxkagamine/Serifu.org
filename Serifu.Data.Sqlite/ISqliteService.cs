@@ -33,7 +33,7 @@ public interface ISqliteService
     /// <param name="cancellationToken">An optional cancellation token.</param>
     /// <exception cref="ArgumentException"/>
     /// <exception cref="DbUpdateException"/>
-    Task SaveQuotes(Source source, IEnumerable<Quote> quotes, CancellationToken cancellationToken = default);
+    Task SaveQuotes(Source source, IReadOnlyCollection<Quote> quotes, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Checks if <paramref name="uri"/> has already been imported and returns its <see cref="AudioFile.ObjectName"/>.

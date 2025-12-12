@@ -17,7 +17,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Serifu.Web.Helpers;
 
-public class AudioFileUrlProvider
+public sealed class AudioFileUrlProvider
 {
     private readonly AudioFileOptions options;
     private readonly IUrlSigner urlSigner;

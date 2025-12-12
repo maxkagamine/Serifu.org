@@ -17,7 +17,7 @@ using Serifu.ML.Abstractions;
 
 namespace Serifu.ML;
 
-internal class QuestionAnsweringPipeline : IQuestionAnsweringPipeline
+internal sealed class QuestionAnsweringPipeline : IQuestionAnsweringPipeline
 {
     private readonly TransformersContext ctx;
     private readonly dynamic pipe;

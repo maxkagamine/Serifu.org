@@ -14,7 +14,7 @@
 
 namespace Serifu.Web.Models;
 
-public class ErrorViewModel
+internal sealed class ErrorViewModel
 {
     public required int StatusCode { get; init; }
 

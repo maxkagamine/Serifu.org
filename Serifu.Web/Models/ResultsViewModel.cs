@@ -14,7 +14,7 @@
 
 namespace Serifu.Web.Models;
 
-public class ResultsViewModel
+internal sealed class ResultsViewModel
 {
     public IReadOnlyList<QuoteViewModel> Quotes { get; init; } = [];
 

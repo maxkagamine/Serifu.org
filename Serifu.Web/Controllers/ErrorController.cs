@@ -19,7 +19,7 @@ using Serifu.Web.Models;
 
 namespace Serifu.Web.Controllers;
 
-public class ErrorController : Controller
+public sealed class ErrorController : Controller
 {
     [Route("/Error/{statusCode:range(400, 599)}")]
     public ActionResult Error(int statusCode)

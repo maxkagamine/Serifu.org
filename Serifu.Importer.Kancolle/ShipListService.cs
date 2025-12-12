@@ -22,7 +22,7 @@ namespace Serifu.Importer.Kancolle;
 /// <summary>
 /// Handles scraping the "Ship list" page.
 /// </summary>
-internal class ShipListService
+internal sealed class ShipListService
 {
     private const string ShipListPage = "Ship list";
     private const string ShipLinkSelector = ".mw-parser-output span[id^=\"shiplistkai-\"] a:not(.mw-redirect)";

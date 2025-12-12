@@ -73,5 +73,5 @@ internal static class AudioFormatUtility
     }
 }
 
-public class UnsupportedAudioFormatException(string message) : Exception(message)
+public sealed class UnsupportedAudioFormatException(string message) : Exception(message)
 { }

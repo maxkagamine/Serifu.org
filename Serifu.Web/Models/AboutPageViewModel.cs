@@ -16,12 +16,12 @@ using Serifu.Data;
 
 namespace Serifu.Web.Models;
 
-public class AboutPageViewModel
+internal sealed class AboutPageViewModel
 {
     public List<GameListRow> GameListRows { get; set; } = [];
 }
 
-public class GameListRow
+internal sealed class GameListRow
 {
     public required Source Source { get; set; }
 

@@ -17,7 +17,7 @@ namespace Serifu.Data;
 /// <summary>
 /// Used to keep track of already-imported audio files.
 /// </summary>
-public record AudioFileCache
+public sealed record AudioFileCache
 {
     /// <summary>
     /// The original audio file URL, if downloading from the web, or local file path, to avoid re-extracting/converting.

@@ -14,7 +14,7 @@
 
 namespace Serifu.Importer.Generic.Kirikiri;
 
-internal class KsParserOptions : ParserOptions
+internal sealed class KsParserOptions : ParserOptions
 {
     // The config binder appends to arrays, and there doesn't seem to be a way to make it replace the default instead.
     public static readonly string[] DefaultLineSeparatorTags = ["l", "p"];

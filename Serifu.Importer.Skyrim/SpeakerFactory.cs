@@ -17,7 +17,7 @@ using Mutagen.Bethesda.Skyrim;
 
 namespace Serifu.Importer.Skyrim;
 
-internal class SpeakerFactory : ISpeakerFactory
+internal sealed class SpeakerFactory : ISpeakerFactory
 {
     private readonly IGameEnvironment<ISkyrimMod, ISkyrimModGetter> env;
 

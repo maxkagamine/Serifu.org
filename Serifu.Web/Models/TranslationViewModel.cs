@@ -19,9 +19,9 @@ using System.Diagnostics;
 
 namespace Serifu.Web.Models;
 
-public record AudioSource(string Src, string Type);
+internal sealed record AudioSource(string Src, string Type);
 
-public class TranslationViewModel
+internal sealed class TranslationViewModel
 {
     public TranslationViewModel(
         QuoteViewModel quoteViewModel,

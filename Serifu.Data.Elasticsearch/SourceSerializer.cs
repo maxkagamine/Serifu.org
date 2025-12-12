@@ -32,10 +32,10 @@ namespace Serifu.Data.Elasticsearch;
         typeof(JsonBase64ValueArrayConverter<Alignment>)
     ]
 )]
-internal partial class JsonSourceGenerationContext : JsonSerializerContext
+internal sealed partial class JsonSourceGenerationContext : JsonSerializerContext
 { }
 
-internal class SourceSerializer : SystemTextJsonSerializer
+internal sealed class SourceSerializer : SystemTextJsonSerializer
 {
     public static readonly SourceSerializer Instance = new();
 
@@ -43,7 +43,7 @@ internal class SourceSerializer : SystemTextJsonSerializer
     { }
 }
 
-internal class SourceSerializerOptionsProvider : IJsonSerializerOptionsProvider
+internal sealed class SourceSerializerOptionsProvider : IJsonSerializerOptionsProvider
 {
     public static readonly SourceSerializerOptionsProvider Instance = new();
 

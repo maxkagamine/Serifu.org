@@ -16,7 +16,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Serifu.S3Uploader;
 
-public class S3UploaderOptions
+internal sealed class S3UploaderOptions
 {
     /// <summary>
     /// The IAM user's access key ID (set in user secrets).

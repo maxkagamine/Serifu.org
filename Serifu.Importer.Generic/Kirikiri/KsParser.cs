@@ -12,10 +12,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
-
 using Microsoft.Extensions.Options;
 using Serifu.Data;
-using Serilog;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -25,10 +23,9 @@ namespace Serifu.Importer.Generic.Kirikiri;
 /// <summary>
 /// Parser for Kirikiri (KAG) scenario files.
 /// </summary>
-internal partial class KsParser : IParser<KsParserOptions>
+internal sealed partial class KsParser : IParser<KsParserOptions>
 {
     private readonly KsParserOptions options;
-    private readonly ILogger logger;
     private readonly Regex lineSeparatorTagsRegex;
     private readonly Regex? quoteStopRegex;
 
@@ -45,10 +42,9 @@ internal partial class KsParser : IParser<KsParserOptions>
     [GeneratedRegex(@"(?<!\[)\[[^\]]*\]")]
     private partial Regex TagRegex { get; }
 
-    public KsParser(IOptions<KsParserOptions> options, ILogger logger)
+    public KsParser(IOptions<KsParserOptions> options)
     {
         this.options = options.Value;
-        this.logger = logger.ForContext<KsParser>();
 
         string[] lineSeparatorTags = options.Value.LineSeparatorTags ?? KsParserOptions.DefaultLineSeparatorTags;
 
@@ -198,7 +194,7 @@ internal partial class KsParser : IParser<KsParserOptions>
                         string? audioFile = EmptyStringToNull(matches[0].Groups["s"].Value);
 
                         // For some reason, a lot of Maou's lines in the JP version have the name empty
-                        if (speakerName is null && audioFile is not null && audioFile.StartsWith("mao_"))
+                        if (speakerName is null && audioFile is not null && audioFile.StartsWith("mao_", StringComparison.Ordinal))
                         {
                             speakerName = "魔王";
                         }

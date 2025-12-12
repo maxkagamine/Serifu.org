@@ -26,7 +26,7 @@ namespace Serifu.Data;
 /// href="https://github.com/maxkagamine/sqlarserver">sqlarserver</a> for serving the sqlite database as a drop-in
 /// replacement for S3 in dev.
 /// </remarks>
-public record AudioFile
+public sealed record AudioFile
 {
     /// <summary>
     /// The audio file's object name.

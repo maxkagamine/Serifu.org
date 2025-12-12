@@ -16,36 +16,34 @@ using Kagamine.Extensions.Collections;
 
 namespace Serifu.Importer.Generic.Kirikiri;
 
-internal record ScnFile(
+internal sealed record ScnFile(
     ValueArray<ScnScene> Scenes
 );
 
-internal record ScnScene(
+internal sealed record ScnScene(
     string Label,
     ValueArray<ScnSceneText> Texts,
     ScnTranslations<string> Title
 );
 
-internal record ScnSceneText(
+internal sealed record ScnSceneText(
     string? SpeakerName,
     string? SpeakerDisplayName,
     ScnTranslations<ScnSceneTextTranslation> Translations,
     ValueArray<ScnVoiceFile> VoiceFiles
 );
 
-internal record ScnTranslations<T>(
+internal sealed record ScnTranslations<T>(
     T English,
     T Japanese
 );
 
-internal record ScnSceneTextTranslation(
+internal sealed record ScnSceneTextTranslation(
     string TranslatedSpeakerName,
     string FormattedText
-    //string? FuriganaPlainText,
-    //string? PlainText
 );
 
-internal record ScnVoiceFile(
+internal sealed record ScnVoiceFile(
     string Name,
     int Pan,
     int Type,

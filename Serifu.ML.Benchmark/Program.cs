@@ -20,7 +20,7 @@ using Serifu.ML.Abstractions;
 using Serifu.ML.Benchmark;
 using Serilog;
 
-internal class Program
+internal sealed class Program
 {
     public static readonly TransformersContext transformers = new(new LoggerConfiguration().CreateLogger());
     private static readonly Dictionary<int, IQuestionAnsweringPipeline> pipelines = [];

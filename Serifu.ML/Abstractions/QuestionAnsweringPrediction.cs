@@ -24,4 +24,4 @@ namespace Serifu.ML.Abstractions;
 /// <param name="Start">The character start index of the answer.</param>
 /// <param name="End">The character end index of the answer.</param>
 /// <param name="Answer">The answer to the question.</param>
-public record QuestionAnsweringPrediction(double Score, int Start, int End, string Answer);
+public sealed record QuestionAnsweringPrediction(double Score, int Start, int End, string Answer);

@@ -14,18 +14,18 @@
 
 namespace Serifu.Importer.Generic.Larian;
 
-internal record LsjFile(LsjSave Save)
+internal sealed record LsjFile(LsjSave Save)
 { }
 
-internal record LsjSave(LsjRegions Regions);
+internal sealed record LsjSave(LsjRegions Regions);
 
-internal record LsjRegions(LsjTemplates? Templates, LsjOrigins? Origins, LsjVoiceMetaData? VoiceMetaData);
+internal sealed record LsjRegions(LsjTemplates? Templates, LsjOrigins? Origins, LsjVoiceMetaData? VoiceMetaData);
 
-internal record LsjTemplates(LsjGameObject[] GameObjects);
+internal sealed record LsjTemplates(LsjGameObject[] GameObjects);
 
-internal record LsjOrigins(LsjOrigin[] Origin);
+internal sealed record LsjOrigins(LsjOrigin[] Origin);
 
-internal record LsjVoiceMetaData(LsjVoiceSpeakerMetaData[] VoiceSpeakerMetaData);
+internal sealed record LsjVoiceMetaData(LsjVoiceSpeakerMetaData[] VoiceSpeakerMetaData);
 
 /// <summary>
 /// Represents either a game object (character, item, and other things like lights that we don't care about) or a
@@ -36,7 +36,7 @@ internal record LsjVoiceMetaData(LsjVoiceSpeakerMetaData[] VoiceSpeakerMetaData)
 /// <param name="Name">The object or template's internal name.</param>
 /// <param name="TemplateName">The object's template MapKey.</param>
 /// <param name="ParentTemplateId">The template's template MapKey.</param>
-internal record LsjGameObject(
+internal sealed record LsjGameObject(
     LsjTranslatedString? DisplayName,
     LsjGuid? MapKey,
     LsjString? Name,
@@ -48,7 +48,7 @@ internal record LsjGameObject(
 /// </summary>
 /// <param name="DisplayName">The localization XML string ID.</param>
 /// <param name="GlobalTemplate">For our purposes, the "speaker ID" and primary key for this type.</param>
-internal record LsjOrigin(
+internal sealed record LsjOrigin(
     LsjTranslatedString? DisplayName,
     LsjGuid? GlobalTemplate);
 
@@ -57,22 +57,22 @@ internal record LsjOrigin(
 /// </summary>
 /// <param name="MapKey">The speaker ID or "NARRATOR".</param>
 /// <param name="MapValue">The speaker's voice lines.</param>
-internal record LsjVoiceSpeakerMetaData(
+internal sealed record LsjVoiceSpeakerMetaData(
     LsjString MapKey,
     LsjVoiceSpeakerMetaDataValue[] MapValue);
 
-internal record LsjVoiceSpeakerMetaDataValue(LsjVoiceTextMetaData[]? VoiceTextMetaData);
+internal sealed record LsjVoiceSpeakerMetaDataValue(LsjVoiceTextMetaData[]? VoiceTextMetaData);
 
 /// <summary>
 /// Represents a mapping of dialogue text to audio file.
 /// </summary>
 /// <param name="MapKey">The localization XML string ID.</param>
 /// <param name="MapValue">An object containing the audio filename (.wem).</param>
-internal record LsjVoiceTextMetaData(
+internal sealed record LsjVoiceTextMetaData(
     LsjString MapKey,
     LsjVoiceTextMetaDataValue[] MapValue);
 
-internal record LsjVoiceTextMetaDataValue(LsjString Source);
+internal sealed record LsjVoiceTextMetaDataValue(LsjString Source);
 
 internal record struct LsjString(string Value);
 

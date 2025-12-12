@@ -26,7 +26,7 @@ using static Serifu.Data.Sqlite.ImportHelper;
 
 namespace Serifu.Importer.Generic;
 
-internal partial class GenericImporter
+internal sealed class GenericImporter
 {
     // Note: The max word count here is quite long, and only to prevent the ML pipeline from exploding. We may want to
     // put a lower clamp on the quote length, possibly in the Elasticsearch build so that it applies to all sources.
@@ -41,7 +41,7 @@ internal partial class GenericImporter
     private readonly ParserOptions options;
     private readonly ILogger logger;
 
-    private record PairedWithKeyOrIndex(int KeyOrIndex, ParsedQuoteTranslation English, ParsedQuoteTranslation Japanese);
+    private sealed record PairedWithKeyOrIndex(int KeyOrIndex, ParsedQuoteTranslation English, ParsedQuoteTranslation Japanese);
 
     public GenericImporter(
         IParser parser,
@@ -212,9 +212,9 @@ internal partial class GenericImporter
     }
 
     private IEnumerable<PairedWithKeyOrIndex> ValidateAndFilter(
-        IEnumerable<IGrouping<object, ParsedQuoteTranslation>> groupedByKey, CancellationToken cancellationToken)
+        IGrouping<object, ParsedQuoteTranslation>[] groupedByKey, CancellationToken cancellationToken)
     {
-        if (!groupedByKey.Any())
+        if (groupedByKey.Length == 0)
         {
             throw new Exception("Parser did not produce any results.");
         }

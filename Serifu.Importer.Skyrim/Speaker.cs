@@ -22,7 +22,7 @@ namespace Serifu.Importer.Skyrim;
 /// recursively. The name may be overridden by a quest alias. Note that the name and/or voice type may be empty; this is
 /// to simplify resolver logic, and such instances should be skipped when selecting a speaker from the result set.
 /// </summary>
-public record Speaker : IFormLinkIdentifier, INamedGetter // Interfaces allow for use with IFormIdProvider
+internal sealed record Speaker : IFormLinkIdentifier, INamedGetter // Interfaces allow for use with IFormIdProvider
 {
     public Speaker(IFormLinkIdentifier formLink)
     {

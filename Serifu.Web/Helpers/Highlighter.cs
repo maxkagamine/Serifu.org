@@ -16,7 +16,7 @@ using Microsoft.AspNetCore.Html;
 
 namespace Serifu.Web.Helpers;
 
-public static class Highlighter
+internal static class Highlighter
 {
     private static readonly IHtmlContent OpenTag = new HtmlString("<mark>");
     private static readonly IHtmlContent CloseTag = new HtmlString("</mark>");

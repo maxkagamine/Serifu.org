@@ -22,7 +22,7 @@ using Serilog;
 
 namespace Serifu.Importer.Skyrim.Resolvers;
 
-internal class FactionResolver
+internal sealed class FactionResolver
 {
     private readonly Dictionary<FormKey, HashSet<Speaker>> factionToNpcs = [];
     private readonly Dictionary<FormKey, HashSet<Speaker>> factionOverrideAdditionalNpcs = [];

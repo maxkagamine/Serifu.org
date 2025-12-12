@@ -26,7 +26,7 @@ using Noggog.StructuredStrings;
 
 namespace Serifu.Importer.Skyrim;
 
-internal class FlattenedDialogTopic : IDialogTopicGetter
+internal sealed class FlattenedDialogTopic : IDialogTopicGetter
 {
     private readonly IDialogTopicGetter winningOverride;
 

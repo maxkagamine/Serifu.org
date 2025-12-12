@@ -27,7 +27,7 @@ using System.Net;
 
 namespace Serifu.S3Uploader;
 
-public sealed class S3Uploader : IAsyncDisposable
+internal sealed class S3Uploader : IAsyncDisposable
 {
     // https://improve.dk/pushing-the-limits-of-amazon-s3-upload-performance/
     private const int ConcurrentUploads = 64;

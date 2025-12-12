@@ -16,11 +16,12 @@ using Mutagen.Bethesda.Environments;
 using Mutagen.Bethesda.Plugins;
 using Mutagen.Bethesda.Plugins.Aspects;
 using Mutagen.Bethesda.Plugins.Records;
+using System.Globalization;
 using System.Text;
 
 namespace Serifu.Importer.Skyrim;
 
-public class FormIdProvider : IFormIdProvider
+internal sealed class FormIdProvider : IFormIdProvider
 {
     private readonly Dictionary<ModKey, uint> modIndexes = [];
     private readonly string formattedLoadOrder;
@@ -56,7 +57,7 @@ public class FormIdProvider : IFormIdProvider
             }
             else
             {
-                modIndexStr = nextFullIndex.ToString("X2");
+                modIndexStr = nextFullIndex.ToString("X2", CultureInfo.InvariantCulture);
                 modIndex = nextFullIndex++ << 24;
             }
 
@@ -98,10 +99,10 @@ public class FormIdProvider : IFormIdProvider
         var named = formLink as INamedGetter ?? record as INamedGetter;
         if (named?.Name is string name)
         {
-            sb.Append($"\"{name}\" ");
+            sb.Append(CultureInfo.InvariantCulture, $"\"{name}\" ");
         }
 
-        sb.Append($"[{record.GetRecordType()}:{GetFormId(record.FormKey).AsHex()}]");
+        sb.Append(CultureInfo.InvariantCulture, $"[{record.GetRecordType()}:{GetFormId(record.FormKey).AsHex()}]");
         return sb.ToString();
     }
 

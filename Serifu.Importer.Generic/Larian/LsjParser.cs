@@ -12,7 +12,6 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
-
 using Ganss.Xss;
 using Kagamine.Extensions.Logging;
 using Kagamine.Extensions.Utilities;
@@ -28,7 +27,7 @@ namespace Serifu.Importer.Generic.Larian;
 
 using GameObject = (LsjTranslatedString? DisplayName, Guid? TemplateId, string? Name);
 
-internal class LsjParser : IParser<LsjParserOptions>
+internal sealed class LsjParser : IParser<LsjParserOptions>
 {
     private const string NarratorKey = "NARRATOR";
     private const string NarratorStringId = "h0fd7e77ag106bg47d5ga587g6cfeed742d5d";
@@ -86,7 +85,9 @@ internal class LsjParser : IParser<LsjParserOptions>
         XmlSerializer serializer = new(typeof(LocalizationXml));
         string path = Path.GetFullPath(relativePath, options.BaseDirectory);
         using FileStream file = File.OpenRead(path);
+#pragma warning disable CA5369 // Use XmlReader for 'XmlSerializer.Deserialize()'
         var xml = (LocalizationXml)serializer.Deserialize(file)!;
+#pragma warning restore CA5369 // Use XmlReader for 'XmlSerializer.Deserialize()'
 
         foreach (var content in xml.Content)
         {
@@ -181,7 +182,7 @@ internal class LsjParser : IParser<LsjParserOptions>
             LsjTranslatedString? speakerName;
             string speakerIdStr = speakerMetaData.MapKey.Value;
             int weight = 1;
-            
+
             if (speakerIdStr == NarratorKey)
             {
                 speakerName = new(NarratorStringId);
@@ -206,7 +207,7 @@ internal class LsjParser : IParser<LsjParserOptions>
                 LsjTranslatedString stringId = new(voiceTextMetaData.MapKey.Value);
                 string audioFile = voiceTextMetaData.MapValue.Single().Source.Value.Replace(".wem", ".opus");
 
-                if (!audioFile.StartsWith($"v{speakerIdStr.Replace("-", "")}"))
+                if (!audioFile.StartsWith($"v{speakerIdStr.Replace("-", "")}", StringComparison.Ordinal))
                 {
                     throw new Exception("Unexpected speaker ID / audio file name mismatch.");
                 }
@@ -269,7 +270,7 @@ internal class LsjParser : IParser<LsjParserOptions>
                 break;
             }
 
-            if (gameObject.Name?.StartsWith(TavNamePrefix) == true)
+            if (gameObject.Name?.StartsWith(TavNamePrefix, StringComparison.Ordinal) == true)
             {
                 return new(TavStringId);
             }

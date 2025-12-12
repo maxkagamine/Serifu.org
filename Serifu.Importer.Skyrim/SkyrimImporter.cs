@@ -39,7 +39,7 @@ using Alignment = Serifu.Data.Alignment;
 
 namespace Serifu.Importer.Skyrim;
 
-internal sealed partial class SkyrimImporter : IDisposable
+internal sealed class SkyrimImporter : IDisposable
 {
     private static readonly HashSet<RecordType> ExcludedSubtypes = [
         SubtypeName.Bash, SubtypeName.Block, SubtypeName.Death, SubtypeName.EnterBowZoomBreath,

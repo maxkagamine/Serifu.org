@@ -14,13 +14,13 @@
 
 namespace Serifu.Data.Elasticsearch.Tests;
 
-public class QueryJsonTestData : TheoryData<string, string, string> // query, json, because
+internal sealed class QueryJsonTestData : TheoryData<string, string, string> // query, json, because
 {
     public QueryJsonTestData()
     {
         Add(because: "a query in Japanese should search the Japanese translation",
             query: "能代",
-            json: """
+            json: /*lang=json,strict*/ """
             {
               "bool": {
                 "minimum_should_match": 1,
@@ -55,7 +55,7 @@ public class QueryJsonTestData : TheoryData<string, string, string> // query, js
 
         Add(because: "a query in English should search the English translation, even if it contains full-width spaces",
             query: "light　cruiser",
-            json: """
+            json: /*lang=json,strict*/ """
             {
               "bool": {
                 "minimum_should_match": 1,
@@ -94,7 +94,7 @@ public class QueryJsonTestData : TheoryData<string, string, string> // query, js
             """,
             query: "𪚲", // This is also an example of a four-byte kanji (which, since .NET uses UTF-16, means the
                          // string has a length of 2)
-            json: """
+            json: /*lang=json,strict*/ """
             {
               "match": {
                 "japanese.text.kanji": {
@@ -109,7 +109,7 @@ public class QueryJsonTestData : TheoryData<string, string, string> // query, js
             with spaces
             """,
             query: "rumors @Balgruuf_the_Greater",
-            json: """
+            json: /*lang=json,strict*/ """
             {
               "bool": {
                 "filter": {
@@ -154,7 +154,7 @@ public class QueryJsonTestData : TheoryData<string, string, string> // query, js
             usual but wrap it in a bool query to apply the speaker name filter (always using the English field)
             """,
             query: "炭 @Hachiroku",
-            json: """
+            json: /*lang=json,strict*/ """
             {
               "bool": {
                 "filter": {
@@ -177,7 +177,7 @@ public class QueryJsonTestData : TheoryData<string, string, string> // query, js
     }
 
     private new void Add(string query, string json, string because) =>
-        base.Add(new TheoryDataRow<string, string, string>(query, json, because)
+        Add(new TheoryDataRow<string, string, string>(query, json, because)
         {
             TestDisplayName = because.ReplaceLineEndings(" ") + " "
         });

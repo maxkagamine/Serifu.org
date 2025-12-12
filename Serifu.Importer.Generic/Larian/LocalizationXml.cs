@@ -19,7 +19,7 @@ namespace Serifu.Importer.Generic.Larian;
 
 [Serializable]
 [XmlRoot(ElementName = "contentList")]
-public class LocalizationXml
+internal sealed class LocalizationXml
 {
     [XmlElement("content")]
     [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
@@ -28,7 +28,7 @@ public class LocalizationXml
 
 [Serializable]
 [DebuggerDisplay("{Value,nq}", Name = "{ContentUid,nq}")]
-public class LocalizationXmlContent
+internal sealed class LocalizationXmlContent
 {
     [XmlAttribute(AttributeName = "contentuid")]
     public required string ContentUid { get; set; }

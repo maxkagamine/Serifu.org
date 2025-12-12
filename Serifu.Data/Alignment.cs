@@ -29,4 +29,9 @@ public readonly record struct Alignment(ushort FromStart, ushort FromEnd, ushort
         FromEnd != other.FromEnd ? FromEnd - other.FromEnd :
         ToStart != other.ToStart ? ToStart - other.ToStart :
         ToEnd - other.ToEnd;
+
+    public static bool operator <(Alignment left, Alignment right) => left.CompareTo(right) < 0;
+    public static bool operator >(Alignment left, Alignment right) => left.CompareTo(right) > 0;
+    public static bool operator <=(Alignment left, Alignment right) => left.CompareTo(right) <= 0;
+    public static bool operator >=(Alignment left, Alignment right) => left.CompareTo(right) >= 0;
 }
