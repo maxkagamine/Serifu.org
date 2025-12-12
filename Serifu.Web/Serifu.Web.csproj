@@ -2,6 +2,13 @@
 
   <PropertyGroup>
     <NeutralLanguage>en</NeutralLanguage>
+
+    <!--
+      This fixes a bug in the Web SDK that causes a "Your project contained an invalid value for TypeScriptToolsVersion"
+      warning in Visual Studio (setting it to a valid value results in another error about the TypeScript SDK being
+      deprecated), by stopping Microsoft.NET.Sdk.Web.ProjectSystem.targets from importing Microsoft.TypeScript.targets.
+    -->
+    <EnableTypeScriptNuGetTarget>true</EnableTypeScriptNuGetTarget>
   </PropertyGroup>
 
   <ItemGroup>
