@@ -60,7 +60,7 @@ services:
   web:
     image: '${DOCKER_REGISTRY?}/serifu/web:latest'
     profiles:
-      - 'disabled'
+      - 'web'
     build:
       context: '.'
       dockerfile: 'docker/web.Dockerfile'
@@ -85,7 +85,7 @@ services:
       SeqApiKey: '${SEQ_API_KEY}'
   s3mock:
     profiles:
-      - 'disabled'
+      - 's3mock'
     image: 'adobe/s3mock'
     cpus: 1
     mem_limit: '512M'

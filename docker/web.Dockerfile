@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1-labs
 # check=skip=FromPlatformFlagConstDisallowed
 
-ARG DOTNET_VERSION=9.0
+ARG DOTNET_VERSION=10.0
 ARG NODE_VERSION=23.6.0
 
 FROM --platform=linux/amd64 mcr.microsoft.com/dotnet/sdk:$DOTNET_VERSION AS build

@@ -17,8 +17,8 @@
 
   <ItemGroup>
     <PackageReference Include="HtmlSanitizer" Version="8.1.748-beta" />
-    <PackageReference Include="Microsoft.Extensions.FileSystemGlobbing" Version="9.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.FileSystemGlobbing" Version="10.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="10.0.1" />
     <PackageReference Include="TriggersTools.CatSystem2" Version="1.0.2-build-000018" />
   </ItemGroup>
 

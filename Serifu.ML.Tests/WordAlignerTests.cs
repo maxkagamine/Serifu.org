@@ -16,7 +16,8 @@ using Moq;
 using Serifu.Data;
 using Serifu.ML.Abstractions;
 using Serilog;
-using Xunit.Abstractions;
+
+[assembly: CaptureConsole]
 
 namespace Serifu.ML.Tests;
 
@@ -26,14 +27,17 @@ public sealed class WordAlignerTests : IDisposable
     private readonly WordAligner aligner;
     private readonly ILogger logger;
 
-    public WordAlignerTests(ITestOutputHelper output)
+    public WordAlignerTests()
     {
         pipeline = new Mock<IQuestionAnsweringPipeline>(MockBehavior.Strict);
 
         var transformers = Mock.Of<ITransformersContext>(x =>
             x.QuestionAnswering(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()) == Task.FromResult(pipeline.Object));
 
-        logger = output.CreateTestLogger();
+        logger = new LoggerConfiguration()
+            .WriteTo.Console()
+            .CreateLogger();
+
         aligner = new WordAligner(transformers, logger);
     }
 
@@ -45,7 +49,7 @@ public sealed class WordAlignerTests : IDisposable
 
         var aligner = new WordAligner(new TransformersContext(logger), logger);
 
-        IEnumerable<Alignment> result = await aligner.AlignSymmetric(englishText, japaneseText);
+        IEnumerable<Alignment> result = await aligner.AlignSymmetric(englishText, japaneseText, TestContext.Current.CancellationToken);
 
         logger.Information("Result: {Result}", string.Join(',', result.Select(x => $"{x.FromStart},{x.FromEnd},{x.ToStart},{x.ToEnd}")));
     }
@@ -82,7 +86,7 @@ public sealed class WordAlignerTests : IDisposable
         pipeline.Setup(x => x.Pipe(It.IsAny<string[]>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync([]);
 
-        await aligner.AlignSymmetric(englishText, japaneseText);
+        await aligner.AlignSymmetric(englishText, japaneseText, TestContext.Current.CancellationToken);
 
         pipeline.Verify(x => x.Pipe(
             It.Is<string[]>(q => q.SequenceEqual(expectedEnglishQuestions)),
@@ -115,7 +119,7 @@ public sealed class WordAlignerTests : IDisposable
                 new QuestionAnsweringPrediction(Score: 0, Start: 0, End: 3, Answer: "foo"), // low score
             ]);
 
-        IEnumerable<Alignment> result = await aligner.AlignSymmetric(englishText, japaneseText);
+        IEnumerable<Alignment> result = await aligner.AlignSymmetric(englishText, japaneseText, TestContext.Current.CancellationToken);
 
         Assert.Equal([
             new Alignment(0, 3, 0, 2), // ほげ (0,2) <- foo (0,3)
@@ -140,7 +144,7 @@ public sealed class WordAlignerTests : IDisposable
                 new QuestionAnsweringPrediction(Score: 1, Start: 2, End: 10, Answer: "'s alrig"),
             ]);
 
-        IEnumerable<Alignment> result = await aligner.AlignSymmetric(englishText, japaneseText);
+        IEnumerable<Alignment> result = await aligner.AlignSymmetric(englishText, japaneseText, TestContext.Current.CancellationToken);
 
         Assert.Equal([new Alignment(0, 12, 0, 3)], result);
     }

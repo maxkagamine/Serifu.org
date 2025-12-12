@@ -1,0 +1,20 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path="Directory.Build.props" />
+  </Folder>
+  <Project Path="Serifu.Data.Elasticsearch.Build/Serifu.Data.Elasticsearch.Build.csproj" />
+  <Project Path="Serifu.Data.Elasticsearch.Tests/Serifu.Data.Elasticsearch.Tests.csproj" />
+  <Project Path="Serifu.Data.Elasticsearch/Serifu.Data.Elasticsearch.csproj" />
+  <Project Path="Serifu.Data.Sqlite.Tests/Serifu.Data.Sqlite.Tests.csproj" />
+  <Project Path="Serifu.Data.Sqlite/Serifu.Data.Sqlite.csproj" />
+  <Project Path="Serifu.Data/Serifu.Data.csproj" />
+  <Project Path="Serifu.Importer.Generic/Serifu.Importer.Generic.csproj" />
+  <Project Path="Serifu.Importer.Kancolle/Serifu.Importer.Kancolle.csproj" />
+  <Project Path="Serifu.Importer.Skyrim/Serifu.Importer.Skyrim.csproj" />
+  <Project Path="Serifu.ML.Benchmark/Serifu.ML.Benchmark.csproj" />
+  <Project Path="Serifu.ML.Tests/Serifu.ML.Tests.csproj" />
+  <Project Path="Serifu.ML/Serifu.ML.csproj" />
+  <Project Path="Serifu.S3Uploader/Serifu.S3Uploader.csproj" />
+  <Project Path="Serifu.Web/Serifu.Web.csproj" />
+</Solution>

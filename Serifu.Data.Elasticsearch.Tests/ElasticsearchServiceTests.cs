@@ -22,6 +22,8 @@ using Serilog;
 using System.Globalization;
 using Range = System.Range;
 
+[assembly: CaptureConsole]
+
 namespace Serifu.Data.Elasticsearch.Tests;
 
 public sealed class ElasticsearchServiceTests
@@ -31,8 +33,12 @@ public sealed class ElasticsearchServiceTests
 
     public ElasticsearchServiceTests()
     {
+        var logger = new LoggerConfiguration()
+            .WriteTo.Console()
+            .CreateLogger();
+
         client = new Mock<ElasticsearchClient>(MockBehavior.Strict);
-        service = new ElasticsearchService(client.Object, new LoggerConfiguration().CreateLogger());
+        service = new ElasticsearchService(client.Object, logger);
     }
 
     [Fact]

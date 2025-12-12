@@ -19,7 +19,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Moq.Contrib.HttpClient;
 using Serilog;
-using Xunit.Abstractions;
+
+[assembly: CaptureConsole]
 
 namespace Serifu.Data.Sqlite.Tests;
 
@@ -30,7 +31,7 @@ public sealed class SqliteServiceTests : IDisposable
     private readonly IDbContextFactory<SerifuDbContext> dbFactory;
     private readonly Mock<HttpMessageHandler> httpHandler;
 
-    public SqliteServiceTests(ITestOutputHelper output)
+    public SqliteServiceTests()
     {
         var services = new ServiceCollection();
 
@@ -47,7 +48,7 @@ public sealed class SqliteServiceTests : IDisposable
         httpHandler = new Mock<HttpMessageHandler>(MockBehavior.Strict);
         services.AddSingleton(httpHandler.CreateClient());
 
-        services.AddSingleton<ILogger>(output.CreateTestLogger());
+        services.AddSerilog(config => config.WriteTo.Console());
 
         services.AddSingleton<SqliteService>();
 
@@ -75,7 +76,7 @@ public sealed class SqliteServiceTests : IDisposable
                 skyrimQuote,
             ]);
 
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
         }
 
         Quote[] newQuotes = [
@@ -83,11 +84,11 @@ public sealed class SqliteServiceTests : IDisposable
             new Quote() { Id = 102, Source = Source.Kancolle, English = newTl, Japanese = newTl, AlignmentData = [] },
         ];
 
-        await sqliteService.SaveQuotes(Source.Kancolle, newQuotes);
+        await sqliteService.SaveQuotes(Source.Kancolle, newQuotes, TestContext.Current.CancellationToken);
 
         using (var db = dbFactory.CreateDbContext())
         {
-            var quotes = await db.Quotes.ToListAsync();
+            var quotes = await db.Quotes.ToListAsync(TestContext.Current.CancellationToken);
 
             quotes.Should().BeEquivalentTo([.. newQuotes, skyrimQuote]);
         }
@@ -110,19 +111,19 @@ public sealed class SqliteServiceTests : IDisposable
                 new() { OriginalUri = new("file:///Skyrim/Archive.bsa#file2"), ObjectName = "url fragment test 2" }
             ]);
 
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
         }
 
-        (await sqliteService.GetCachedAudioFile(new("http://example.com/foo")))
+        (await sqliteService.GetCachedAudioFile(new("http://example.com/foo"), TestContext.Current.CancellationToken))
             .Should().Be("bar");
 
-        (await sqliteService.GetCachedAudioFile(new("file:///Skyrim/Archive.bsa#file1")))
+        (await sqliteService.GetCachedAudioFile(new("file:///Skyrim/Archive.bsa#file1"), TestContext.Current.CancellationToken))
             .Should().Be("url fragment test 1");
 
-        (await sqliteService.GetCachedAudioFile(new("file:///Skyrim/Archive.bsa#file2")))
+        (await sqliteService.GetCachedAudioFile(new("file:///Skyrim/Archive.bsa#file2"), TestContext.Current.CancellationToken))
             .Should().Be("url fragment test 2");
 
-        (await sqliteService.GetCachedAudioFile(new("file:///Skyrim/Archive.bsa#file3")))
+        (await sqliteService.GetCachedAudioFile(new("file:///Skyrim/Archive.bsa#file3"), TestContext.Current.CancellationToken))
             .Should().BeNull();
     }
 
@@ -133,10 +134,10 @@ public sealed class SqliteServiceTests : IDisposable
         using var stream = new MemoryStream(bytes);
         string expectedObjectName = "07/13/f029d7e1193a5ca9c63b589ea01b13d148fe.mp3";
 
-        string actualObjectName = await sqliteService.ImportAudioFile(stream);
+        string actualObjectName = await sqliteService.ImportAudioFile(stream, cancellationToken: TestContext.Current.CancellationToken);
 
         using var db = dbFactory.CreateDbContext();
-        AudioFile audioFile = await db.AudioFiles.SingleAsync();
+        AudioFile audioFile = await db.AudioFiles.SingleAsync(TestContext.Current.CancellationToken);
 
         audioFile.Data.ToArray().Should().Equal(bytes);
         audioFile.ObjectName.Should().Be(expectedObjectName);
@@ -160,15 +161,15 @@ public sealed class SqliteServiceTests : IDisposable
             db.AudioFiles.Add(new() { ObjectName = "old version", Data = [] });
             db.AudioFileCache.Add(new() { OriginalUri = originalUri2, ObjectName = "old version" });
 
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
         }
 
-        await sqliteService.ImportAudioFile(stream, originalUri1);
-        await sqliteService.ImportAudioFile(stream, originalUri2); // File exists, but cache entry needs to be updated
+        await sqliteService.ImportAudioFile(stream, originalUri1, TestContext.Current.CancellationToken);
+        await sqliteService.ImportAudioFile(stream, originalUri2, TestContext.Current.CancellationToken); // File exists, but cache entry needs to be updated
 
         using (var db = dbFactory.CreateDbContext())
         {
-            var cache = await db.AudioFileCache.ToListAsync();
+            var cache = await db.AudioFileCache.ToListAsync(TestContext.Current.CancellationToken);
 
             cache.Should().BeEquivalentTo([
                 new AudioFileCache() { OriginalUri = originalUri1, ObjectName = expectedObjectName },
@@ -188,12 +189,12 @@ public sealed class SqliteServiceTests : IDisposable
         httpHandler.SetupRequest(HttpMethod.Get, url)
             .ReturnsResponse(bytes, "audio/mp3");
 
-        string actualObjectName = await sqliteService.DownloadAudioFile(url);
+        string actualObjectName = await sqliteService.DownloadAudioFile(url, TestContext.Current.CancellationToken);
 
         using var db = dbFactory.CreateDbContext();
 
-        var audioFile = await db.AudioFiles.SingleAsync();
-        var cache = await db.AudioFileCache.SingleAsync();
+        var audioFile = await db.AudioFiles.SingleAsync(TestContext.Current.CancellationToken);
+        var cache = await db.AudioFileCache.SingleAsync(TestContext.Current.CancellationToken);
 
         audioFile.Data.ToArray().Should().Equal(bytes);
         audioFile.ObjectName.Should().Be(expectedObjectName);
@@ -212,11 +213,11 @@ public sealed class SqliteServiceTests : IDisposable
             db.AudioFiles.Add(new() { ObjectName = "cached object name", Data = [] });
             db.AudioFileCache.Add(new() { OriginalUri = new(url), ObjectName = "cached object name" });
 
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
         }
 
         // No http handler setup, so the mock will throw if this makes a request
-        string actualObjectName = await sqliteService.DownloadAudioFile(url);
+        string actualObjectName = await sqliteService.DownloadAudioFile(url, TestContext.Current.CancellationToken);
         actualObjectName.Should().Be("cached object name");
     }
 
@@ -256,15 +257,15 @@ public sealed class SqliteServiceTests : IDisposable
                 },
             ]);
 
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
         }
 
-        await sqliteService.DeleteOrphanedAudioFiles();
+        await sqliteService.DeleteOrphanedAudioFiles(TestContext.Current.CancellationToken);
 
         using (var db = dbFactory.CreateDbContext())
         {
-            var audioFiles = await db.AudioFiles.ToListAsync();
-            var cache = await db.AudioFileCache.ToListAsync();
+            var audioFiles = await db.AudioFiles.ToListAsync(TestContext.Current.CancellationToken);
+            var cache = await db.AudioFileCache.ToListAsync(TestContext.Current.CancellationToken);
 
             audioFiles.Should().BeEquivalentTo([
                 new AudioFile() { ObjectName = "referenced audio file 1", Data = [39, 39, 39] },
