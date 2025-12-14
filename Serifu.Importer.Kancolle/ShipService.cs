@@ -133,30 +133,13 @@ internal sealed class ShipService
             }
 
             // Download audio file
-            Task<string>? audioFileTask = null;
-            if (audioFileUrl is not null)
-            {
-                try
-                {
-                    audioFileTask = sqliteService.DownloadAudioFile(audioFileUrl, cancellationToken);
-                }
-                catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.NotFound)
-                {
-                    logger.Warning("{Ship}'s {Context} audio file {Url} returned {StatusCode}.",
-                        ship, scenario, audioFileUrl, (int)ex.StatusCode);
-                }
-                catch (UnsupportedAudioFormatException ex)
-                {
-                    logger.Warning("{Ship}'s {Context} audio file {Url} is invalid: {Message}",
-                        ship, scenario, audioFileUrl, ex.Message);
-                }
-            }
+            Task<string?> audioFileTask = DownloadAudioFile(ship, scenario, audioFileUrl, cancellationToken);
 
             // Run word alignment
             var alignmentDataTask = wordAligner.AlignSymmetric(textEnglish, textJapanese, cancellationToken);
 
             // Wait for both to complete
-            await Task.WhenAll(audioFileTask ?? Task.CompletedTask, alignmentDataTask);
+            await Task.WhenAll(audioFileTask, alignmentDataTask);
 
             // Create quote
             (string contextEnglish, string contextJapanese) = translationService.TranslateContext(ship, scenario);
@@ -187,7 +170,7 @@ internal sealed class ShipService
                     Context = contextJapanese,
                     Text = textJapanese,
                     WordCount = wordCountJapanese,
-                    AudioFile = audioFileTask?.Result,
+                    AudioFile = audioFileTask.Result,
                 },
                 AlignmentData = alignmentDataTask.Result.ToArray()
             };
@@ -229,6 +212,43 @@ internal sealed class ShipService
         }
 
         return quotes;
+    }
+
+    /// <summary>
+    /// Downloads <paramref name="audioFileUrl"/> if not <see langword="null"/>. If the link 404s or returns an
+    /// unsupported file, logs a warning and returns <see langword="null"/>.
+    /// </summary>
+    /// <param name="ship">The current ship, for logging.</param>
+    /// <param name="scenario">The current scenario name, for logging.</param>
+    /// <param name="audioFileUrl">The audio file url.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The imported <see cref="AudioFile.ObjectName"/>, or <see langword="null"/> if no audio file is
+    /// available.</returns>
+    private async Task<string?> DownloadAudioFile(
+        Ship ship,
+        string scenario,
+        string? audioFileUrl,
+        CancellationToken cancellationToken)
+    {
+        if (audioFileUrl is not null)
+        {
+            try
+            {
+                return await sqliteService.DownloadAudioFile(audioFileUrl, cancellationToken);
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.NotFound)
+            {
+                logger.Warning("{Ship}'s {Context} audio file {Url} returned {StatusCode}.",
+                    ship, scenario, audioFileUrl, (int)ex.StatusCode);
+            }
+            catch (UnsupportedAudioFormatException ex)
+            {
+                logger.Warning("{Ship}'s {Context} audio file {Url} is invalid: {Message}",
+                    ship, scenario, audioFileUrl, ex.Message);
+            }
+        }
+
+        return null;
     }
 
     /// <summary>
