@@ -11,9 +11,7 @@ WORKDIR /src
 COPY --exclude=Serifu.db . .
 
 RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
-    --mount=type=secret,id=nugetconfig \
     dotnet publish Serifu.Data.Elasticsearch.Build \
-        --configfile /run/secrets/nugetconfig \
         -c Release -r linux-x64 -v normal -o /builder
 
 # Build index under x64 since ES doesn't run under QEMU

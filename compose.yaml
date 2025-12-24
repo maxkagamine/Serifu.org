@@ -6,8 +6,6 @@ services:
       dockerfile: 'docker/elasticsearch.Dockerfile'
       args:
         ES_VERSION: '8.17.0'
-      secrets:
-        - 'nugetconfig'
       platforms:
         - 'linux/amd64'
         - 'linux/arm64'
@@ -64,8 +62,6 @@ services:
     build:
       context: '.'
       dockerfile: 'docker/web.Dockerfile'
-      secrets:
-        - 'nugetconfig'
       platforms:
         - 'linux/amd64'
         - 'linux/arm64'
@@ -98,10 +94,6 @@ services:
       initialBuckets: 'mock-audio-bucket'
       root: '/data'
       retainFilesOnExit: 'true'
-
-secrets:
-  nugetconfig:
-    file: '/mnt/c/Users/max/AppData/Roaming/NuGet/NuGet.Config'
 
 volumes:
   seq-log-buffer:

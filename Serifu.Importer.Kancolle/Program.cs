@@ -13,11 +13,11 @@
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
 using Kagamine.Extensions.Hosting;
+using Kagamine.Extensions.Http;
 using Kagamine.Extensions.Logging;
 using Kagamine.Extensions.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Options;
 using Serifu.Data;
 using Serifu.Data.Sqlite;
 using Serifu.Importer.Kancolle;
@@ -33,8 +33,7 @@ builder.Services.AddSerifuSerilog();
 builder.Services.AddSerifuSqlite();
 builder.Services.AddSerifuMachineLearning();
 
-builder.Services.AddSingleton<RateLimitingHttpHandler>();
-builder.Services.AddHttpClient(Options.DefaultName).AddHttpMessageHandler<RateLimitingHttpHandler>();
+builder.Services.ConfigureHttpClientDefaults(builder => builder.AddRateLimiting());
 
 builder.Services.AddScoped<ShipListService>();
 builder.Services.AddScoped<ShipService>();

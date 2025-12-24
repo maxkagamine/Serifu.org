@@ -24,9 +24,7 @@ RUN npx vite build
 WORKDIR /src
 COPY . .
 RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
-    --mount=type=secret,id=nugetconfig \
     dotnet publish Serifu.Web \
-        --configfile /run/secrets/nugetconfig \
         -c Release -v normal -o /publish /p:UseAppHost=false
 
 RUN mkdir /var/log/seq

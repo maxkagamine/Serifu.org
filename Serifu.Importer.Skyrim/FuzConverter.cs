@@ -59,7 +59,7 @@ internal sealed class FuzConverter : IFuzConverter
         logger.Debug("Running {Command}", "ffmpeg " + command.Arguments);
         await command.ProcessAsynchronously();
 
-        return opusTempFile.OpenRead(deleteWhenClosed: true);
+        return opusTempFile.OpenRead();
     }
 
     /// <summary>

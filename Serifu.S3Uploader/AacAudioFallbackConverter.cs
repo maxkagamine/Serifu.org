@@ -60,6 +60,6 @@ internal sealed class AacAudioFallbackConverter
         logger.Debug("Running {Command}", "ffmpeg " + command.Arguments);
         await command.ProcessAsynchronously();
 
-        return outputFile.OpenRead(deleteWhenClosed: true);
+        return outputFile.OpenRead();
     }
 }
