@@ -3,7 +3,6 @@
     method="get"
     id="searchBox"
     role="search"
-    autocomplete="off"
     data-route-template="@Url.Action("Results", new { query = "__QUERY__" })"
     data-too-short="@Strings.ValidationErrorTooShort"
     data-too-long="@Strings.ValidationErrorTooLong"
@@ -18,6 +17,10 @@
         aria-autocomplete="list"
         aria-controls="searchBoxAutocomplete"
         aria-expanded="false"
+        enterkeyhint="search"
+        autocapitalize="none"
+        autocomplete="off"
+        class="@((bool?)ViewBag.FocusSearchBox == true ? "autofocus" : null)"
     />
 
     <!-- For animation purposes, the stroke length is centered on its midpoint, and the offset starts at 0. The shape's

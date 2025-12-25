@@ -16,6 +16,14 @@ const MAX_LENGTH_JAPANESE = 32;
   const svg = form.querySelector('svg') as SVGSVGElement;
   const input = form.querySelector('input') as HTMLInputElement;
 
+  // Focus search box when loading homepage. This is more reliable than the autofocus attribute. The media query is to
+  // prevent a blinking cursor appearing on a mobile device without a keyboard where the user would have to tap the
+  // search box anyway (there's a proposal for detecting a keyboard: https://github.com/w3c/csswg-drafts/issues/3871).
+  if (input.classList.contains('autofocus') && window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    input.focus();
+    input.select();
+  }
+
   function update() {
     const box = svg.getBoundingClientRect();
     const totalLength = box.width * 2 + box.height * 2;
