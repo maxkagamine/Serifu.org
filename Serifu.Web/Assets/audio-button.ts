@@ -50,17 +50,17 @@ class AudioButton extends HTMLElement {
   };
 
   onLoading = () => {
-    console.log('Loading:', this.audio.src);
+    console.log('Loading:', this.currentSrc);
     this.state = 'loading';
   };
 
   onPlaying = () => {
-    console.log('Playing:', this.audio.src);
+    console.log('Playing:', this.currentSrc);
     this.state = 'playing';
   };
 
   onStopped = () => {
-    console.log('Stopped:', this.audio.src);
+    console.log('Stopped:', this.currentSrc);
     this.state = 'stopped';
   };
 
@@ -68,7 +68,7 @@ class AudioButton extends HTMLElement {
     if (this.state !== 'stopped') {
       return;
     }
-    console.log('▶ Play:', this.audio.src);
+    console.log('▶ Play:', this.currentSrc);
     AudioButton.current?.stop();
     AudioButton.current = this;
     this.audio.play();
@@ -78,7 +78,7 @@ class AudioButton extends HTMLElement {
     if (this.state === 'stopped') {
       return;
     }
-    console.log('⏹ Stop:', this.audio.src);
+    console.log('⏹ Stop:', this.currentSrc);
     this.audio.pause();
     this.audio.currentTime = 0;
   }
@@ -100,6 +100,10 @@ class AudioButton extends HTMLElement {
         this.icon.className = 'icon icon-stop';
         break;
     }
+  }
+
+  get currentSrc() {
+    return this.audio.currentSrc?.split('?')[0].split('/').slice(-3).join('/');
   }
 }
 
