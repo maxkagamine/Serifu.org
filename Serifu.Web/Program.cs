@@ -138,6 +138,7 @@ builder.Services.AddSingleton<IUrlSigner>(provider =>
 });
 
 builder.Services.AddSingleton<AudioFileUrlProvider>();
+builder.Services.AddSingleton<ViteAssetProvider>();
 
 builder.WebHost.ConfigureKestrel(options => options.AddServerHeader = false);
 

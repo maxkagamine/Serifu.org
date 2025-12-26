@@ -10,8 +10,12 @@ import './results.css';
 import './about-page.css';
 import './error-page.css';
 
-import './images/serifu.svg';
 import './images/favicon.svg?no-inline';
+import './images/favicon@180.png?no-inline';
+import './images/favicon-maskable.svg?no-inline';
+import './images/favicon-maskable@192.png?no-inline';
+import './images/favicon-maskable@512.png?no-inline';
+import './images/serifu.svg?no-inline';
 
 import './header';
 import './search-box';
@@ -44,3 +48,11 @@ if (!isSupported()) {
   console.log('Polyfilling popovers');
   apply();
 }
+
+// Prevent intrusive PWA install prompt
+//
+// Since it has a manifest, users will have the option to add it to their home
+// screen if they wish, but it isn't really meant to be an "app".
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+});
