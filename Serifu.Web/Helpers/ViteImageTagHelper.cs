@@ -13,20 +13,17 @@
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
 using Microsoft.AspNetCore.Razor.TagHelpers;
-using Vite.AspNetCore;
 
 namespace Serifu.Web.Helpers;
 
 [HtmlTargetElement("img", Attributes = "vite-src")]
 public sealed class ViteImageTagHelper : TagHelper
 {
-    private readonly IViteManifest manifest;
-    private readonly IHostEnvironment env;
+    private readonly ViteAssetProvider assets;
 
-    public ViteImageTagHelper(IViteManifest manifest, IHostEnvironment env)
+    public ViteImageTagHelper(ViteAssetProvider assets)
     {
-        this.manifest = manifest;
-        this.env = env;
+        this.assets = assets;
     }
 
     [HtmlAttributeName("vite-src")]
@@ -34,28 +31,12 @@ public sealed class ViteImageTagHelper : TagHelper
 
     public override void Process(TagHelperContext context, TagHelperOutput output)
     {
-        output.Attributes.RemoveAll("vite-src");
-
         if (ViteSrc is null)
         {
             return;
         }
 
-        string src = ViteSrc.TrimStart('/');
-
-        if (env.IsDevelopment())
-        {
-            src = $"/{src}";
-        }
-        else if (manifest[src] is not IViteChunk chunk)
-        {
-            throw new Exception($"No chunk in manifest called \"{src}\".");
-        }
-        else
-        {
-            src = $"/{chunk.File}";
-        }
-
-        output.Attributes.Add("src", src);
+        output.Attributes.RemoveAll("vite-src");
+        output.Attributes.Add("src", assets[ViteSrc]);
     }
 }
