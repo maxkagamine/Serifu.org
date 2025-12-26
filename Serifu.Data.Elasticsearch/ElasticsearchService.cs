@@ -72,128 +72,27 @@ public sealed partial class ElasticsearchService : IElasticsearchService
         }
     };
 
+    /// <summary>
+    /// Parses and validates <paramref name="query"/> and searches Elasticsearch.
+    /// </summary>
+    /// <param name="query">The search query.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The search results, which includes the determined <see cref="SearchLanguage"/>.</returns>
+    /// <exception cref="ElasticsearchValidationException">The query failed validation checks.</exception>
+    /// <exception cref="ElasticsearchException">An error occurred while running the search.</exception>
     public async Task<SearchResults> Search(string query, CancellationToken cancellationToken)
     {
         try
         {
             (query, string? mention) = ExtractMention(query);
-
-            SearchLanguage searchLanguage = UnicodeHelper.IsJapanese(query) ?
-                SearchLanguage.Japanese : SearchLanguage.English;
+            SearchLanguage searchLanguage = DetermineSearchLanguage(query);
 
             if (mention is { Length: > MaxSpeakerNameLength })
             {
                 return new(searchLanguage, []);
             }
 
-            Field searchField;
-            Fields? additionalFields = null;
-            Query requestQuery;
-
-            int length = new StringInfo(query).LengthInTextElements;
-            int maxLength = searchLanguage is SearchLanguage.English ? MaxLengthEnglish : MaxLengthJapanese;
-
-            if (length > maxLength)
-            {
-                throw new ElasticsearchValidationException(ElasticsearchValidationError.TooLong);
-            }
-
-            // To avoid a slew of irrelevant results that merely happen to have one of the same kanji or kana in it, the
-            // default analyzer is configured to break Japanese into bigrams -- units of two characters -- rather than
-            // unigrams (a dictionary-based tokenizer is not useful in this particular case, although one is used for
-            // conjugations). However, it would still be helpful to be able to search for a single kanji, so for that
-            // reason the index contains a dedicated subfield exclusively indexing kanji characters. This should also
-            // help to speed up typical searches containing multiple characters.
-            //
-            // TODO: Consider splitting queries by whitespace so that individual kanji can be searched in conjunction
-            //  with another word.
-            //
-            if (searchLanguage is SearchLanguage.Japanese && UnicodeHelper.IsSingleKanji(query))
-            {
-                searchField = JapaneseKanjiField;
-                requestQuery = new MatchQuery(JapaneseKanjiField) { Query = query };
-            }
-            else if (length < 2)
-            {
-                throw new ElasticsearchValidationException(ElasticsearchValidationError.TooShort);
-            }
-            else
-            {
-                (searchField, Field conjugationsField) = searchLanguage is SearchLanguage.English ?
-                    (EnglishTextField, EnglishConjugationsField) :
-                    (JapaneseTextField, JapaneseConjugationsField);
-
-                additionalFields = Fields.FromField(conjugationsField);
-
-                requestQuery = new BoolQuery()
-                {
-                    Should = [
-                        new MatchPhraseQuery(searchField)
-                        {
-                            Query = query
-                        },
-                        new MatchQuery(searchField)
-                        {
-                            Query = query,
-                            MinimumShouldMatch = "75%"
-                        },
-                        new MatchQuery(conjugationsField)
-                        {
-                            Query = query,
-                            MinimumShouldMatch = "75%"
-                        }
-                    ],
-                    MinimumShouldMatch = 1
-                };
-            }
-
-            if (mention is not null)
-            {
-                // Elasticsearch's .NET library is a bit weird: BoolQuery and MatchQuery etc. are NOT subclasses of
-                // Query as you'd expect. Assignment to Query invokes an implicit conversion, and for some reason the
-                // only way to access the actual query object is like this.
-                if (!requestQuery.TryGet(out BoolQuery? boolQuery))
-                {
-                    requestQuery = boolQuery = new BoolQuery() { Must = [requestQuery] };
-                }
-
-                boolQuery.Filter ??= [];
-                boolQuery.Filter.Add(new TermQuery(EnglishSpeakerNameField)
-                {
-                    Value = mention.Replace('_', ' ')
-                });
-            }
-
-            SearchRequest request = new()
-            {
-                Query = requestQuery,
-                Sort = [
-                    SortOptions.Score(new()
-                    {
-                        Order = SortOrder.Desc
-                    }),
-                    SortOptions.Script(new()
-                    {
-                        Script = new() { Id = WeightedRandomScriptId },
-                        Type = ScriptSortType.Number,
-                        Order = SortOrder.Desc
-                    })
-                ],
-                Highlight = new()
-                {
-                    Fields = new Dictionary<Field, HighlightField>()
-                    {
-                        [searchField] = new()
-                        {
-                            MatchedFields = additionalFields,
-                            NumberOfFragments = 0,
-                            PreTags = [HighlightMarker.ToString()],
-                            PostTags = [HighlightMarker.ToString()]
-                        }
-                    }
-                },
-                Size = PageSize
-            };
+            SearchRequest request = BuildSearchRequest(query, mention, searchLanguage, out Field? searchField);
 
             if (logger.IsEnabled(LogEventLevel.Debug))
             {
@@ -212,7 +111,8 @@ public sealed partial class ElasticsearchService : IElasticsearchService
                     IReadOnlyList<Range> japaneseHighlights = [];
 
                     if (x.Highlight is not null &&
-                        x.Highlight.TryGetValue(searchField.Name!, out var highlightedTexts) &&
+                        searchField?.Name is string highlightFieldName &&
+                        x.Highlight.TryGetValue(highlightFieldName, out var highlightedTexts) &&
                         highlightedTexts.Count == 1)
                     {
                         if (searchLanguage == SearchLanguage.English)
@@ -250,6 +150,154 @@ public sealed partial class ElasticsearchService : IElasticsearchService
     }
 
     /// <summary>
+    /// Builds the <see cref="SearchRequest"/> based on the query.
+    /// </summary>
+    /// <param name="query">The trimmed query without any @-mention.</param>
+    /// <param name="mention">The mention (without the @ sign), or <see langword="null"/>.</param>
+    /// <param name="searchLanguage">The search language, used for validation and to determine which fields to search.</param>
+    /// <param name="searchField">The search field that will contain highlights.</param>
+    /// <exception cref="ElasticsearchValidationException">The query is either too long or too short.</exception>
+    private static SearchRequest BuildSearchRequest(
+        string query,
+        string? mention,
+        SearchLanguage searchLanguage,
+        out Field? searchField)
+    {
+        Query requestQuery;
+        Fields? additionalFields = null;
+        TermQuery? mentionQuery = null;
+        searchField = null;
+
+        if (mention is not null)
+        {
+            mentionQuery = new(EnglishSpeakerNameField)
+            {
+                Value = mention.Replace('_', ' ')
+            };
+
+            if (string.IsNullOrEmpty(query))
+            {
+                // Searching by speaker without a query
+                return new SearchRequest()
+                {
+                    Query = mentionQuery,
+                    Sort = [
+                        SortOptions.Script(new()
+                        {
+                            Script = new() { Id = WeightedRandomScriptId },
+                            Type = ScriptSortType.Number,
+                            Order = SortOrder.Desc
+                        })
+                    ],
+                    Size = PageSize
+                };
+            }
+        }
+
+        int length = new StringInfo(query).LengthInTextElements;
+        int maxLength = searchLanguage is SearchLanguage.English ? MaxLengthEnglish : MaxLengthJapanese;
+
+        if (length > maxLength)
+        {
+            throw new ElasticsearchValidationException(ElasticsearchValidationError.TooLong);
+        }
+
+        // To avoid a slew of irrelevant results that merely happen to have one of the same kanji or kana in it, the
+        // default analyzer is configured to break Japanese into bigrams -- units of two characters -- rather than
+        // unigrams (a dictionary-based tokenizer is not useful in this particular case, although one is used for
+        // conjugations). However, it would still be helpful to be able to search for a single kanji, so for that reason
+        // the index contains a dedicated subfield exclusively indexing kanji characters. This should also help to speed
+        // up typical searches containing multiple characters.
+        //
+        // TODO: Consider splitting queries by whitespace so that individual kanji can be searched in conjunction with
+        //  another word.
+        //
+        if (searchLanguage is SearchLanguage.Japanese && UnicodeHelper.IsSingleKanji(query))
+        {
+            searchField = JapaneseKanjiField;
+            requestQuery = new MatchQuery(JapaneseKanjiField) { Query = query };
+        }
+        else if (length < 2)
+        {
+            throw new ElasticsearchValidationException(ElasticsearchValidationError.TooShort);
+        }
+        else
+        {
+            (searchField, Field conjugationsField) = searchLanguage is SearchLanguage.English ?
+                (EnglishTextField, EnglishConjugationsField) :
+                (JapaneseTextField, JapaneseConjugationsField);
+
+            additionalFields = Fields.FromField(conjugationsField);
+
+            requestQuery = new BoolQuery()
+            {
+                Should = [
+                    new MatchPhraseQuery(searchField)
+                    {
+                        Query = query
+                    },
+                    new MatchQuery(searchField)
+                    {
+                        Query = query,
+                        MinimumShouldMatch = "75%"
+                    },
+                    new MatchQuery(conjugationsField)
+                    {
+                        Query = query,
+                        MinimumShouldMatch = "75%"
+                    }
+                ],
+                MinimumShouldMatch = 1
+            };
+        }
+
+        if (mentionQuery is not null)
+        {
+            // Elasticsearch's .NET library is a bit weird: BoolQuery and MatchQuery etc. are NOT subclasses of Query as
+            // you'd expect. Assignment to Query invokes an implicit conversion, and for some reason the only way to
+            // access the actual query object is like this.
+            if (!requestQuery.TryGet(out BoolQuery? boolQuery))
+            {
+                requestQuery = boolQuery = new BoolQuery() { Must = [requestQuery] };
+            }
+
+            boolQuery.Filter ??= [];
+            boolQuery.Filter.Add(mentionQuery);
+        }
+
+        return new SearchRequest()
+        {
+            Query = requestQuery,
+            Sort = [
+                SortOptions.Score(new()
+                {
+                    Order = SortOrder.Desc
+                }),
+                SortOptions.Script(new()
+                {
+                    Script = new() { Id = WeightedRandomScriptId },
+                    Type = ScriptSortType.Number,
+                    Order = SortOrder.Desc
+                })
+            ],
+            Highlight = new()
+            {
+                Fields = new Dictionary<Field, HighlightField>()
+                {
+                    [searchField] = new()
+                    {
+                        MatchedFields = additionalFields,
+                        NumberOfFragments = 0,
+                        PreTags = [HighlightMarker.ToString()],
+                        PostTags = [HighlightMarker.ToString()]
+                    }
+                }
+            },
+            Size = PageSize
+        };
+    }
+
+    /// <summary>
     /// Extracts any @-mention from the query if present.
     /// </summary>
     /// <param name="query">The query.</param>
@@ -274,6 +322,24 @@ public sealed partial class ElasticsearchService : IElasticsearchService
             .Trim();
 
         return (query, mention);
+    }
+
+    /// <summary>
+    /// Detects whether <paramref name="query"/> is Japanese or not. If it is empty (i.e. searching by speaker without a
+    /// query), assumes the search should be from the perspective of the user's own language.
+    /// </summary>
+    /// <param name="query">The trimmed query without any @-mention.</param>
+    /// <returns>The determined <see cref="SearchLanguage"/>.</returns>
+    internal static SearchLanguage DetermineSearchLanguage(string query)
+    {
+        if (string.IsNullOrEmpty(query))
+        {
+            return CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "ja" ?
+                SearchLanguage.Japanese : SearchLanguage.English;
+        }
+
+        return UnicodeHelper.IsJapanese(query) ?
+            SearchLanguage.Japanese : SearchLanguage.English;
     }
 
     /// <summary>

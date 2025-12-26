@@ -16,5 +16,6 @@ namespace Serifu.Data.Elasticsearch;
 
 public interface IElasticsearchService
 {
+    /// <inheritdoc cref="ElasticsearchService.Search(string, CancellationToken)"/>
     Task<SearchResults> Search(string query, CancellationToken cancellationToken);
 }

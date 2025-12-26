@@ -174,6 +174,18 @@ internal sealed class QueryJsonTestData : TheoryData<string, string, string> // 
               }
             }
             """);
+
+        Add(because: "searching by speaker without a query",
+            query: "@Hachiroku",
+            json: /*lang=json,strict*/ """
+            {
+              "term": {
+                "english.speakerName.keyword": {
+                  "value": "Hachiroku"
+                }
+              }
+            }
+            """);
     }
 
     private new void Add(string query, string json, string because) =>

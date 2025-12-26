@@ -203,15 +203,19 @@ public sealed class ElasticsearchServiceTests
 
     [Theory]
     [InlineData("", ElasticsearchValidationError.TooShort)]
-    [InlineData("a", ElasticsearchValidationError.TooShort)]
+    [InlineData("  a  ", ElasticsearchValidationError.TooShort)]
     [InlineData("a\u0301", ElasticsearchValidationError.TooShort)] // Accent combining character
     [InlineData("aa", null)]
-    [InlineData("か", ElasticsearchValidationError.TooShort)]
+    [InlineData("  か  ", ElasticsearchValidationError.TooShort)]
     [InlineData("か\u3099", ElasticsearchValidationError.TooShort)] // Dakuten combining character
     [InlineData("かか", null)]
     [InlineData("鏡", null)]
     [InlineData("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", ElasticsearchValidationError.TooLong)]
+    [InlineData("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa @Hachiroku", null)]
     [InlineData("あああああああああああああああああああああああああああああああああ", ElasticsearchValidationError.TooLong)]
+    [InlineData("ああああああああああああああああああああああああああああああああ @Hachiroku", null)]
+    [InlineData("a @Hachiroku", ElasticsearchValidationError.TooShort)]
+    [InlineData("か @Hachiroku", ElasticsearchValidationError.TooShort)]
     public async Task Search_ThrowsIfQueryIsTooShortOrLong(string query, ElasticsearchValidationError? error)
     {
         Func<Task> func = () => service.Search(query, CancellationToken.None);
@@ -229,10 +233,12 @@ public sealed class ElasticsearchServiceTests
 
     [Theory]
     [InlineData("top number", "top number", null)]
+    [InlineData("@Hachiroku", "", "Hachiroku")]
     [InlineData("top number@Hachiroku", "top number@Hachiroku", null)] // No space before @ sign
     [InlineData("top number @Hachiroku", "top number", "Hachiroku")]
     [InlineData("@Hachiroku top number", "top number", "Hachiroku")]
     [InlineData("  top  @Hachiroku  number  ", "top number", "Hachiroku")]
+    [InlineData("\t@Hachiroku ", "", "Hachiroku")]
     public void ExtractMention(string query, string expectedQuery, string? expectedMention)
     {
         var (actualQuery, actualMention) = ElasticsearchService.ExtractMention(query);
@@ -249,6 +255,27 @@ public sealed class ElasticsearchServiceTests
             .Error.Should()
             .Be(ElasticsearchValidationError.MultipleMentions);
     }
+
+    [Fact]
+    public Task DetermineSearchLanguage() => Task.Run(() => // Making sure CurrentCulture stays scoped to this test
+    {
+        CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("en-US");
+
+        ElasticsearchService.DetermineSearchLanguage("")
+            .Should().Be(SearchLanguage.English, "if the query is empty, the user's language should be used");
+
+        ElasticsearchService.DetermineSearchLanguage("当ててやろうか？　誰かにスイートロールを盗まれたかな？")
+            .Should().Be(SearchLanguage.Japanese, "the query is non-empty and contains Japanese");
+
+        CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("ja-JP");
+
+        ElasticsearchService.DetermineSearchLanguage("")
+            .Should().Be(SearchLanguage.Japanese, "if the query is empty, the user's language should be used");
+
+        ElasticsearchService.DetermineSearchLanguage("Let me guess - someone stole your sweetroll...")
+            .Should().Be(SearchLanguage.English, "the query is non-empty and does not contain Japanese");
+
+    }, TestContext.Current.CancellationToken);
 
     private static ValueArray<Alignment> DecodeAlignmentData(string base64) =>
         ValueArray.FromBytes<Alignment>(Convert.FromBase64String(base64));

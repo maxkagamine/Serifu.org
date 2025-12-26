@@ -97,7 +97,16 @@ const MAX_LENGTH_JAPANESE = 32;
     }
 
     // Remove any @-mention prior to validating query length
-    query = query.replace(MENTION_REGEX, ' ').trim();
+    const mention = query.match(MENTION_REGEX);
+    if (mention) {
+      query = `${query.substring(0, mention.index)} ${query.substring(mention.index! + mention[0].length)}`.trim();
+
+      // Searching by speaker without a query
+      if (!query) {
+        input.setCustomValidity('');
+        return;
+      }
+    }
 
     // Unlike .NET, regexes in JS have full Unicode support, so we can match the server-side validation easily
     const isJapanese = /\p{Script=Hiragana}|\p{Script=Katakana}|\p{Script=Han}/u.test(query);
